@@ -99,6 +99,7 @@ begin
   try
     Result.LoadFromFile(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
     Result.SetWrap(GL_CLAMP, GL_CLAMP, GL_CLAMP);
+    Result.SetFilter(GL_LINEAR, GL_LINEAR);
     //Result.DeleteTextureOnFree := False;
     //Result.FreeDataAfterGenTexture := False;
     Result.GenTexture();

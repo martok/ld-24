@@ -228,12 +228,38 @@ begin
   glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 2 (Back)
   glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 3 (Back)
   glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 4 (Back)
+
   // Top Face
   glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
   glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
   glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
   glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
   glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
+  if not FSelectMode then begin
+    glEnd;
+
+    Texture.Bind(true);
+    glPushAttrib(GL_LIGHTING_BIT or GL_ENABLE_BIT or GL_DEPTH_FUNC);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glDepthFunc(GL_LEQUAL);
+    glColor3f(1,1,1);
+
+    glBegin(GL_QUADS);
+    glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
+    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
+    glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
+    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
+    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
+    glEnd;
+
+    Texture.Unbind(true);
+    glPopAttrib;
+
+    glBegin(GL_QUADS);
+  end;
+
+
   // Right face
   glNormal3f( 1.0, 0.0, 0.0);                  // Normal Pointing Right
   glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 1 (Right)
