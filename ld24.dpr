@@ -10,7 +10,6 @@ uses
   Camera in 'Camera.pas',
   dglOpenGL in 'dglOpenGL.pas',
   FastGL in 'FastGL.pas',
-  Fonts in 'Fonts.pas',
   Geometry in 'Geometry.pas',
   GLHelper in 'GLHelper.pas',
   uBldElementarySchool in 'uBldElementarySchool.pas',
