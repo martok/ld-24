@@ -1,14 +1,16 @@
 unit uViewFrame;
 
+{$MODE Delphi}
+
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, dglOpenGL, AppEvnts, ExtCtrls, Camera;
+  LCLIntf, LCLType, Windows, LMessages, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, dglOpenGl, Camera, uCity;
 
 type
   TViewFrame = class(TForm)
-    ApplicationEvents1: TApplicationEvents;
+    ApplicationEvents1: TApplicationProperties;
     Timer1: TTimer;
     procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -31,6 +33,7 @@ type
   public
     { Public-Deklarationen }
     Camera: TCamera;
+    City: TCity;
     procedure Timestep(DT: Single);
     procedure Render;
   end;
@@ -40,10 +43,12 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TViewFrame.FormCreate(Sender: TObject);
 begin
+  ClientWidth:= 800;
+  ClientHeight:= 600;
   InitOpenGL();
   DC:= GetDC(Handle);
   RC:= CreateRenderingContext(DC, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
@@ -99,7 +104,7 @@ end;
 
 function KeyPressed(Key: Integer): Boolean;
 begin
-  Result:= ForegroundTask and Application.Active and (GetKeyState(Key) < 0);
+  Result:= Application.Active and (GetKeyState(Key) < 0);
 end;
 
 procedure TViewFrame.HandleInputs;

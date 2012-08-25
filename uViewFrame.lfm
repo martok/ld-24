@@ -1,0 +1,28 @@
+object ViewFrame: TViewFrame
+  Left = 192
+  Height = 381
+  Top = 135
+  Width = 761
+  Caption = 'ViewFrame'
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnMouseDown = FormMouseDown
+  OnMouseUp = FormMouseUp
+  Position = poScreenCenter
+  LCLVersion = '1.1'
+  object ApplicationEvents1: TApplicationProperties
+    OnIdle = ApplicationEvents1Idle
+    left = 668
+    top = 32
+  end
+  object Timer1: TTimer
+    Interval = 100
+    OnTimer = Timer1Timer
+    left = 668
+    top = 64
+  end
+end
