@@ -143,7 +143,7 @@ begin
   LastEvolve:= 0;
 
   City:= TCity.Create;
-  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test.map');
+  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
 
   Application.OnIdle := ApplicationIdle;
 end;
