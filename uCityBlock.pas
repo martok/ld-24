@@ -3,7 +3,7 @@ unit uCityBlock;
 interface
 
 uses
-  SysUtils, dglOpenGL, GLHelper;
+  SysUtils, dglOpenGL, GLHelper, glBitmap, uGlobals;
 
 type
   TBuilding = class;
@@ -48,6 +48,7 @@ type
     procedure RenderSimple(Color: TRGBA; Height: Single);
   public
     constructor Create; virtual;
+    class function Texture: TglBitmap2D; virtual;
     procedure RenderSelect(r, g, b: byte);
     procedure Render; virtual;
     function SLivingSpace: integer; virtual;
@@ -257,6 +258,11 @@ end;
 function TBuilding.SPollution: integer;
 begin
   Result:= 0;
+end;
+
+class function TBuilding.Texture: TglBitmap2D;
+begin
+  Result:= textures.BUnknown;
 end;
 
 end.

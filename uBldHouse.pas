@@ -3,7 +3,7 @@ unit uBldHouse;
 interface
 
 uses
-  dglOpenGL, uCityBlock, GLHelper;
+  dglOpenGL, uCityBlock, GLHelper, glBitmap, uGlobals;
 
 type
   TBHouse = class(TBuilding)
@@ -13,6 +13,7 @@ type
     procedure Render; override;
     function SLivingSpace: Integer; override;
     function SHappiness: Integer; override;
+    class function Texture: TglBitmap2D; override;
   end;
 
   TBAppartement = class(TBuilding)
@@ -22,6 +23,7 @@ type
     procedure Render; override;
     function SLivingSpace: Integer; override;
     function SHappiness: Integer; override;
+    class function Texture: TglBitmap2D; override;
   end;
 
 implementation
@@ -50,6 +52,11 @@ begin
   Result:= 10;
 end;
 
+class function TBHouse.Texture: TglBitmap2D;
+begin
+  Result:= Textures.BHouse;
+end;
+
 { TBAppartement }
 
 function TBAppartement.ClickHeight: Single;
@@ -71,6 +78,11 @@ end;
 function TBAppartement.SLivingSpace: Integer;
 begin
   Result:= 50;
+end;
+
+class function TBAppartement.Texture: TglBitmap2D;
+begin
+  Result:= Textures.BHouse;
 end;
 
 end.

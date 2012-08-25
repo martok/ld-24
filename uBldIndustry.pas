@@ -3,7 +3,7 @@ unit uBldIndustry;
 interface
 
 uses
-  dglOpenGL, uCityBlock, GLHelper;
+  dglOpenGL, uCityBlock, GLHelper, glBitmap, uGlobals;
 
 type
   TBSmallIndustry = class(TBuilding)
@@ -13,6 +13,7 @@ type
     procedure Render; override;
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;
+    class function Texture: TglBitmap2D; override;
   end;
 
   TBFactory = class(TBuilding)
@@ -21,7 +22,8 @@ type
   public
     procedure Render; override;
     function SIndustryValue: Integer; override;
-    function SPollution: Integer; override;
+    function SPollution: Integer; override;  
+    class function Texture: TglBitmap2D; override;
   end;
 
 implementation
@@ -50,6 +52,11 @@ begin
   Result:= 1;
 end;
 
+class function TBSmallIndustry.Texture: TglBitmap2D;
+begin
+  Result:= Textures.BSmallIndustry;
+end;
+
 { TBFactory }
 
 function TBFactory.ClickHeight: Single;
@@ -71,6 +78,11 @@ end;
 function TBFactory.SPollution: Integer;
 begin
   Result:= 3;
+end;
+
+class function TBFactory.Texture: TglBitmap2D;
+begin
+  Result:= Textures.BFactory;
 end;
 
 end.

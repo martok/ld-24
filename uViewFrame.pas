@@ -94,6 +94,9 @@ end;
 function LoadTexture(Name: string): TglBitmap2D;
 begin
   Result:= TglBitmap2D.Create(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
+  Result.DeleteTextureOnFree := False;
+  Result.FreeDataAfterGenTexture := False;
+  Result.GenTexture(True);
 end;
 
 procedure TViewFrame.FormCreate(Sender: TObject);
@@ -117,6 +120,7 @@ begin
   Textures.BFactory:= LoadTexture('BFactory');
   Textures.BHouse:= LoadTexture('BHouse');   
   Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
+  Textures.BUnknown:= LoadTexture('BUnknown');
 
   FFrameCount:= 0;
 

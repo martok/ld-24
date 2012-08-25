@@ -14,7 +14,8 @@ var
     BFactories,
     BFactory,
     BHouse,
-    BSmallIndustry: TglBitmap2D;
+    BSmallIndustry,
+    BUnknown: TglBitmap2D;
   end;
 
 implementation
