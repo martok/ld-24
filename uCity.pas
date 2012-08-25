@@ -131,7 +131,7 @@ var
     if (A < 0) or (B < 0) or (A > high(FCityBlocks)) or (B > high(FCityBlocks[A])) then
       exit;
     cb:= FCityBlocks[a, b];
-    f:= 1 / sqrt(sqr(a - x) + sqr(b - y));
+    f:= 1 / (sqrt(sqr(a - x) + sqr(b - y))+1);
     ind:= ind + f * cb.Industry;
     living:= living + f * cb.Space;
     happi:= happi + f * cb.Happiness;

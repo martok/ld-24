@@ -3,7 +3,7 @@ unit uGUIBlock;
 interface
 
 uses
-  dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite;
+  SysUtils, dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite;
 
 type
   TGUIBlock = class(TGUILayer)
@@ -77,6 +77,9 @@ begin
     tsTextColor3f(0, 0, 0);
     Fonts.GUIText.TextOut(ClientRect.Left + 20, ClientRect.Top + 20 + i * 20, FCurrentList[i]);
   end;
+  Fonts.GUIText.TextOut(ClientRect.Left + 20, ClientRect.Bottom - 100,
+    Format('Ppl: %d Happi: %d Ind: %d',
+    [FBlock.People, FBlock.Happiness, FBlock.Industry]));
 end;
 
 end.

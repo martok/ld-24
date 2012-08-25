@@ -113,7 +113,7 @@ begin
   glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
   glEnable(GL_LIGHTING);
   glBegin(GL_QUADS);
-  SetGLMaterial(ColorToRGBA(FPeople/10, 0.9, 0.9));
+  SetGLMaterial(ColorToRGBA(0.9, 0.9, 0.9));
   glVertex3f(3.1, 0, -0.1);
   glVertex3f(-0.1, 0, -0.1);
   glVertex3f(-0.1, 0, 3.1);
