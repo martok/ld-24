@@ -65,7 +65,7 @@ var
   x, y: integer;
 begin
   glPushMatrix;
-  /*
+  {
   if not Selection then begin
     glBegin(GL_QUADS);
     SetGLMaterial(ColorToRGBA(0.5, 0.9, 0.5));
@@ -75,7 +75,7 @@ begin
     glVertex3f(1000, -0.2, 1000);
     glEnd;
   end;
-  */
+  }
   if not Selection then begin
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
