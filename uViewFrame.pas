@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, dglOpenGL, AppEvnts, ExtCtrls, Camera;
+  Dialogs, dglOpenGL, AppEvnts, ExtCtrls, Camera, uCity;
 
 type
   TViewFrame = class(TForm)
@@ -31,6 +31,7 @@ type
   public
     { Public-Deklarationen }
     Camera: TCamera;
+    City: TCity;
     procedure Timestep(DT: Single);
     procedure Render;
   end;
