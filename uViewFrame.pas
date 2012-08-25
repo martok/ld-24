@@ -77,7 +77,7 @@ var
 
 implementation
 
-uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock;
+uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock, glBitmap;
 
 {$R *.dfm}
 
@@ -89,6 +89,11 @@ var
 begin
   QueryPerformanceCounter(pc);
   Result:= pc / pfc * 1000;
+end;
+
+function LoadTexture(Name: string): TglBitmap2D;
+begin
+  Result:= TglBitmap2D.Create(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
 end;
 
 procedure TViewFrame.FormCreate(Sender: TObject);
@@ -107,6 +112,11 @@ begin
   TtsFont.InitTS;
   Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
   Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
+
+  Textures.BFactories:= LoadTexture('BFactories');
+  Textures.BFactory:= LoadTexture('BFactory');
+  Textures.BHouse:= LoadTexture('BHouse');   
+  Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
 
   FFrameCount:= 0;
 

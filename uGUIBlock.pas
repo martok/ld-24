@@ -3,14 +3,18 @@ unit uGUIBlock;
 interface
 
 uses
-  SysUtils, dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite;
+  SysUtils, dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite,
+  glBitmap;
 
 type
   TGUIBlock = class(TGUILayer)
   private
     FCity: TCity;
     FBlock: TCityBlock;
-    FCurrentList: array of String;
+    FCurrentList: array of record
+      idx: integer;
+      cls: TBuildingClass;
+    end;
   protected
     procedure BuildClick(Sender: TObject);
   public
@@ -47,7 +51,8 @@ begin
   for i:= 0 to 8 do
     if Assigned(FBlock.Building[i]) then begin
       SetLength(FCurrentList,k+1);
-      FCurrentList[k]:= FBlock.Building[i].ClassName;
+      FCurrentList[k].idx:= i;
+      FCurrentList[k].cls:= TBuildingClass(FBlock.Building[i].ClassType);
       inc(k);
     end;
   if k < 9 then begin
@@ -70,12 +75,14 @@ end;
 
 procedure TGUIBlock.Render;
 var
-  i: integer;
+  i,x,y: integer;
 begin
   inherited;
   for i:= 0 to high(FCurrentList) do begin
+    x:= FCurrentList[i].idx mod 3;
+    y:= FCurrentList[i].idx div 3;
     tsTextColor3f(0, 0, 0);
-    Fonts.GUIText.TextOut(ClientRect.Left + 20, ClientRect.Top + 20 + i * 20, FCurrentList[i]);
+    Fonts.GUIText.TextOut(ClientRect.Left + 20 + x*50, ClientRect.Top + 20 + y*50, FCurrentList[i].cls.ClassName);
   end;
   Fonts.GUIText.TextOut(ClientRect.Left + 20, ClientRect.Bottom - 100,
     Format('Ppl: %d Happi: %d Ind: %d',
