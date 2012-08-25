@@ -3,7 +3,7 @@ unit uCity;
 interface
 
 uses
-  dglOpenGL, uCityBlock;
+  dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL;
 
 type
   TCityBlocks = array of array of TCityBlock;
@@ -56,6 +56,27 @@ var
   x, y: integer;
 begin
   glPushMatrix;
+  if not Selection then begin
+    glBegin(GL_QUADS);
+    SetGLMaterial(ColorToRGBA(0.5, 0.9, 0.5));
+    glVertex3f(1000, -0.1, -1000);
+    glVertex3f(-1000, -0.1, -1000);
+    glVertex3f(-1000, -0.1, 1000);
+    glVertex3f(1000, -0.1, 1000);
+    glEnd;
+  end;
+
+
+  if not Selection then begin
+    glEnable(GL_LIGHTING);
+    glShadeModel(GL_SMOOTH);
+    SetGLMaterial(c_Yellow);
+    glLight(VectorMake(-5, 5, 5),
+            ColorToRGBA(0.2, 0.2, 0.2), ColorToRGBA(0.8, 0.8, 0.8),
+            ColorToRGBA(1.0, 1.0, 1.0), 0, 0);
+  end else begin
+    glDisable(GL_LIGHTING);
+  end;
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       glPushMatrix;

@@ -30,6 +30,7 @@ type
     LastFrame: cardinal;
     LastEvolve: single;
     PausedForInput: boolean;
+    seltext: string;
     procedure HandleInputs;
     procedure RenderForMouseClick(x,y: integer);
     procedure PrepareMatrix;
@@ -58,7 +59,6 @@ begin
   DC:= GetDC(Handle);
   RC:= CreateRenderingContext(DC, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
   ActivateRenderingContext(DC, RC);
-  glEnable(GL_DEPTH_TEST);
   wglSwapIntervalEXT:= wglGetProcAddress('wglSwapIntervalEXT');
   wglSwapIntervalEXT(0);
 
@@ -98,13 +98,13 @@ const
   time_per_frame = 1000 / 60;
 begin
   Done:= false;
-  HandleInputs;
 
   if GetTickCount - LastFrame < time_per_frame then begin
     Sleep(1);
     exit;
   end;
 
+  HandleInputs;
   Timestep((GetTickCount - LastFrame) / 1000);
   Render;
 
@@ -141,7 +141,7 @@ begin
       if pressed = [mbMiddle] then begin
         if ((dy > 0) and (Camera.Y > 4)) or
           ((dy < 0) and (Camera.Y < 100)) then
-          BewegReinRaus(dy)
+          BewegReinRaus(dy*0.5)
       end;
     end;
     MP.X:= ax;
@@ -191,11 +191,13 @@ begin
   glMatrixMode(GL_MODELVIEW);
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
+  glEnable(GL_DEPTH_TEST);
 end;
 
 procedure TViewFrame.Render;
 begin
   PrepareMatrix;
+  glEnable(GL_LIGHTING);
 
   glPushMatrix;
   Camera.Apply;
@@ -209,11 +211,8 @@ begin
     glEnable(GL_BLEND);
 
     tsTextColor3f(1,1,1);
-    Fonts.LargeText.TextOut(400,50,'Hallo Welt', TS_ALIGN_CENTER);
+    Fonts.LargeText.TextOut(400,50,seltext, TS_ALIGN_CENTER);
   Exit2dMode;
-
-
-
 
   SwapBuffers(DC);
 end;
@@ -232,8 +231,9 @@ begin
 
   glReadPixels(x, ClientHeight-y, 1,1,GL_RGB,GL_UNSIGNED_BYTE,@clr);
   case clr[2] of
-    0..8: ; // building
-    255: ; // block
+    0: seltext:= 'nothing';
+    1..9: seltext:= Format('bld %d @ %d %d',[clr[2]-1, clr[0],clr[1]]); // building
+    255: seltext:= Format('block %d %d',[clr[0],clr[1]]); // block
   end;
 end;
 

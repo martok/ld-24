@@ -3,7 +3,7 @@ unit uBldElementarySchool;
 interface
 
 uses
-  dglOpenGL, uCityBlock;
+  dglOpenGL, uCityBlock, GLHelper;
 
 type
   TBElementarySchool = class(TBuilding)
@@ -25,15 +25,7 @@ end;
 procedure TBElementarySchool.Render;
 begin
   inherited;
-  glBegin(GL_TRIANGLES);
-  glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
-  glColor3f(0, 0, 1); glVertex3f(1, 0, 1);
-  glColor3f(0, 1, 0); glVertex3f(0.5, 1, 0.5);
-
-  glColor3f(1, 0, 0); glVertex3f(0, 0, 1);
-  glColor3f(0, 0, 1); glVertex3f(1, 0, 0);
-  glColor3f(0, 1, 0); glVertex3f(0.5, 1, 0.5);
-  glEnd;
+  RenderSimple(c_Red, 2);
 end;
 
 end.

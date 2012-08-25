@@ -21,7 +21,7 @@ type
 implementation
 
 const
-  BewegFaktor = 0.1;
+  BewegFaktor = 0.3;
 
 { TCamera }
 
