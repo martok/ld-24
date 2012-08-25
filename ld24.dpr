@@ -2,7 +2,8 @@ program ld24;
 
 uses
   Forms,
-  uViewFrame in 'uViewFrame.pas' {ViewFrame};
+  uViewFrame in 'uViewFrame.pas' {ViewFrame},
+  uBldElementarySchool in 'uBldElementarySchool.pas';
 
 {$R *.res}
 

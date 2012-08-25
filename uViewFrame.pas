@@ -27,7 +27,11 @@ type
     pressed: set of TMouseButton;
     FFrameCount: integer;
     LastFrame: cardinal;
+    LastEvolve: single;
+    PausedForInput: boolean;
     procedure HandleInputs;
+    procedure RenderForMouseClick(x,y: integer);
+    procedure PrepareMatrix;
   public
     { Public-Deklarationen }
     Camera: TCamera;
@@ -41,10 +45,14 @@ var
 
 implementation
 
+uses GLHelper, uCityBlock;
+
 {$R *.dfm}
 
 procedure TViewFrame.FormCreate(Sender: TObject);
 begin
+  ClientWidth:= 800;
+  ClientHeight:= 600;
   InitOpenGL();
   DC:= GetDC(Handle);
   RC:= CreateRenderingContext(DC, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
@@ -55,15 +63,20 @@ begin
   FFrameCount:= 0;
 
   Camera:= TCamera.Create;
-  Camera.Y:= 20;
+  Camera.Y:= 50;
   Camera.X:= -20;
-  Camera.Z:= 20;
+  Camera.Z:= 50;
   Camera.Beta:= -45;
   Camera.Alpha:= -45;
+  PausedForInput:= false;
+  LastEvolve:= 0;
+
+  City:= TCity.Create;
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);
 begin
+  FreeAndNil(City);
   FreeAndNil(Camera);
   if RC <> 0 then begin
     DeactivateRenderingContext;
@@ -118,17 +131,19 @@ begin
         BewegVorZuruck(-dy * 0.3);
         BewegLinksRechts(dx * 0.3);
       end;
-      if pressed = [mbLeft] then begin
-        if ((dy > 0) and (Camera.Y > 2)) or
+      if pressed = [mbMiddle] then begin
+        if ((dy > 0) and (Camera.Y > 4)) or
           ((dy < 0) and (Camera.Y < 100)) then
           BewegReinRaus(dy)
       end;
-      {      if pressed=[mbRight,mbLeft] then begin
-              Dist := Dist   - (dy div 2);
-            end;       }
     end;
     MP.X:= ax;
     MP.y:= ay;
+
+    if pressed=[mbLeft] then begin
+      pressed:=[];
+      RenderForMouseClick(MP.X, mp.Y);
+    end;
   end;
 
   if KeyPressed(VK_LEFT) then
@@ -139,14 +154,22 @@ begin
     Camera.BewegVorZuruck(-2);
   if KeyPressed(VK_UP) then
     Camera.BewegVorZuruck(+2);
+  if KeyPressed(VK_SPACE) then
+    PausedForInput:= true;
 end;
 
 procedure TViewFrame.Timestep(DT: Single);
 begin
-
+  if not PausedForInput then begin
+    LastEvolve:= LastEvolve + DT;
+    if LastEvolve >= 1 then begin
+      City.Evolve;
+      LastEvolve:= 0;
+    end;
+  end;
 end;
 
-procedure TViewFrame.Render;
+procedure TViewFrame.PrepareMatrix;
 const
   FOV = 40;
   CLIP_NEAR = 0.1;
@@ -161,20 +184,39 @@ begin
   glMatrixMode(GL_MODELVIEW);
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
+end;
+
+procedure TViewFrame.Render;
+begin
+  PrepareMatrix;
 
   glPushMatrix;
   Camera.Apply;
-  glBegin(GL_TRIANGLES);
-  glColor3f(1, 0, 0);
-  glVertex3f(-1, -1, 0);
-  glColor3f(0, 0, 1);
-  glVertex3f(1, -1, 0);
-  glColor3f(0, 1, 0);
-  glVertex3f(0, 1, 0);
-  glEnd;
+  City.Render(false);
+  if PausedForInput then
+    ;
   glPopMatrix;
 
   SwapBuffers(DC);
+end;
+
+procedure TViewFrame.RenderForMouseClick(x,y: integer);
+var
+  clr: Array[0..2] of byte;
+begin
+  PrepareMatrix;
+  glDisable(GL_LIGHTING);
+
+  glPushMatrix;
+  Camera.Apply;
+  City.Render(true);
+  glPopMatrix;
+
+  glReadPixels(x, ClientHeight-y, 1,1,GL_RGB,GL_UNSIGNED_BYTE,@clr);
+  case clr[2] of
+    0..8: ; // building
+    255: ; // block
+  end;
 end;
 
 procedure TViewFrame.FormMouseDown(Sender: TObject; Button: TMouseButton;
