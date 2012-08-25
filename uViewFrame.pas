@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, dglOpenGL, AppEvnts, ExtCtrls, Camera, uCity;
+  Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, Camera, uCity;
 
 type
   TViewFrame = class(TForm)
@@ -22,6 +22,7 @@ type
     { Private-Deklarationen }
     DC: HDC;
     RC: HGLRC;
+
     MC: boolean;
     MP: TPoint;
     pressed: set of TMouseButton;
@@ -45,7 +46,7 @@ var
 
 implementation
 
-uses GLHelper, uCityBlock;
+uses GLHelper, uCityBlock, uFonts, uGlobals;
 
 {$R *.dfm}
 
@@ -60,6 +61,10 @@ begin
   glEnable(GL_DEPTH_TEST);
   wglSwapIntervalEXT:= wglGetProcAddress('wglSwapIntervalEXT');
   wglSwapIntervalEXT(0);
+
+  TtsFont.InitTS;
+  Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
+
   FFrameCount:= 0;
 
   Camera:= TCamera.Create;
@@ -78,6 +83,8 @@ procedure TViewFrame.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(City);
   FreeAndNil(Camera);
+
+  TtsFont.DoneTS;
   if RC <> 0 then begin
     DeactivateRenderingContext;
     DestroyRenderingContext(RC);
@@ -196,6 +203,17 @@ begin
   if PausedForInput then
     ;
   glPopMatrix;
+
+  Enter2dMode(800,600);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+
+    tsTextColor3f(1,1,1);
+    Fonts.LargeText.TextOut(400,50,'Hallo Welt', TS_ALIGN_CENTER);
+  Exit2dMode;
+
+
+
 
   SwapBuffers(DC);
 end;
