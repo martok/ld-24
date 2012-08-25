@@ -7,6 +7,7 @@ uses
   Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, Camera, uCity;
 
 type
+  TGUILayer = class;
   TViewFrame = class(TForm)
     ApplicationEvents1: TApplicationEvents;
     Timer1: TTimer;
@@ -38,8 +39,20 @@ type
     { Public-Deklarationen }
     Camera: TCamera;
     City: TCity;
+    GUILayer: TGUILayer;
     procedure Timestep(DT: Single);
     procedure Render;
+  end;
+
+  TGUILayer = class
+  private
+  protected
+    Owner: TGUILayer;
+    ClientRect: TRect;
+  public
+    procedure MouseClick(X,Y: integer); virtual;
+    procedure Close;
+    procedure Render; virtual;
   end;
 
 var
@@ -47,7 +60,7 @@ var
 
 implementation
 
-uses GLHelper, uCityBlock, uFonts, uGlobals;
+uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock;
 
 {$R *.dfm}
 
@@ -147,9 +160,15 @@ begin
     MP.X:= ax;
     MP.y:= ay;
 
-    if pressed=[mbLeft] then begin
-      pressed:=[];
-      RenderForMouseClick(MP.X, mp.Y);
+    if PausedForInput then begin
+      if pressed=[mbLeft] then begin
+        pressed:=[];
+
+        if not Assigned(GUILayer) then
+          RenderForMouseClick(MP.X, mp.Y)
+        else
+          GUILayer.MouseClick(MP.X, mp.Y);
+      end;
     end;
   end;
 
@@ -210,8 +229,17 @@ begin
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 
+    if PausedForInput then begin
+      tsTextColor3f(1,0,0);
+      Fonts.LargeText.TextOut(400,550, 'Pause', TS_ALIGN_CENTER);
+    end;
+
     tsTextColor3f(1,1,1);
     Fonts.LargeText.TextOut(400,50,seltext, TS_ALIGN_CENTER);
+
+    glDisable(GL_TEXTURE_2D);
+    if Assigned(GUILayer) then
+      GUILayer.Render;
   Exit2dMode;
 
   SwapBuffers(DC);
@@ -235,6 +263,10 @@ begin
     1..9: seltext:= Format('bld %d @ %d %d',[clr[2]-1, clr[0],clr[1]]); // building
     255: seltext:= Format('block %d %d',[clr[0],clr[1]]); // block
   end;
+  if clr[2]>0 then begin
+    GUILayer:= TGUIBlock.Create(City, clr[0],clr[1]);
+  end else
+    PausedForInput:= false;
 end;
 
 procedure TViewFrame.FormMouseDown(Sender: TObject; Button: TMouseButton;
@@ -250,6 +282,38 @@ procedure TViewFrame.FormMouseUp(Sender: TObject; Button: TMouseButton;
 begin
   mc:= False;
   Exclude(pressed, Button);
+end;
+
+{ TGUILayer }
+
+procedure TGUILayer.Close;
+begin
+  if Assigned(Owner) then begin
+    ViewFrame.GUILayer:= Owner;
+  end else begin
+    ViewFrame.GUILayer:= nil;
+  end;
+  Free;
+end;
+
+procedure TGUILayer.MouseClick(X, Y: integer);
+begin
+  if not PtInRect(ClientRect, Point(X,Y)) then
+    Close;
+end;
+
+procedure TGUILayer.Render;
+begin
+  if Assigned(Owner) then
+    Owner.Render;
+
+  glBegin(GL_QUADS);
+  SetGLColor(ColorToRGBA(clSilver));
+  glVertex2f(ClientRect.Left,ClientRect.Top);
+  glVertex2f(ClientRect.Right,ClientRect.Top);
+  glVertex2f(ClientRect.Right,ClientRect.Bottom);
+  glVertex2f(ClientRect.Left,ClientRect.Bottom);
+  glEnd; 
 end;
 
 end.

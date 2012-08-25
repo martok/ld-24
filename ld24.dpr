@@ -5,7 +5,8 @@ uses
   uViewFrame in 'uViewFrame.pas' {ViewFrame},
   uBldElementarySchool in 'uBldElementarySchool.pas',
   uFonts in 'uFonts.pas',
-  uGlobals in 'uGlobals.pas';
+  uGlobals in 'uGlobals.pas',
+  uGUIBlock in 'uGUIBlock.pas';
 
 {$R *.res}
 
