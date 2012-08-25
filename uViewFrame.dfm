@@ -18,11 +18,6 @@ object ViewFrame: TViewFrame
   OnMouseUp = FormMouseUp
   PixelsPerInch = 96
   TextHeight = 13
-  object ApplicationEvents1: TApplicationEvents
-    OnIdle = ApplicationEvents1Idle
-    Left = 668
-    Top = 32
-  end
   object Timer1: TTimer
     Interval = 100
     OnTimer = Timer1Timer

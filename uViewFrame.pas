@@ -9,9 +9,8 @@ uses
 type
   TGUILayer = class;
   TViewFrame = class(TForm)
-    ApplicationEvents1: TApplicationEvents;
     Timer1: TTimer;
-    procedure ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
+    procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -130,6 +129,9 @@ begin
   LastEvolve:= 0;
 
   City:= TCity.Create;
+  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test.map');
+
+  Application.OnIdle := ApplicationIdle;
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);
@@ -146,7 +148,7 @@ begin
   inherited;
 end;
 
-procedure TViewFrame.ApplicationEvents1Idle(Sender: TObject; var Done: Boolean);
+procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
 const
   time_per_frame = 1000 / 60;
 begin

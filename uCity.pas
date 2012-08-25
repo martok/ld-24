@@ -65,6 +65,7 @@ var
   x, y: integer;
 begin
   glPushMatrix;
+  /*
   if not Selection then begin
     glBegin(GL_QUADS);
     SetGLMaterial(ColorToRGBA(0.5, 0.9, 0.5));
@@ -74,7 +75,7 @@ begin
     glVertex3f(1000, -0.2, 1000);
     glEnd;
   end;
-
+  */
   if not Selection then begin
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
@@ -96,20 +97,22 @@ begin
   end;
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
-      glPushMatrix;
-      glTranslatef(x * 4, 0, y * 4);
-      if Selection then begin
-        glBegin(GL_QUADS);
-        glColor3ub(x, y, 255);
-        glVertex3f(0, 0, 0);
-        glVertex3f(3, 0, 0);
-        glVertex3f(3, 0, 3);
-        glVertex3f(0, 0, 3);
-        glEnd;
-      end;
+      if Assigned(FCityBlocks[x, y]) then begin
+        glPushMatrix;
+        glTranslatef(x * 4, 0, y * 4);
+        if Selection then begin
+          glBegin(GL_QUADS);
+          glColor3ub(x, y, 255);
+          glVertex3f(0, 0, 0);
+          glVertex3f(3, 0, 0);
+          glVertex3f(3, 0, 3);
+          glVertex3f(0, 0, 3);
+          glEnd;
+        end;
 
-      FCityBlocks[x, y].Render(Selection);
-      glPopMatrix;
+        FCityBlocks[x, y].Render(Selection);
+        glPopMatrix;
+      end;
     end;
   end;
   glPopMatrix;
@@ -138,46 +141,51 @@ var
     if (A < 0) or (B < 0) or (A > high(FCityBlocks)) or (B > high(FCityBlocks[A])) then
       exit;
     cb:= FCityBlocks[a, b];
-    f:= 1 / (sqrt(sqr(a - x) + sqr(b - y))+1);
-    ind:= ind + f * cb.Industry;
-    living:= living + f * cb.Space;
-    happi:= happi + f * cb.Happiness;
-    pollu:= pollu + f * cb.Pollution;
-    people:= people + f * cb.People;
+    if Assigned(cb) then begin
+      f:= 1 / (sqrt(sqr(a - x) + sqr(b - y))+1);
+      ind:= ind + f * cb.Industry;
+      living:= living + f * cb.Space;
+      happi:= happi + f * cb.Happiness;
+      pollu:= pollu + f * cb.Pollution;
+      people:= people + f * cb.People;
+    end;
   end;
 var
   cb: TCityBlock;
 begin
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
-      FCityBlocks[x, y].Update;
+      if Assigned(FCityBlocks[x, y]) then
+        FCityBlocks[x, y].Update;
     end;
   end;
 
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];
-      ind:= 0;
-      living:= 0;
-      happi:= 0;
-      pollu:= 0;
-      people:= 0;
-      AddUp(x, y);
-      AddUp(x - 1, y);
-      AddUp(x + 1, y);
-      AddUp(x, y - 1);
-      AddUp(x, y + 1);
+      if Assigned(cb) then begin
+        ind:= 0;
+        living:= 0;
+        happi:= 0;
+        pollu:= 0;
+        people:= 0;
+        AddUp(x, y);
+        AddUp(x - 1, y);
+        AddUp(x + 1, y);
+        AddUp(x, y - 1);
+        AddUp(x, y + 1);
 
-      if people > living * 0.9 then
-        cb.Happiness:= cb.Happiness - 1
-      else if people < living * 0.3 then
-        cb.Happiness:= cb.Happiness - 1
-      else
-        cb.Happiness:= cb.Happiness + 1;
+        if people > living * 0.9 then
+          cb.Happiness:= cb.Happiness - 1
+        else if people < living * 0.3 then
+          cb.Happiness:= cb.Happiness - 1
+        else
+          cb.Happiness:= cb.Happiness + 1;
 
-      cb.Happiness:= cb.Happiness - trunc(pollu / 10);
+        cb.Happiness:= cb.Happiness - trunc(pollu / 10);
 
-      cb.People:= cb.People + cb.Happiness;
+        cb.People:= cb.People + cb.Happiness;
+      end;
     end;
   end;
 end;
@@ -186,7 +194,7 @@ procedure TCity.LoadFromFile(const aFilename: String);
 var
   kcf: TkcfConfigFile;
   stream: TFileStream;
-  w, h, x, y, c, i, t: Integer;
+  w, h, x, y, c, i, j, t: Integer;
 begin
   if not FileExists(aFilename) then
     raise Exception.Create('invalid filepath: '+aFilename);
@@ -199,7 +207,9 @@ begin
         w := GetValue('Width', 10);
         h := GetValue('Height', 10);
         SetLength(FCityBlocks, w, h);
-        FillChar(FCityBlocks[0, 0], w*h, 0);
+        for i := 0 to High(FCityBlocks) do
+          for j := 0 to High(FCityBlocks[i]) do
+            FCityBlocks[i, j] := nil;
         c := GetValue('BlockCount', 0);
         with Section('Blocks') do begin
           for i := 0 to c-1 do begin
