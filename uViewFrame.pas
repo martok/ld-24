@@ -125,13 +125,13 @@ begin
   TtsFont.InitTS;
   Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
   Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
-  {
+
   Textures.BFactories:= LoadTexture('BFactories');
   Textures.BFactory:= LoadTexture('BFactory');
-  Textures.BHouse:= LoadTexture('BHouse');   
+  Textures.BHouse:= LoadTexture('BHouse');
   Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
   Textures.BUnknown:= LoadTexture('BUnknown');
-  }
+
   FFrameCount:= 0;
 
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
@@ -200,8 +200,8 @@ begin
   ay:= ScreenToClient(Mouse.CursorPos).y;
 
   if mc then begin
-    dy := dy + (MP.Y - aY);
-    dx := dx + (MP.X - aX);
+    dy := (MP.Y - aY);
+    dx := (MP.X - aX);
 
     if pressed = [mbRight] then begin
       Camera.turn := Camera.turn - dx;

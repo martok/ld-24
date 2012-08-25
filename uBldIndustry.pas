@@ -8,39 +8,38 @@ uses
 type
   TBSmallIndustry = class(TBuilding)
   protected
-    function ClickHeight: Single; override;
+    procedure RenderShape(Height: Single); override;
   public
-    procedure Render(const aHeight: Single); override;
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;
     class function Texture: TglBitmap2D; override;
+    constructor Create; override;
   end;
 
   TBFactory = class(TBuilding)
   protected
-    function ClickHeight: Single; override;
+    procedure RenderShape(Height: Single); override;
   public
-    procedure Render(const aHeight: Single); override;
     function SIndustryValue: Integer; override;
-    function SPollution: Integer; override;  
+    function SPollution: Integer; override;
     class function Texture: TglBitmap2D; override;
+    constructor Create; override;
   end;
 
 implementation
 
 { TBSmallIndustry }
 
-function TBSmallIndustry.ClickHeight: Single;
-begin
-  Result:= 0.5;
-end;
-
-procedure TBSmallIndustry.Render(const aHeight: Single);
+constructor TBSmallIndustry.Create;
 begin
   inherited;
-  RenderSimple(ColorToRGBA(1,0.5,0.5), 0.5);
+  FColor:= ColorToRGBA(1,0.5,0.5);
 end;
 
+procedure TBSmallIndustry.RenderShape(Height: Single);
+begin
+  inherited RenderShape(0.5);
+end;
 
 function TBSmallIndustry.SIndustryValue: Integer;
 begin
@@ -59,15 +58,15 @@ end;
 
 { TBFactory }
 
-function TBFactory.ClickHeight: Single;
-begin
-  Result:= 1;
-end;
-
-procedure TBFactory.Render(const aHeight: Single);
+constructor TBFactory.Create;
 begin
   inherited;
-  RenderSimple(ColorToRGBA(1,0.5,0.5), 1);
+  FColor:= ColorToRGBA(1,0.5,0.5);
+end;
+
+procedure TBFactory.RenderShape(Height: Single);
+begin
+  inherited RenderShape(1);
 end;
 
 function TBFactory.SIndustryValue: Integer;
