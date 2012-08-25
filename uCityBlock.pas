@@ -10,6 +10,7 @@ type
 
   { TCityBlock }
 
+  TBlockType = (btNormal = 0, btWater = 1);
   TCityBlock = class
   private
     FFields: array[0..8] of TBuilding;
@@ -21,12 +22,13 @@ type
     FIndustry: integer;
     FEducation: integer;
     FSpace: integer;
+    FBlockType: TBlockType;
     function GetBuilding(Index: integer): TBuilding;
     procedure SetBuilding(Index: integer; const Value: TBuilding);
   protected
     procedure RenderFloor;
   public
-    constructor Create(X, Y: Integer);
+    constructor Create(X, Y: Integer; BlockType: TBlockType);
     destructor Destroy; override;
     property Industry: integer read FIndustry;
     property Pollution: integer read FPollution;
@@ -63,11 +65,12 @@ uses
 
 { TCityBlock }
 
-constructor TCityBlock.Create(X, Y: Integer);
+constructor TCityBlock.Create(X, Y: Integer; BlockType: TBlockType);
 begin
   inherited Create;
   FPosX:= X;
   FPosY:= Y;
+  FBlockType := BlockType;
   FFields[0]:= TBHouse.Create;
   FFields[5]:= TBAppartement.Create;
 end;
