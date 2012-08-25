@@ -28,7 +28,7 @@ type
     MP: TPoint;
     pressed: set of TMouseButton;
     FFrameCount: integer;
-    LastFrame: cardinal;
+    LastFrameTime: Double;
     LastEvolve: single;
     PausedForInput: boolean;
     seltext: string;
@@ -81,8 +81,19 @@ uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock;
 
 {$R *.dfm}
 
+var
+  pfc: Int64;
+function GetPrecisionTime: Double;
+var
+  pc: Int64;
+begin
+  QueryPerformanceCounter(pc);
+  Result:= pc / pfc * 1000;
+end;
+
 procedure TViewFrame.FormCreate(Sender: TObject);
 begin
+  QueryPerformanceFrequency(pfc);
   ClientWidth:= 800;
   ClientHeight:= 600;
   InitOpenGL();
@@ -91,6 +102,7 @@ begin
   ActivateRenderingContext(DC, RC);
   wglSwapIntervalEXT:= wglGetProcAddress('wglSwapIntervalEXT');
   wglSwapIntervalEXT(0);
+  LastFrameTime:= GetPrecisionTime;
 
   TtsFont.InitTS;
   Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
@@ -130,17 +142,17 @@ const
 begin
   Done:= false;
 
-  if GetTickCount - LastFrame < time_per_frame then begin
+  if GetPrecisionTime - LastFrameTime < time_per_frame then begin
     Sleep(1);
     exit;
   end;
 
   HandleInputs;
-  Timestep((GetTickCount - LastFrame) / 1000);
+  Timestep((GetPrecisionTime - LastFrameTime) / 1000);
   Render;
 
   inc(FFrameCount);
-  LastFrame:= GettickCount;
+  LastFrameTime:= GetPrecisionTime;
 end;
 
 procedure TViewFrame.Timer1Timer(Sender: TObject);

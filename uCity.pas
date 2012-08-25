@@ -26,6 +26,8 @@ type
 
 implementation
 
+uses SysUtils;
+
 { TCity }
 
 constructor TCity.Create;
@@ -43,8 +45,12 @@ begin
 end;
 
 destructor TCity.Destroy;
+var
+  x, y: integer;
 begin
-
+  for x:= 0 to high(FCityBlocks) do
+    for y:= 0 to high(FCityBlocks[x]) do
+      FreeAndNil(FCityBlocks[x, y]);
   inherited;
 end;
 
