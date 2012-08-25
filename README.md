@@ -1,4 +1,16 @@
-ld-24
-=====
+ld-24 @ BitSpace: Game Of Citylife
+==================================
 
-Ludum Dare 24 - Jam!
+**Programmers**
+
+* Martok
+* Bergmann89
+
+
+**Gfx**
+
+* Akaikee
+
+**Sound/Music**
+
+* Teekeks
