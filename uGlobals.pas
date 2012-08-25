@@ -2,14 +2,22 @@ unit uGlobals;
 
 interface
 
-uses uFonts;
+uses uFonts, GLBitmap;
 
 var
-  Fonts : record
+  Fonts: record
     GUIText,
-    LargeText: TtsFont;
+      LargeText: TtsFont;
+  end;
+
+  Textures: record
+    BFactories,
+    BFactory,
+    BHouse,
+    BSmallIndustry: TglBitmap2D;
   end;
 
 implementation
 
 end.
+

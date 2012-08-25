@@ -15,7 +15,8 @@ uses
   uBldElementarySchool in 'uBldElementarySchool.pas',
   uBldHouse in 'uBldHouse.pas',
   uCity in 'uCity.pas',
-  uCityBlock in 'uCityBlock.pas';
+  uCityBlock in 'uCityBlock.pas',
+  glBitmap in 'glBitmap.pas';
 
 {$R *.res}
 
