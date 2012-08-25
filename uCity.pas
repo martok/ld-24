@@ -20,6 +20,8 @@ type
     property Block[X, Y: integer]: TCityBlock read GetBlock;
     procedure Evolve;
     procedure Render(Selection: boolean);
+
+    procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
   end;
 
 implementation
@@ -100,6 +102,17 @@ end;
 
 procedure TCity.Evolve;
 begin
+end;
+
+procedure TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
+var
+  i: integer;
+begin
+  for i:= 0 to 8 do
+    if Where.Building[i]=nil then begin
+      Where.Building[i]:= Building.Create;
+      break;
+    end;
 end;
 
 end.

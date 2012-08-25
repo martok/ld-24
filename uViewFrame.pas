@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, Camera, uCity;
+  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, Camera, uCity;
 
 type
   TGUILayer = class;
@@ -33,7 +33,7 @@ type
     PausedForInput: boolean;
     seltext: string;
     procedure HandleInputs;
-    procedure RenderForMouseClick(x,y: integer);
+    procedure RenderForMouseClick(x, y: integer);
     procedure PrepareMatrix;
   public
     { Public-Deklarationen }
@@ -45,14 +45,31 @@ type
   end;
 
   TGUILayer = class
-  private
   protected
     Owner: TGUILayer;
     ClientRect: TRect;
+    Clickables: TObjectList;
   public
-    procedure MouseClick(X,Y: integer); virtual;
+    constructor Create;
+    destructor Destroy; override;
+    procedure MouseClick(X, Y: integer); virtual;
     procedure Close;
     procedure Render; virtual;
+  end;
+
+  TGUIClickable = class
+  private
+    FText: string;
+    FOnClick: TNotifyEvent;
+    FTag: integer;
+  protected
+    ActiveRect: TRect;
+    procedure Click;
+  public
+    constructor Create(Rect: TRect);
+    property Text: string read FText write FText;
+    property Tag: integer read FTag write FTag;
+    property OnClick: TNotifyEvent read FOnClick write FOnClick;
   end;
 
 var
@@ -76,6 +93,7 @@ begin
   wglSwapIntervalEXT(0);
 
   TtsFont.InitTS;
+  Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
   Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
 
   FFrameCount:= 0;
@@ -154,15 +172,15 @@ begin
       if pressed = [mbMiddle] then begin
         if ((dy > 0) and (Camera.Y > 4)) or
           ((dy < 0) and (Camera.Y < 100)) then
-          BewegReinRaus(dy*0.5)
+          BewegReinRaus(dy * 0.5)
       end;
     end;
     MP.X:= ax;
     MP.y:= ay;
 
     if PausedForInput then begin
-      if pressed=[mbLeft] then begin
-        pressed:=[];
+      if pressed = [mbLeft] then begin
+        pressed:= [];
 
         if not Assigned(GUILayer) then
           RenderForMouseClick(MP.X, mp.Y)
@@ -225,29 +243,29 @@ begin
     ;
   glPopMatrix;
 
-  Enter2dMode(800,600);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
+  Enter2dMode(800, 600);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
 
-    if PausedForInput then begin
-      tsTextColor3f(1,0,0);
-      Fonts.LargeText.TextOut(400,550, 'Pause', TS_ALIGN_CENTER);
-    end;
+  if PausedForInput then begin
+    tsTextColor3f(1, 0, 0);
+    Fonts.LargeText.TextOut(400, 550, 'Pause', TS_ALIGN_CENTER);
+  end;
 
-    tsTextColor3f(1,1,1);
-    Fonts.LargeText.TextOut(400,50,seltext, TS_ALIGN_CENTER);
+  tsTextColor3f(1, 1, 1);
+  Fonts.LargeText.TextOut(400, 50, seltext, TS_ALIGN_CENTER);
 
-    glDisable(GL_TEXTURE_2D);
-    if Assigned(GUILayer) then
-      GUILayer.Render;
+  glDisable(GL_TEXTURE_2D);
+  if Assigned(GUILayer) then
+    GUILayer.Render;
   Exit2dMode;
 
   SwapBuffers(DC);
 end;
 
-procedure TViewFrame.RenderForMouseClick(x,y: integer);
+procedure TViewFrame.RenderForMouseClick(x, y: integer);
 var
-  clr: Array[0..2] of byte;
+  clr: array[0..2] of byte;
 begin
   PrepareMatrix;
   glDisable(GL_LIGHTING);
@@ -257,14 +275,14 @@ begin
   City.Render(true);
   glPopMatrix;
 
-  glReadPixels(x, ClientHeight-y, 1,1,GL_RGB,GL_UNSIGNED_BYTE,@clr);
+  glReadPixels(x, ClientHeight - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, @clr);
   case clr[2] of
     0: seltext:= 'nothing';
-    1..9: seltext:= Format('bld %d @ %d %d',[clr[2]-1, clr[0],clr[1]]); // building
-    255: seltext:= Format('block %d %d',[clr[0],clr[1]]); // block
+    1..9: seltext:= Format('bld %d @ %d %d', [clr[2] - 1, clr[0], clr[1]]); // building
+    255: seltext:= Format('block %d %d', [clr[0], clr[1]]); // block
   end;
-  if clr[2]>0 then begin
-    GUILayer:= TGUIBlock.Create(City, clr[0],clr[1]);
+  if clr[2] > 0 then begin
+    GUILayer:= TGUIBlock.Create(City, clr[0], clr[1]);
   end else
     PausedForInput:= false;
 end;
@@ -296,24 +314,78 @@ begin
   Free;
 end;
 
-procedure TGUILayer.MouseClick(X, Y: integer);
+constructor TGUILayer.Create;
 begin
-  if not PtInRect(ClientRect, Point(X,Y)) then
+  inherited Create;
+  Clickables:= TObjectList.Create(true);
+end;
+
+destructor TGUILayer.Destroy;
+begin
+  FreeAndNil(Clickables);
+  inherited;
+end;
+
+procedure TGUILayer.MouseClick(X, Y: integer);
+var
+  i: integer;
+begin
+  if not PtInRect(ClientRect, Point(X, Y)) then begin
     Close;
+    exit;
+  end;
+  for i:= 0 to Clickables.Count - 1 do begin
+    if PtInRect(TGUIClickable(Clickables[i]).ActiveRect, Point(X, Y)) then begin
+      TGUIClickable(Clickables[i]).Click;
+      break;
+    end;
+  end;
 end;
 
 procedure TGUILayer.Render;
+var
+  i: integer;
 begin
   if Assigned(Owner) then
     Owner.Render;
 
   glBegin(GL_QUADS);
   SetGLColor(ColorToRGBA(clSilver));
-  glVertex2f(ClientRect.Left,ClientRect.Top);
-  glVertex2f(ClientRect.Right,ClientRect.Top);
-  glVertex2f(ClientRect.Right,ClientRect.Bottom);
-  glVertex2f(ClientRect.Left,ClientRect.Bottom);
-  glEnd; 
+  glVertex2f(ClientRect.Left, ClientRect.Top);
+  glVertex2f(ClientRect.Right, ClientRect.Top);
+  glVertex2f(ClientRect.Right, ClientRect.Bottom);
+  glVertex2f(ClientRect.Left, ClientRect.Bottom);
+  glEnd;
+
+  for i:= 0 to Clickables.Count - 1 do begin
+    with TGUIClickable(Clickables[i]) do begin
+      glBegin(GL_QUADS);
+      SetGLColor(ColorToRGBA(clGray));
+      glVertex2f(ActiveRect.Left, ActiveRect.Top);
+      glVertex2f(ActiveRect.Right, ActiveRect.Top);
+      glVertex2f(ActiveRect.Right, ActiveRect.Bottom);
+      glVertex2f(ActiveRect.Left, ActiveRect.Bottom);
+      glEnd;
+      tsTextColor3f(0, 0, 0);
+      Fonts.GUIText.TextOut((ActiveRect.Right + ActiveRect.Left) div 2,
+       (ActiveRect.Top + ActiveRect.Bottom) div 2 + 6, FText, TS_ALIGN_CENTER);
+    end;
+  end;
+end;
+
+{ TGUIClickable }
+
+procedure TGUIClickable.Click;
+begin
+  if Assigned(FOnClick) then
+    FOnClick(Self);
+end;
+
+constructor TGUIClickable.Create(Rect: TRect);
+begin
+  inherited Create;
+  FText:= '';
+  ActiveRect:= Rect;
 end;
 
 end.

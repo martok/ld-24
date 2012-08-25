@@ -11,7 +11,7 @@ type
     FFont: tsFontID;
   public
     constructor Create(Name: string; Size: integer; AA: boolean; Style: TFontStyles = []);
-    procedure TextOut(X, Y: Single; Str: string; Align: Cardinal=TS_ALIGN_LEFT);
+    procedure TextOut(X, Y: Single; Str: string; HAlign: Cardinal=TS_ALIGN_LEFT);
 
     class procedure InitTS;
     class procedure DoneTS;
@@ -106,14 +106,15 @@ begin
   TextSuiteCheckError;
 end;
 
-procedure TtsFont.TextOut(X, Y: Single; Str: string; Align: Cardinal);
+procedure TtsFont.TextOut(X, Y: Single; Str: string; HAlign: Cardinal);
 begin
   tsFontBind(FFont);
-  tsSetParameteri(TS_ALIGN, Align);
+  tsSetParameteri(TS_ALIGN, HAlign);
 
   glPushMatrix;
     glTranslatef(x, y, 0);
     tsTextOutA(PAnsiChar(Str));
+    glDisable(GL_TEXTURE_2D);
   glPopMatrix;
 end;
 

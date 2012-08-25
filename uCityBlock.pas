@@ -21,6 +21,7 @@ type
     FIndustry: integer;
     FEducation: integer;
     function GetBuilding(Index: integer): TBuilding;
+    procedure SetBuilding(Index: integer; const Value: TBuilding);
   protected
     procedure RenderFloor;
   public
@@ -32,16 +33,18 @@ type
     property Luxury: integer read FLuxury;
     property People: integer read FPeople;
     property Satisfaction: integer read FSatisfaction;
-    property Building[Index: integer]: TBuilding read GetBuilding;
+    property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
     procedure Render(Selection: boolean);
   end;
 
+  TBuildingClass = class of TBuilding;
   TBuilding = class
   private
   protected
     function ClickHeight: single; virtual;
     procedure RenderSimple(Color: TRGBA; Height: Single);
   public
+    constructor Create; virtual;
     procedure RenderSelect(r, g, b: byte);
     procedure Render; virtual;
   end;
@@ -49,7 +52,7 @@ type
 implementation
 
 uses
-  uBldElementarySchool;
+  uBldHouse;
 
 { TCityBlock }
 
@@ -58,8 +61,8 @@ begin
   inherited Create;
   FPosX:= X;
   FPosY:= Y;
-  FFields[0]:= TBElementarySchool.Create;
-  FFields[2]:= TBElementarySchool.Create;
+  FFields[0]:= TBHouse.Create;
+  FFields[5]:= TBAppartement.Create;
 end;
 
 destructor TCityBlock.Destroy;
@@ -122,6 +125,11 @@ begin
   glPopAttrib;
 end;
 
+procedure TCityBlock.SetBuilding(Index: integer; const Value: TBuilding);
+begin
+  FFields[Index]:= Value;
+end;
+
 { TBuilding }
 
 function TBuilding.ClickHeight: single;
@@ -129,9 +137,13 @@ begin
   Result:= 5;
 end;
 
+constructor TBuilding.Create;
+begin
+  inherited;
+end;
+
 procedure TBuilding.Render;
 begin
-
 end;
 
 procedure TBuilding.RenderSelect(r, g, b: byte);
@@ -163,38 +175,32 @@ procedure TBuilding.RenderSimple(Color: TRGBA; Height: Single);
     glNormal3f( 0.0, 0.0, 1.0);                  // Normal Pointing Towards Viewer
     glTexCoord2f(0.0, 0.0); glVertex3f(0.0, 0.0,  1.0);  // Point 1 (Front)
     glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 2 (Front)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);  // Point 3 (Front)
-    glTexCoord2f(0.0, 1.0); glVertex3f(0.0,  1.0,  1.0);  // Point 4 (Front)
+    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Front)
+    glTexCoord2f(0.0, 1.0); glVertex3f(0.0,  Height,  1.0);  // Point 4 (Front)
     // Back Face
     glNormal3f( 0.0, 0.0,0.0);                  // Normal Pointing Away From Viewer
     glTexCoord2f(1.0, 0.0); glVertex3f(0.0, 0.0, 0.0);  // Point 1 (Back)
-    glTexCoord2f(1.0, 1.0); glVertex3f(0.0,  1.0, 0.0);  // Point 2 (Back)
-    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0, 0.0);  // Point 3 (Back)
+    glTexCoord2f(1.0, 1.0); glVertex3f(0.0,  Height, 0.0);  // Point 2 (Back)
+    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height, 0.0);  // Point 3 (Back)
     glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0, 0.0);  // Point 4 (Back)
     // Top Face
     glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
-    glTexCoord2f(0.0, 1.0); glVertex3f(0.0,  1.0, 0.0);  // Point 1 (Top)
-    glTexCoord2f(0.0, 0.0); glVertex3f(0.0,  1.0,  1.0);  // Point 2 (Top)
-    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  1.0,  1.0);  // Point 3 (Top)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, 0.0);  // Point 4 (Top)
-    // Bottom Face
-    glNormal3f( 0.0,0.0, 0.0);                  // Normal Pointing Down
-    glTexCoord2f(1.0, 1.0); glVertex3f(0.0, 0.0, 0.0);  // Point 1 (Bottom)
-    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0, 0.0, 0.0);  // Point 2 (Bottom)
-    glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 3 (Bottom)
-    glTexCoord2f(1.0, 0.0); glVertex3f(0.0, 0.0,  1.0);  // Point 4 (Bottom)
+    glTexCoord2f(0.0, 1.0); glVertex3f(0.0,  Height, 0.0);  // Point 1 (Top)
+    glTexCoord2f(0.0, 0.0); glVertex3f(0.0,  Height,  1.0);  // Point 2 (Top)
+    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
+    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, 0.0);  // Point 4 (Top)
     // Right face
     glNormal3f( 1.0, 0.0, 0.0);                  // Normal Pointing Right
     glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0, 0.0);  // Point 1 (Right)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  1.0, 0.0);  // Point 2 (Right)
-    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  1.0,  1.0);  // Point 3 (Right)
+    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, 0.0);  // Point 2 (Right)
+    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Right)
     glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 4 (Right)
     // Left Face
     glNormal3f(0.0, 0.0, 0.0);                  // Normal Pointing Left
     glTexCoord2f(0.0, 0.0); glVertex3f(0.0, 0.0, 0.0);  // Point 1 (Left)
     glTexCoord2f(1.0, 0.0); glVertex3f(0.0, 0.0,  1.0);  // Point 2 (Left)
-    glTexCoord2f(1.0, 1.0); glVertex3f(0.0,  1.0,  1.0);  // Point 3 (Left)
-    glTexCoord2f(0.0, 1.0); glVertex3f(0.0,  1.0, 0.0);  // Point 4 (Left)
+    glTexCoord2f(1.0, 1.0); glVertex3f(0.0,  Height,  1.0);  // Point 3 (Left)
+    glTexCoord2f(0.0, 1.0); glVertex3f(0.0,  Height, 0.0);  // Point 4 (Left)
     glEnd;
   end;
 begin
