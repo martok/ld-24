@@ -20,13 +20,14 @@ type
     property Block[X, Y: integer]: TCityBlock read GetBlock;
     procedure Evolve;
     procedure Render(Selection: boolean);
+    procedure LoadFromFile(const aFilename: String);
 
     procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
   end;
 
 implementation
 
-uses SysUtils;
+uses SysUtils, uConfigFile, Classes;
 
 { TCity }
 
@@ -39,7 +40,7 @@ begin
 
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
-      FCityBlocks[x, y]:= TCityBlock.Create(x, y);
+      FCityBlocks[x, y]:= TCityBlock.Create(x, y, btNormal);
     end;
   end;
 end;
@@ -178,6 +179,47 @@ begin
 
       cb.People:= cb.People + cb.Happiness;
     end;
+  end;
+end;
+
+procedure TCity.LoadFromFile(const aFilename: String);
+var
+  kcf: TkcfConfigFile;
+  stream: TFileStream;
+  w, h, x, y, c, i, t: Integer;
+begin
+  if not FileExists(aFilename) then
+    raise Exception.Create('invalid filepath: '+aFilename);
+
+  stream := TFileStream.Create(aFilename, fmOpenRead);
+  try
+    kcf := TkcfConfigFile.Create(stream);
+    try
+      with kcf.Section('Map') do begin
+        w := GetValue('Width', 10);
+        h := GetValue('Height', 10);
+        SetLength(FCityBlocks, w, h);
+        FillChar(FCityBlocks[0, 0], w*h, 0);
+        c := GetValue('BlockCount', 0);
+        with Section('Blocks') do begin
+          for i := 0 to c-1 do begin
+            with Section(IntToStr(i)) do begin
+              x := GetValue('x', -1);
+              y := GetValue('y', -1);
+              t := GetValue('type', 0);
+              if (x >= 0) and (x < w) and (y >= 0) and (y < h) then begin
+                FCityBlocks[x, y] := TCityBlock.Create(x, y, TBlockType(t))
+              end else
+                raise Exception.Create(format('invalid value (x: %d, y: %d)', [x, y]));
+            end;
+          end;
+        end;
+      end;
+    finally
+      kcf.Free;
+    end;
+  finally
+    stream.Free;
   end;
 end;
 
