@@ -109,10 +109,6 @@ begin
   glPopMatrix;
 end;
 
-procedure TCity.Evolve;
-begin
-end;
-
 procedure TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
 var
   i: integer;
@@ -122,6 +118,17 @@ begin
       Where.Building[i]:= Building.Create;
       break;
     end;
+end;
+
+procedure TCity.Evolve;
+var
+  x, y: integer;
+begin
+  for x:= 0 to high(FCityBlocks) do begin
+    for y:= 0 to high(FCityBlocks[x]) do begin
+      FCityBlocks[x,y].Update;
+    end;
+  end;
 end;
 
 end.

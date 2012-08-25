@@ -16,10 +16,11 @@ type
     FPosX, FPosY: integer;
     FPeople: integer;
     FLuxury: integer;
-    FSatisfaction: integer;
+    FHappiness: integer;
     FPollution: integer;
     FIndustry: integer;
     FEducation: integer;
+    FSpace: integer;
     function GetBuilding(Index: integer): TBuilding;
     procedure SetBuilding(Index: integer; const Value: TBuilding);
   protected
@@ -32,9 +33,11 @@ type
     property Education: integer read FEducation;
     property Luxury: integer read FLuxury;
     property People: integer read FPeople;
-    property Satisfaction: integer read FSatisfaction;
+    property Space: integer read FSpace;
+    property Happiness: integer read FHappiness;
     property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
     procedure Render(Selection: boolean);
+    procedure Update;
   end;
 
   TBuildingClass = class of TBuilding;
@@ -47,6 +50,10 @@ type
     constructor Create; virtual;
     procedure RenderSelect(r, g, b: byte);
     procedure Render; virtual;
+    function SLivingSpace: integer; virtual;
+    function SIndustryValue: integer; virtual;
+    function SPollution: integer; virtual;
+    function SHappiness: integer; virtual;
   end;
 
 implementation
@@ -128,6 +135,31 @@ end;
 procedure TCityBlock.SetBuilding(Index: integer; const Value: TBuilding);
 begin
   FFields[Index]:= Value;
+end;
+
+procedure TCityBlock.Update;
+var
+  i: integer;
+  b: TBuilding;
+  ind, living, happi, pollu: integer;
+begin
+  ind:= 0;
+  living:= 50;
+  happi:= 0;
+  pollu:= 0;
+  for i:= 0 to 8 do
+    if Assigned(FFields[i]) then begin
+      b:= TBuilding(FFields[i]);
+      inc(ind, b.SIndustryValue);
+      inc(living, b.SLivingSpace);
+      inc(pollu, b.SPollution);
+      inc(happi, b.SHappiness);
+    end;
+
+  FHappiness:= happi;
+  FPollution:= pollu;
+  FIndustry:= ind;
+  FSpace:= living;
 end;
 
 { TBuilding }
@@ -215,6 +247,26 @@ begin
   glLineWidth(2);
   Cube;
   glPopAttrib;
+end;
+
+function TBuilding.SHappiness: integer;
+begin
+  Result:= 0;
+end;
+
+function TBuilding.SIndustryValue: integer;
+begin
+  Result:= 0;
+end;
+
+function TBuilding.SLivingSpace: integer;
+begin
+  Result:= 0;
+end;
+
+function TBuilding.SPollution: integer;
+begin
+  Result:= 0;
 end;
 
 end.
