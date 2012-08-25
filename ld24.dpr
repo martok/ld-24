@@ -3,7 +3,7 @@ program ld24;
 uses
   Forms,
   uViewFrame in 'uViewFrame.pas' {ViewFrame},
-  uBldHouse in 'uBldHouse.pas',
+  uBldIndustry in 'uBldIndustry.pas',
   uFonts in 'uFonts.pas',
   uGlobals in 'uGlobals.pas',
   uGUIBlock in 'uGUIBlock.pas';

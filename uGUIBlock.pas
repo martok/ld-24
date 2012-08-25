@@ -20,7 +20,7 @@ type
 
 implementation
 
-uses Classes, uGlobals, uBldHouse;
+uses Classes, uGlobals, uBldHouse, uBldIndustry;
 
 { TGUIBlock }
 
@@ -54,6 +54,8 @@ begin
     i:= 0;
     Buildable(TBHouse);
     Buildable(TBAppartement);
+    Buildable(TBSmallIndustry);
+    Buildable(TBFactory);
   end;
 end;
 

@@ -61,10 +61,10 @@ begin
   if not Selection then begin
     glBegin(GL_QUADS);
     SetGLMaterial(ColorToRGBA(0.5, 0.9, 0.5));
-    glVertex3f(1000, -0.1, -1000);
-    glVertex3f(-1000, -0.1, -1000);
-    glVertex3f(-1000, -0.1, 1000);
-    glVertex3f(1000, -0.1, 1000);
+    glVertex3f(1000, -0.2, -1000);
+    glVertex3f(-1000, -0.2, -1000);
+    glVertex3f(-1000, -0.2, 1000);
+    glVertex3f(1000, -0.2, 1000);
     glEnd;
   end;
 
@@ -79,10 +79,19 @@ begin
   end else begin
     glDisable(GL_LIGHTING);
   end;
+  if not Selection then begin
+    glBegin(GL_QUADS);
+    SetGLMaterial(ColorToRGBA(0.3, 0.3, 0.3));
+    glVertex3f(4*length(FCityBlocks), -0.1, -1);
+    glVertex3f(-1, -0.1, -1);
+    glVertex3f(-1, -0.1, 4*length(FCityBlocks[0]));
+    glVertex3f(4*length(FCityBlocks), -0.1, 4*length(FCityBlocks[0]));
+    glEnd;
+  end;
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       glPushMatrix;
-      glTranslatef(x * 3, 0, y * 3);
+      glTranslatef(x * 4, 0, y * 4);
       if Selection then begin
         glBegin(GL_QUADS);
         glColor3ub(x, y, 255);
