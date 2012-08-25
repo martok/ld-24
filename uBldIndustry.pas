@@ -10,7 +10,7 @@ type
   protected
     function ClickHeight: Single; override;
   public
-    procedure Render; override;
+    procedure Render(const aHeight: Single); override;
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;
     class function Texture: TglBitmap2D; override;
@@ -20,7 +20,7 @@ type
   protected
     function ClickHeight: Single; override;
   public
-    procedure Render; override;
+    procedure Render(const aHeight: Single); override;
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;  
     class function Texture: TglBitmap2D; override;
@@ -35,7 +35,7 @@ begin
   Result:= 0.5;
 end;
 
-procedure TBSmallIndustry.Render;
+procedure TBSmallIndustry.Render(const aHeight: Single);
 begin
   inherited;
   RenderSimple(ColorToRGBA(1,0.5,0.5), 0.5);
@@ -64,7 +64,7 @@ begin
   Result:= 1;
 end;
 
-procedure TBFactory.Render;
+procedure TBFactory.Render(const aHeight: Single);
 begin
   inherited;
   RenderSimple(ColorToRGBA(1,0.5,0.5), 1);

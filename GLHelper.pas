@@ -182,8 +182,8 @@ var
   mat_diffuse    : TRGBA;
 begin
   mat_specular:= MixRGBA(ColorToRGBA(1.0, 1.0, 1.0, 1.0),col);
-  mat_ambient:= MixRGBA(ColorToRGBA(0.5, 0.5, 0.5, 1.0), col);
-  mat_diffuse:= MixRGBA(ColorToRGBA(0.6, 0.6, 0.6, 1.0), col);
+  mat_ambient:= MixRGBA(ColorToRGBA(0.4, 0.4, 0.4, 1.0), col);
+  mat_diffuse:= MixRGBA(ColorToRGBA(0.8, 0.8, 0.8, 1.0), col);
   mat_shininess[0]:= 50.0;
 
 

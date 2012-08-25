@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, Camera, uCity;
+  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, uCity;
 
 type
   TGUILayer = class;
@@ -36,7 +36,10 @@ type
     procedure PrepareMatrix;
   public
     { Public-Deklarationen }
-    Camera: TCamera;
+    Camera: packed record
+      pos: array[0..2] of Single;
+      turn, tilt, zoom: Single;
+    end;
     City: TCity;
     GUILayer: TGUILayer;
     procedure Timestep(DT: Single);
@@ -92,14 +95,22 @@ end;
 
 function LoadTexture(Name: string): TglBitmap2D;
 begin
-  Result:= TglBitmap2D.Create(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
-  Result.DeleteTextureOnFree := False;
-  Result.FreeDataAfterGenTexture := False;
-  Result.GenTexture(True);
+  Result:= TglBitmap2D.Create;
+  try
+    Result.LoadFromFile(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
+    Result.SetWrap(GL_CLAMP, GL_CLAMP, GL_CLAMP);
+    //Result.DeleteTextureOnFree := False;
+    //Result.FreeDataAfterGenTexture := False;
+    Result.GenTexture();
+  except
+    FreeAndNil(result);
+  end;
 end;
 
 procedure TViewFrame.FormCreate(Sender: TObject);
 begin
+  randomize;
+
   QueryPerformanceFrequency(pfc);
   ClientWidth:= 800;
   ClientHeight:= 600;
@@ -114,21 +125,20 @@ begin
   TtsFont.InitTS;
   Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
   Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
-
+  {
   Textures.BFactories:= LoadTexture('BFactories');
   Textures.BFactory:= LoadTexture('BFactory');
   Textures.BHouse:= LoadTexture('BHouse');   
   Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
   Textures.BUnknown:= LoadTexture('BUnknown');
-
+  }
   FFrameCount:= 0;
 
-  Camera:= TCamera.Create;
-  Camera.Y:= 50;
-  Camera.X:= -20;
-  Camera.Z:= 50;
-  Camera.Beta:= -45;
-  Camera.Alpha:= -45;
+  FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
+  Camera.turn := 15;
+  Camera.tilt := 35;
+  Camera.zoom := -100;
+
   PausedForInput:= false;
   LastEvolve:= 0;
 
@@ -141,7 +151,6 @@ end;
 procedure TViewFrame.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(City);
-  FreeAndNil(Camera);
 
   TtsFont.DoneTS;
   if RC <> 0 then begin
@@ -189,20 +198,37 @@ var
 begin
   ax:= ScreenToClient(Mouse.CursorPos).x;
   ay:= ScreenToClient(Mouse.CursorPos).y;
+
   if mc then begin
-    dy:= (MP.Y - aY);
-    dx:= (MP.X - aX);
-    with Camera do begin
-      if pressed = [mbRight] then begin
-        BewegVorZuruck(-dy * 0.3);
-        BewegLinksRechts(dx * 0.3);
-      end;
-      if pressed = [mbMiddle] then begin
-        if ((dy > 0) and (Camera.Y > 4)) or
-          ((dy < 0) and (Camera.Y < 100)) then
-          BewegReinRaus(dy * 0.5)
-      end;
+    dy := dy + (MP.Y - aY);
+    dx := dx + (MP.X - aX);
+
+    if pressed = [mbRight] then begin
+      Camera.turn := Camera.turn - dx;
+      while Camera.turn < 0 do
+        Camera.turn := Camera.turn + 360;
+      while Camera.turn > 360 do
+        Camera.turn := Camera.turn - 360;
+        
+      Camera.tilt := Camera.tilt - dy;
+      if Camera.tilt < 10 then
+        Camera.tilt := 10;
+      if Camera.tilt > 90 then
+        Camera.tilt := 90;
     end;
+
+    if pressed = [mbRight, mbLeft] then begin
+      Camera.zoom := Camera.zoom + dy;
+    end;
+
+    if pressed = [mbLeft] then begin
+      Camera.pos[0] := Camera.pos[0] + cos(Camera.turn/180*Pi)*dx * Camera.zoom / 1000;
+      Camera.pos[2] := Camera.pos[2] + sin(Camera.turn/180*Pi)*dx * Camera.zoom / 1000;
+
+      Camera.pos[0] := Camera.pos[0] - sin(Camera.turn/180*Pi)*dy * Camera.zoom / 1000;
+      Camera.pos[2] := Camera.pos[2] + cos(Camera.turn/180*Pi)*dy * Camera.zoom / 1000;
+    end;
+
     MP.X:= ax;
     MP.y:= ay;
 
@@ -218,16 +244,23 @@ begin
     end;
   end;
 
+  dx := 0;
+  dy := 0;
   if KeyPressed(VK_LEFT) then
-    Camera.BewegLinksRechts(-2);
+    dx := dx - 50;
   if KeyPressed(VK_RIGHT) then
-    Camera.BewegLinksRechts(+2);
+    dx := dx + 50;
   if KeyPressed(VK_DOWN) then
-    Camera.BewegVorZuruck(-2);
+    dy := dy + 50;
   if KeyPressed(VK_UP) then
-    Camera.BewegVorZuruck(+2);
+    dy := dy - 50;
   if KeyPressed(VK_SPACE) then
     PausedForInput:= true;
+
+  Camera.pos[0] := Camera.pos[0] + cos(Camera.turn/180*Pi)*dx * Camera.zoom / 1000;
+  Camera.pos[2] := Camera.pos[2] + sin(Camera.turn/180*Pi)*dx * Camera.zoom / 1000;
+  Camera.pos[0] := Camera.pos[0] - sin(Camera.turn/180*Pi)*dy * Camera.zoom / 1000;
+  Camera.pos[2] := Camera.pos[2] + cos(Camera.turn/180*Pi)*dy * Camera.zoom / 1000;    
 end;
 
 procedure TViewFrame.Timestep(DT: Single);
@@ -265,7 +298,11 @@ begin
   glEnable(GL_LIGHTING);
 
   glPushMatrix;
-  Camera.Apply;
+  glLoadIdentity;
+  glTranslatef(0, 0, Camera.zoom);
+  glRotatef(Camera.tilt, 1, 0, 0);
+  glRotatef(Camera.turn, 0, 1, 0);  
+  glTranslatef(Camera.pos[0], Camera.pos[1], Camera.pos[2]);
   City.Render(false);
   if PausedForInput then
     ;
@@ -299,7 +336,11 @@ begin
   glDisable(GL_LIGHTING);
 
   glPushMatrix;
-  Camera.Apply;
+  glLoadIdentity;
+  glTranslatef(0, 0, Camera.zoom);
+  glRotatef(Camera.tilt, 1, 0, 0);  
+  glRotatef(Camera.turn, 0, 1, 0);
+  glTranslatef(Camera.pos[0], Camera.pos[1], Camera.pos[2]);
   City.Render(true);
   glPopMatrix;
 

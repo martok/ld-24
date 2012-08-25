@@ -10,7 +10,7 @@ type
   protected
     function ClickHeight: Single; override;
   public
-    procedure Render; override;
+    procedure Render(const aHeight: Single); override;
     function SLivingSpace: Integer; override;
     function SHappiness: Integer; override;
     class function Texture: TglBitmap2D; override;
@@ -20,7 +20,7 @@ type
   protected
     function ClickHeight: Single; override;
   public
-    procedure Render; override;
+    procedure Render(const aHeight: Single); override;
     function SLivingSpace: Integer; override;
     function SHappiness: Integer; override;
     class function Texture: TglBitmap2D; override;
@@ -35,10 +35,10 @@ begin
   Result:= 0.5;
 end;
 
-procedure TBHouse.Render;
+procedure TBHouse.Render(const aHeight: Single);
 begin
   inherited;
-  RenderSimple(ColorToRGBA(0.5,0.5,1), 0.5);
+  RenderSimple(ColorToRGBA(0.5, 0.5, 1), (0.9 + FRndHeight) * aHeight);
 end;
 
 
@@ -64,10 +64,10 @@ begin
   Result:= 1;
 end;
 
-procedure TBAppartement.Render;
+procedure TBAppartement.Render(const aHeight: Single);
 begin
   inherited;
-  RenderSimple(ColorToRGBA(0.5,0.5,1), 1);
+  RenderSimple(ColorToRGBA(0.5,0.5,1), (1.0 + FRndHeight) * aHeight);
 end;
 
 function TBAppartement.SHappiness: Integer;

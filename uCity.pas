@@ -7,13 +7,22 @@ uses
 
 type
   TCityBlocks = array of array of TCityBlock;
+  TStreets = array of packed record
+    width: Byte;
+    startPos, endPos: packed record
+      x, y: Single;
+    end;
+  end;
 
   { TCity }
 
   TCity = class
   private
     FCityBlocks: TCityBlocks;
+    FStreets: TStreets;
+    FBlockDist: Single;
     function GetBlock(X, Y: integer): TCityBlock;
+    procedure ClearBlocks; 
   public
     constructor Create;
     destructor Destroy; override;
@@ -60,46 +69,40 @@ begin
   Result:= FCityBlocks[X, Y];
 end;
 
+procedure TCity.ClearBlocks;
+var
+  x, y: Integer;
+begin
+  for x := 0 to High(FCityBlocks) do
+    for y := 0 to High(FCityBlocks[x]) do
+      if Assigned(FCityBlocks[x, y]) then
+        FreeAndNil(FCityBlocks[x, y]);
+  SetLength(FCityBlocks, 0, 0);
+end;
+
 procedure TCity.Render(Selection: boolean);
 var
-  x, y: integer;
+  x, y, i: integer;
 begin
   glPushMatrix;
-  {
-  if not Selection then begin
-    glBegin(GL_QUADS);
-    SetGLMaterial(ColorToRGBA(0.5, 0.9, 0.5));
-    glVertex3f(1000, -0.2, -1000);
-    glVertex3f(-1000, -0.2, -1000);
-    glVertex3f(-1000, -0.2, 1000);
-    glVertex3f(1000, -0.2, 1000);
-    glEnd;
-  end;
-  }
+
   if not Selection then begin
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
     SetGLMaterial(c_Yellow);
-    glLight(VectorMake(-5, 5, 5),
-      ColorToRGBA(0.2, 0.2, 0.2), ColorToRGBA(0.8, 0.8, 0.8),
-      ColorToRGBA(1.0, 1.0, 1.0), 0, 0);
+    glLight(VectorMake(2, 10, 5, 0),
+      ColorToRGBA(0.1, 0.1, 0.1),
+      ColorToRGBA(0.8, 0.8, 0.8),
+      ColorToRGBA(0.0, 0.0, 0.0), 0, 0);
   end else begin
     glDisable(GL_LIGHTING);
   end;
-  if not Selection then begin
-    glBegin(GL_QUADS);
-    SetGLMaterial(ColorToRGBA(0.3, 0.3, 0.3));
-    glVertex3f(4 * length(FCityBlocks), -0.1, -1);
-    glVertex3f(-1, -0.1, -1);
-    glVertex3f(-1, -0.1, 4 * length(FCityBlocks[0]));
-    glVertex3f(4 * length(FCityBlocks), -0.1, 4 * length(FCityBlocks[0]));
-    glEnd;
-  end;
+
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       if Assigned(FCityBlocks[x, y]) then begin
         glPushMatrix;
-        glTranslatef(x * 4, 0, y * 4);
+        glTranslatef(x * FBlockDist, 0, y * FBlockDist);
         if Selection then begin
           glBegin(GL_QUADS);
           glColor3ub(x, y, 255);
@@ -115,6 +118,27 @@ begin
       end;
     end;
   end;
+
+  glTranslatef(-7.5, 0, -7.5);
+  //glColor4f(0.7, 0.7, 0.7, 1);
+  SetGLMaterial(ColorToRGBA(0.7, 0.7, 0.7));
+  glBegin(GL_QUADS);
+    glNormal3f(0, 1, 0);
+    for i := 0 to High(FStreets) do with FStreets[i] do begin
+      if (Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) > 1 then begin
+        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist+width);
+        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-width);
+        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist-width);
+        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+width);
+      end else begin
+        glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-width);
+        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-width);
+        glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+width);
+        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+width);
+      end;
+    end;
+  glEnd;
+
   glPopMatrix;
 end;
 
@@ -206,10 +230,13 @@ begin
       with kcf.Section('Map') do begin
         w := GetValue('Width', 10);
         h := GetValue('Height', 10);
+        FBlockDist := GetValue('BlockDist', 15);
+        ClearBlocks;
         SetLength(FCityBlocks, w, h);
         for i := 0 to High(FCityBlocks) do
           for j := 0 to High(FCityBlocks[i]) do
             FCityBlocks[i, j] := nil;
+
         c := GetValue('BlockCount', 0);
         with Section('Blocks') do begin
           for i := 0 to c-1 do begin
@@ -221,6 +248,20 @@ begin
                 FCityBlocks[x, y] := TCityBlock.Create(x, y, TBlockType(t))
               end else
                 raise Exception.Create(format('invalid value (x: %d, y: %d)', [x, y]));
+            end;
+          end;
+        end;
+
+        c := GetValue('StreetCount', 0);
+        SetLength(FStreets, c);
+        with Section('Streets') do begin
+          for i := 0 to c-1 do begin
+            with Section(IntToStr(i)) do begin
+              FStreets[i].startPos.x := GetValue('StartX', 0);
+              FStreets[i].startPos.y := GetValue('StartY', 0);
+              FStreets[i].endPos.x := GetValue('EndX', 0);
+              FStreets[i].endPos.y := GetValue('EndY', 0);
+              FStreets[i].width := GetValue('Width', 1);
             end;
           end;
         end;

@@ -1,18 +1,6 @@
-(***********************************************************
-glBitmap by Steffen Xonna (2003-2006)
-http://www.dev-center.de/
-------------------------------------------------------------
-This unit implement some textureobjects wich have inspired by
-
-glBMP.pas Copyright by Jason Allen
-http://delphigl.cfxweb.net/
-
-and
-
-textures.pas Coypright by Jan Horn
-http://www.sulaco.co.za/
-
-It is compatible with an standard Delphi TBitmap.
+{***********************************************************
+glBitmap by Steffen Xonna aka Lossy eX (2003-2008)
+http://www.opengl24.de/index.php?cat=header&file=glbitmap
 ------------------------------------------------------------
 The contents of this file are used with permission, subject to
 the Mozilla Public License Version 1.1 (the "License"); you may
@@ -20,9 +8,49 @@ not use this file except in compliance with the License. You may
 obtain a copy of the License at
 http://www.mozilla.org/MPL/MPL-1.1.html
 ------------------------------------------------------------
-Version 1.8.10
+Version 2.0.3
 ------------------------------------------------------------
 History
+21-03-2010
+- The define GLB_DELPHI dosn't check versions anymore. If you say you are using delphi
+  then it's your problem if that isn't true. This prevents the unit for incompatibility
+  with newer versions of Delphi.
+- Problems with D2009+ resolved (Thanks noeska and all i forgot)
+- GetPixel isn't set if you are loading textures inside the constructor (Thanks Wilson)
+10-08-2008
+- AddAlphaFromglBitmap used the custom pointer instead the imagedatapointer (Thanks Wilson)
+- Additional Datapointer for functioninterface now has the name CustomData  
+24-07-2008
+- AssigneAlphaToBitmap overwrites his own palette (Thanks Wilson)
+- If you load an texture from an file the property Filename will be set to the name of the file
+- Three new properties to attach custom data to the Texture objects
+  - CustomName  (free for use string)
+  - CustomNameW (free for use widestring)
+  - CustomDataPointer (free for use pointer to attach other objects or complex structures)
+27-05-2008
+- RLE TGAs loaded much faster
+26-05-2008
+- fixed some problem with reading RLE TGAs.
+21-05-2008
+- function clone now only copys data if it's assigned and now it also copies the ID
+- it seems that lazarus dont like comments in comments.
+01-05-2008
+- It's possible to set the id of the texture
+- define GLB_NO_NATIVE_GL deactivated by default
+27-04-2008
+- Now supports the following libraries
+  - SDL and SDL_image
+  - libPNG
+  - libJPEG
+- Linux compatibillity via free pascal compatibility (delphi sources optional)
+- BMPs now loaded manuel
+- Large restructuring
+- Property DataPtr now has the name Data
+- Functions are more flexible between RGB(A) and BGR(A). RGB can be saved as Bitmap and will be saved as BGR
+- Unused Depth removed
+- Function FreeData to freeing image data added 
+24-10-2007
+- ImageID flag of TGAs was ignored. (Thanks Zwoetzen)
 15-11-2006
 - Function SetBorderColor implemented (only used by opengl if wrap is set to GL_CLAMP_TO_BORDER)
 - Function AddAlphaFromValue implemented to use an fixed Value as Alphachannel
@@ -79,7 +107,7 @@ History
 - Some AllocMem replaced with GetMem (little speed change)
 - better exception handling. Better protection from memory leaks.
 22-09-2005
-- Added support for Direct Draw Surfaces (*.DDS) (uncompressed images only)
+- Added support for Direct Draw Surfaces (.DDS) (uncompressed images only)
 - Added new internal formats (RGB8, RGBA8, RGBA4, RGB5A1, RGB10A2, R5G6B5)
 07-09-2005
 - Added support for Grayscale textures
@@ -183,43 +211,191 @@ History
 - Support for 24Bit and 32Bit TGA Pictures added
 25-07-2003
 - begin of programming
-***********************************************************)
+***********************************************************}
 unit glBitmap;
+
+{.$message warn 'Hey. I''m the glBitmap.pas and i need to be configured. My master tell me your preferences! ;)'}
+// Please uncomment the defines below to configure the glBitmap to your preferences.
+// If you have configured the unit you can uncomment the warning above.
+
+ 
+// ###### Start of preferences ################################################
+
+{.$define GLB_NO_NATIVE_GL}
+// To enable the dglOpenGL.pas Header
+// With native GL then bindings are staticlly declared to support other headers
+// or use the glBitmap inside of DLLs (minimize codesize).
+
+
+{.$define GLB_SDL}
+// To enable the support for SDL_surfaces
+
+{.$define GLB_DELPHI}
+// To enable the support for TBitmap from Delphi (not lazarus)
+
+
+// *** image libs ***
+
+{.$define GLB_SDL_IMAGE}
+// To enable the support of SDL_image to load files. (READ ONLY)
+// If you enable SDL_image all other libraries will be ignored!
+
+
+{.$define GLB_PNGIMAGE}
+// to enable png support with the unit pngimage. You can download it from http://pngdelphi.sourceforge.net/
+// if you enable pngimage the libPNG will be ignored
+
+{.$define GLB_LIB_PNG}
+// to use the libPNG http://www.libpng.org/
+// You will need an aditional header.
+// http://www.opengl24.de/index.php?cat=header&file=libpng
+
+{.$define GLB_DELPHI_JPEG}
+// if you enable delphi jpegs the libJPEG will be ignored
+
+{.$define GLB_LIB_JPEG}
+// to use the libJPEG http://www.ijg.org/
+// You will need an aditional header.
+// http://www.opengl24.de/index.php?cat=header&file=libjpeg
+
+// ###### End of preferences ##################################################
+
+// ###### PRIVATE. Do not change anything. ####################################
+// *** old defines for compatibility ***
+{$ifdef NO_NATIVE_GL}
+  {$define GLB_NO_NATIVE_GL}
+{$endif}
+{$ifdef pngimage}
+  {$definde GLB_PNGIMAGE}
+{$endif}
+
+
+// *** Delphi Versions ***
+{$ifdef fpc}
+  {$MODE Delphi}
+
+  {$ifdef CPUI386}
+    {$define CPU386}
+    {$asmmode INTEL}
+  {$endif}
+
+  {$ifndef WIN32}
+    {$linklib c}
+  {$endif}
+{$endif}
+
+// *** checking define combinations ***
+{$ifdef GLB_SDL_IMAGE}
+  {$ifndef GLB_SDL}
+    {$message warn 'SDL_image won''t work without SDL. SDL will be activated.'}
+    {$define GLB_SDL}
+  {$endif}
+  {$ifdef GLB_PNGIMAGE}
+    {$message warn 'The unit pngimage will be ignored because you are using SDL_image.'}
+    {$undef GLB_PNGIMAGE}
+  {$endif}
+  {$ifdef GLB_DELPHI_JPEG}
+    {$message warn 'The unit JPEG will be ignored because you are using SDL_image.'}
+    {$undef GLB_DELPHI_JPEG}
+  {$endif}
+  {$ifdef GLB_LIB_PNG}
+    {$message warn 'The library libPNG will be ignored because you are using SDL_image.'}
+    {$undef GLB_LIB_PNG}
+  {$endif}
+  {$ifdef GLB_LIB_JPEG}
+    {$message warn 'The library libJPEG will be ignored because you are using SDL_image.'}
+    {$undef GLB_LIB_JPEG}
+  {$endif}
+
+  {$define GLB_SUPPORT_PNG_READ}
+  {$define GLB_SUPPORT_JPEG_READ}
+{$endif}
+
+{$ifdef GLB_PNGIMAGE}
+  {$ifdef GLB_LIB_PNG}
+    {$message warn 'The library libPNG will be ignored if you are using pngimage.'}
+    {$undef GLB_LIB_PNG}
+  {$endif}
+
+  {$define GLB_SUPPORT_PNG_READ}
+  {$define GLB_SUPPORT_PNG_WRITE}
+{$endif}
+
+{$ifdef GLB_LIB_PNG}
+  {$define GLB_SUPPORT_PNG_READ}
+  {$define GLB_SUPPORT_PNG_WRITE}
+{$endif}
+
+
+{$ifdef GLB_DELPHI_JPEG}
+  {$ifdef GLB_LIB_JPEG}
+    {$message warn 'The library libJPEG will be ignored if you are using the unit JPEG.'}
+    {$undef GLB_LIB_JPEG}
+  {$endif}
+
+  {$define GLB_SUPPORT_JPEG_READ}
+  {$define GLB_SUPPORT_JPEG_WRITE}
+{$endif}
+
+{$ifdef GLB_LIB_JPEG}
+  {$define GLB_SUPPORT_JPEG_READ}
+  {$define GLB_SUPPORT_JPEG_WRITE}
+{$endif}
+
+// *** general options ***
+{$EXTENDEDSYNTAX ON}
+{$LONGSTRINGS ON}
+{$ALIGN ON}
+{$ifndef fpc}
+  {$OPTIMIZATION ON}
+{$endif}
+
 
 interface
 
-{$X+,H+,O+}
-
-{.$define pngimage}
-// PNG Support: to enable pngsupport you must add the define "pngimage" or uncomment above.
-// And you must install a copy of pgnimage. You can download it from http://pngdelphi.sourceforge.net/
-
-{$ifdef pngimage}
-  {$define Store16bits}
-{$endif}
-
-{$define NO_NATIVE_GL}
-// To enable the dglOpenGL Header you must define "NO_NATIVE_GL" or uncomment above.
-// With native GL then bindings are staticlly declared to support other headers or use of glBitmap in DLLs.
-
-// Features
-// TODO 4: MipMaps implementieren. Bei allen Funtionen muss ein Level angebbar sein.
-// TODO 5: Zusätzliche Datentypen imlementieren. RGB(A)12, RGB(A)16, Float
 
 uses
-  Windows, Graphics, Classes, SysUtils, JPEG
-  {$ifdef NO_NATIVE_GL}, dglOpenGL{$endif}
-  {$ifdef pngimage}, pngimage{$endif}
-  ;
+  {$ifdef GLB_NO_NATIVE_GL} dglOpenGL,                            {$endif}
 
-{$ifndef NO_NATIVE_GL}
+  {$ifdef GLB_SDL}          SDL,                                  {$endif}
+  {$ifdef GLB_DELPHI}       Dialogs, Windows, Graphics,           {$endif}
+
+  {$ifdef GLB_SDL_IMAGE}    SDL_image,                            {$endif}
+
+  {$ifdef GLB_PNGIMAGE}     pngimage,                             {$endif}
+  {$ifdef GLB_LIB_PNG}      libPNG,                               {$endif}
+
+  {$ifdef GLB_DELPHI_JPEG}  JPEG,                                 {$endif}
+  {$ifdef GLB_LIB_JPEG}     libJPEG,                              {$endif}
+  Classes, SysUtils;
+
+
+
+{$ifndef GLB_DELPHI}
+type
+  HGLRC = Cardinal;
+  DWORD = Cardinal;
+  PDWORD = ^DWORD;
+
+  TRGBQuad = packed record
+    rgbBlue: Byte;
+    rgbGreen: Byte;
+    rgbRed: Byte;
+    rgbReserved: Byte;
+  end;
+{$endif}
+
+
+{$ifndef GLB_NO_NATIVE_GL}
 // Native OpenGL Implementation
 type
   PByteBool = ^ByteBool;
 
+{$ifdef GLB_DELPHI}
 var
   gLastContext: HGLRC;
-  
+{$endif}
+
 const
   // Generell
   GL_VERSION = $1F02;
@@ -367,7 +543,7 @@ var
   // Funtions
 const
 
-{$ifdef UNIX}
+{$ifdef LINUX}
   libglu = 'libGLU.so.1';
   libopengl = 'libGL.so.1';
 {$else}
@@ -375,43 +551,47 @@ const
   libopengl = 'opengl32.dll';
 {$endif}
 
-  function wglGetProcAddress(ProcName: PChar): Pointer; stdcall; external libopengl;
-  function glGetString(name: Cardinal): PChar; stdcall; external libopengl;
 
-  procedure glEnable(cap: Cardinal); stdcall; external libopengl;
-  procedure glDisable(cap: Cardinal); stdcall; external libopengl;
-  procedure glGetIntegerv(pname: Cardinal; params: PInteger); stdcall; external libopengl;
+{$ifdef LINUX}
+  function glXGetProcAddress(ProcName: PAnsiChar): Pointer; cdecl; external libopengl;
+{$else}
+  function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external libopengl;
+{$endif}
 
-  procedure glTexImage1D(target: Cardinal; level, internalformat, width, border: Integer; format, atype: Cardinal; const pixels: Pointer); stdcall; external libopengl;
-  procedure glTexImage2D(target: Cardinal; level, internalformat, width, height, border: Integer; format, atype: Cardinal; const pixels: Pointer); stdcall; external libopengl;
+  function glGetString(name: Cardinal): PAnsiChar; {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
 
-  procedure glGenTextures(n: Integer; Textures: PDWORD); stdcall; external libopengl;
-  procedure glBindTexture(target: Cardinal; Texture: Cardinal); stdcall; external libopengl;
-  procedure glDeleteTextures(n: Integer; const textures: PDWORD); stdcall; external libopengl;
+  procedure glEnable(cap: Cardinal); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glDisable(cap: Cardinal); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glGetIntegerv(pname: Cardinal; params: PInteger); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
 
-  procedure glReadPixels(x, y: Integer; width, height: Integer; format, atype: Cardinal; pixels: Pointer); stdcall; external libopengl;
-  procedure glPixelStorei(pname: Cardinal; param: Integer); stdcall; external libopengl;
-  procedure glGetTexImage(target: Cardinal; level: Integer; format: Cardinal; _type: Cardinal; pixels: Pointer); stdcall; external libopengl;
+  procedure glTexImage1D(target: Cardinal; level, internalformat, width, border: Integer; format, atype: Cardinal; const pixels: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glTexImage2D(target: Cardinal; level, internalformat, width, height, border: Integer; format, atype: Cardinal; const pixels: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
 
-  function glAreTexturesResident(n: Integer; const Textures: PDWORD; residences: PByteBool): ByteBool;  stdcall; external libopengl;
-  procedure glTexParameteri(target: Cardinal; pname: Cardinal; param: Integer); stdcall; external libopengl;
-  procedure glTexParameterfv(target: Cardinal; pname: Cardinal; const param: PSingle); stdcall; external libopengl;
-  procedure glGetTexLevelParameteriv(target: Cardinal; level: Integer; pname: Cardinal; params: PInteger); stdcall; external libopengl;
-  procedure glTexGeni(coord, pname: Cardinal; param: Integer); stdcall; external libopengl;
+  procedure glGenTextures(n: Integer; Textures: PCardinal); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glBindTexture(target: Cardinal; Texture: Cardinal); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glDeleteTextures(n: Integer; const textures: PCardinal); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
 
-  function gluBuild1DMipmaps(Target: Cardinal; Components, Width: Integer; Format, atype: Cardinal; Data: Pointer): Integer; stdcall; external libglu;
-  function gluBuild2DMipmaps(Target: Cardinal; Components, Width, Height: Integer; Format, aType: Cardinal; Data: Pointer): Integer; stdcall; external libglu;
+  procedure glReadPixels(x, y: Integer; width, height: Integer; format, atype: Cardinal; pixels: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glPixelStorei(pname: Cardinal; param: Integer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glGetTexImage(target: Cardinal; level: Integer; format: Cardinal; _type: Cardinal; pixels: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+
+  function glAreTexturesResident(n: Integer; const Textures: PCardinal; residences: PByteBool): ByteBool;  {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glTexParameteri(target: Cardinal; pname: Cardinal; param: Integer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glTexParameterfv(target: Cardinal; pname: Cardinal; const params: PSingle); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glGetTexLevelParameteriv(target: Cardinal; level: Integer; pname: Cardinal; params: PInteger); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+  procedure glTexGeni(coord, pname: Cardinal; param: Integer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libopengl;
+
+  function gluBuild1DMipmaps(Target: Cardinal; Components, Width: Integer; Format, atype: Cardinal; Data: Pointer): Integer; {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libglu;
+  function gluBuild2DMipmaps(Target: Cardinal; Components, Width, Height: Integer; Format, aType: Cardinal; Data: Pointer): Integer; {$ifdef Win32}stdcall; {$else}cdecl; {$endif} external libglu;
 
 var
-  glCompressedTexImage2D : procedure(target: Cardinal; level: Integer; internalformat: Cardinal; width, height: Integer; border: Integer; imageSize: Integer; const data: Pointer); {$IFDEF Win32}stdcall; {$ELSE}cdecl; {$ENDIF}
-  glCompressedTexImage1D : procedure(target: Cardinal; level: Integer; internalformat: Cardinal; width: Integer; border: Integer; imageSize: Integer; const data: Pointer); {$IFDEF Win32}stdcall; {$ELSE}cdecl; {$ENDIF}
-  glGetCompressedTexImage : procedure(target: Cardinal; level: Integer; img: Pointer); {$IFNDEF CLR}{$IFDEF Win32}stdcall; {$ELSE}cdecl; {$ENDIF}{$ENDIF}
+  glCompressedTexImage2D : procedure(target: Cardinal; level: Integer; internalformat: Cardinal; width, height: Integer; border: Integer; imageSize: Integer; const data: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif}
+  glCompressedTexImage1D : procedure(target: Cardinal; level: Integer; internalformat: Cardinal; width: Integer; border: Integer; imageSize: Integer; const data: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif}
+  glGetCompressedTexImage : procedure(target: Cardinal; level: Integer; img: Pointer); {$ifdef Win32}stdcall; {$else}cdecl; {$endif}
 {$endif}
 
 
 type
-  TglBitmap = class;
-
   // Exception
   EglBitmapException = Exception;
   EglBitmapSizeToLargeException = EglBitmapException;
@@ -439,13 +619,18 @@ type
     PixelDesc: TglBitmapPixelDesc;
   end;
 
-  TglBitmapPixelPositionFields = set of (ffX, ffY, ffZ);
+  TglBitmapPixelPositionFields = set of (ffX, ffY);
   TglBitmapPixelPosition = record
     Fields : TglBitmapPixelPositionFields;
     X : Word;
     Y : Word;
-    Z : Word;
   end;
+
+const
+  cNullSize : TglBitmapPixelPosition = (Fields : []; X: 0; Y: 0);
+
+type
+  TglBitmap = class;
 
   TglBitmapFunctionRec = record
     Sender : TglBitmap;
@@ -453,7 +638,7 @@ type
     Position: TglBitmapPixelPosition;
     Source: TglBitmapPixelData;
     Dest: TglBitmapPixelData;
-    Data: Pointer;
+    CustomData: Pointer;
   end;
 
   TglBitmapFunction = procedure(var FuncRec: TglBitmapFunctionRec);
@@ -467,7 +652,12 @@ type
     const Pixel: TglBitmapPixelData) of object;
 
   // Settings
-  TglBitmapFileType = (ftBMP, ftTGA, ftJPEG, {$ifdef pngimage}ftPNG, {$endif}ftDDS);
+  TglBitmapFileType = (
+      {$ifdef GLB_SUPPORT_PNG_WRITE} ftPNG,  {$endif}
+      {$ifdef GLB_SUPPORT_JPEG_WRITE}ftJPEG, {$endif}
+      ftDDS,
+      ftTGA,
+      ftBMP);
   TglBitmapFileTypes = set of TglBitmapFileType;
 
   TglBitmapFormat = (tfDefault, tf4BitsPerChanel, tf8BitsPerChanel, tfCompressed);
@@ -502,65 +692,77 @@ type
   TglBitmapUnMapFunc = procedure (var pData: pByte; var Pixel: TglBitmapPixelData);
 
   // Base Class
-  TglBitmap = class
+  TglBitmap = class(TObject)
   protected
-    FID: Cardinal;
-    FTarget: Cardinal;
-    FFormat: TglBitmapFormat;
-    FMipMap: TglBitmapMipMap;
-    FAnisotropic: Integer;
-    FBorderColor: array [0..3] of single;
+    fID: Cardinal;
+    fTarget: Cardinal;
+    fFormat: TglBitmapFormat;
+    fMipMap: TglBitmapMipMap;
+    fAnisotropic: Integer;
+    fBorderColor: array [0..3] of single;
 
-    FDeleteTextureOnFree: Boolean;
-    FFreeDataAfterGenTexture: Boolean;
+    fDeleteTextureOnFree: Boolean;
+    fFreeDataAfterGenTexture: Boolean;
 
     // Propertys
-    FDataPtr: PByte;
-    FInternalFormat: TglBitmapInternalFormat;
-    FDimension: TglBitmapPixelPosition;
+    fData: pByte;
+    fInternalFormat: TglBitmapInternalFormat;
+    fDimension: TglBitmapPixelPosition;
 
-    FIsResident: Boolean;
+    fIsResident: Boolean;
 
     // Mapping
-    FPixelSize: Integer;
-    FLineSize: Integer;
-    FUnmapFunc: TglBitmapUnMapFunc;
-    FMapFunc: TglBitmapMapFunc;
+    fPixelSize: Integer;
+    fRowSize: Integer;
+    fUnmapFunc: TglBitmapUnMapFunc;
+    fMapFunc: TglBitmapMapFunc;
 
     // Filtering
-    FFilterMin: Integer;
-    FFilterMag: Integer;
+    fFilterMin: Integer;
+    fFilterMag: Integer;
 
     // Texturwarp
-    FWrapS: Integer;
-    FWrapT: Integer;
-    FWrapR: Integer;
+    fWrapS: Integer;
+    fWrapT: Integer;
+    fWrapR: Integer;
 
-    FGetPixelFunc: TglBitmapGetPixel;
-    FSetPixelFunc: TglBitmapSetPixel;
+    fGetPixelFunc: TglBitmapGetPixel;
+    fSetPixelFunc: TglBitmapSetPixel;
 
-    function GetData: PByte;
-    procedure SetDataPtr(Ptr: PByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1; Depth: Integer = -1); virtual;
+    // custom data
+    fFilename: String;
+    fCustomName: String;
+    fCustomNameW: WideString;
+    fCustomDataPointer: Pointer;
 
-    {$ifdef pngimage}
-    function LoadPng(const Stream: TStream): Boolean; virtual;
+
+    procedure SetDataPointer(NewData: pByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1); virtual;
+
+    {$ifdef GLB_SUPPORT_PNG_READ}
+      function LoadPNG(Stream: TStream): Boolean; virtual;
     {$endif}
-    function LoadDDS(const Stream: TStream): Boolean; virtual;
-    function LoadTga(const Stream: TStream): Boolean; virtual;
-    function LoadJpg(const Stream: TStream): Boolean; virtual;
-    function LoadBmp(const Stream: TStream): Boolean; virtual;
-
-    {$ifdef pngimage}
-    procedure SavePng(const Stream: TStream);
+    {$ifdef GLB_SUPPORT_JPEG_READ}
+      function LoadJPEG(Stream: TStream): Boolean; virtual;
     {$endif}
-    procedure SaveDDS(const Stream: TStream);
-    procedure SaveTga(const Stream: TStream);
-    procedure SaveJpg(const Stream: TStream);
-    procedure SaveBmp(const Stream: TStream);
+    function LoadDDS(Stream: TStream): Boolean; virtual;
+    function LoadTGA(Stream: TStream): Boolean; virtual;
+    function LoadBMP(Stream: TStream): Boolean; virtual;
+
+
+    {$ifdef GLB_SUPPORT_PNG_WRITE}
+      procedure SavePNG(Stream: TStream); virtual;
+    {$endif}
+    {$ifdef GLB_SUPPORT_JPEG_WRITE}
+      procedure SaveJPEG(Stream: TStream); virtual;
+    {$endif}
+    procedure SaveDDS(Stream: TStream); virtual;
+    procedure SaveTGA(Stream: TStream); virtual;
+    procedure SaveBMP(Stream: TStream); virtual;
+
 
     procedure CreateID;
     procedure SetupParameters(var BuildWithGlu: Boolean);
-    procedure SelectFormat(Format: TglBitmapInternalFormat; var glFormat, glInternalFormat, glType: Cardinal; CanConvertImage: Boolean = True);
+    procedure SelectFormat(DataFormat: TglBitmapInternalFormat; var glFormat, glInternalFormat, glType: Cardinal; CanConvertImage: Boolean = True);
 
     procedure GenTexture(TestTextureSize: Boolean = True); virtual; abstract;
 
@@ -569,32 +771,41 @@ type
 
     function FlipHorz: Boolean; virtual;
     function FlipVert: Boolean; virtual;
-    function FlipDepth: Boolean; virtual;
 
-    function GetDepth: Integer;
     function GetHeight: Integer;
     function GetWidth: Integer;
 
+    function GetFileHeight: Integer;
+    function GetFileWidth: Integer;
+
     property Width: Integer read GetWidth;
     property Height: Integer read GetHeight;
-    property Depth: Integer read GetDepth;
+
+    property FileWidth: Integer read GetFileWidth;
+    property FileHeight: Integer read GetFileHeight;
   public
     // propertys
-    property ID: Cardinal read FID;
-    property Target: Cardinal read FTarget write FTarget;
-    property Format: TglBitmapFormat read FFormat write FFormat;
-    property InternalFormat: TglBitmapInternalFormat read FInternalFormat write SetInternalFormat;
-    property Dimension: TglBitmapPixelPosition read FDimension;
+    property ID: Cardinal read fID write fID;
+    property Target: Cardinal read fTarget write fTarget;
+    property Format: TglBitmapFormat read fFormat write fFormat;
+    property InternalFormat: TglBitmapInternalFormat read fInternalFormat write SetInternalFormat;
+    property Dimension: TglBitmapPixelPosition read fDimension;
 
-    property DataPtr: PByte read GetData;
+    property Data: pByte read fData;
 
-    property MipMap: TglBitmapMipMap read FMipMap write FMipMap;
-    property Anisotropic: Integer read FAnisotropic write SetAnisotropic;
+    property MipMap: TglBitmapMipMap read fMipMap write fMipMap;
+    property Anisotropic: Integer read fAnisotropic write SetAnisotropic;
 
-    property DeleteTextureOnFree: Boolean read FDeleteTextureOnFree write FDeleteTextureOnFree;
-    property FreeDataAfterGenTexture: Boolean read FFreeDataAfterGenTexture write FFreeDataAfterGenTexture;
+    property DeleteTextureOnFree: Boolean read fDeleteTextureOnFree write fDeleteTextureOnFree;
+    property FreeDataAfterGenTexture: Boolean read fFreeDataAfterGenTexture write fFreeDataAfterGenTexture;
 
-    property IsResident: boolean read FIsResident;
+    property IsResident: boolean read fIsResident;
+
+    // propertys for custom data
+    property Filename: String read fFilename;
+    property CustomName: String read fCustomName write fCustomName;
+    property CustomNameW: WideString read fCustomNameW write fCustomNameW;
+    property CustomDataPointer: Pointer read fCustomDataPointer write fCustomDataPointer;
 
     // Construction and Destructions Methods
     procedure AfterConstruction; override;
@@ -603,38 +814,56 @@ type
     constructor Create(); overload;
     constructor Create(FileName: String); overload;
     constructor Create(Stream: TStream); overload;
-    constructor CreateFromResourceName(Instance: Cardinal; Resource: String; ResType: PAnsiChar = nil);
-    constructor Create(Instance: Cardinal; Resource: String; ResType: PAnsiChar = nil); overload;
-    constructor Create(Instance: Cardinal; ResourceID: Integer; ResType: PAnsiChar); overload;
+    {$ifdef GLB_DELPHI}
+      constructor CreateFromResourceName(Instance: Cardinal; Resource: String; ResType: PChar = nil);
+      constructor Create(Instance: Cardinal; Resource: String; ResType: PChar = nil); overload;
+      constructor Create(Instance: Cardinal; ResourceID: Integer; ResType: PChar); overload;
+    {$endif}
     constructor Create(Size: TglBitmapPixelPosition; Format: TglBitmapInternalFormat); overload;
-    constructor Create(Size: TglBitmapPixelPosition; Format: TglBitmapInternalFormat; Func: TglBitmapFunction; Data: Pointer = nil); overload;
+    constructor Create(Size: TglBitmapPixelPosition; Format: TglBitmapInternalFormat; Func: TglBitmapFunction; CustomData: Pointer = nil); overload;
 
     function Clone: TglBitmap;
+
+    procedure FreeData;
 
     // Loading Methods
     procedure LoadFromFile(FileName: String);
     procedure LoadFromStream(Stream: TStream); virtual;
-    procedure LoadFromResource(Instance: Cardinal; Resource: String; ResType: PAnsiChar = nil);
-    procedure LoadFromResourceID(Instance: Cardinal; ResourceID: Integer; ResType: PAnsiChar);
-    procedure LoadFromFunc(Size: TglBitmapPixelPosition; Func: TglBitmapFunction; Format: TglBitmapInternalFormat; Data: Pointer = nil);
+    {$ifdef GLB_DELPHI}
+      procedure LoadFromResource(Instance: Cardinal; Resource: String; ResType: PChar = nil);
+      procedure LoadFromResourceID(Instance: Cardinal; ResourceID: Integer; ResType: PChar);
+    {$endif}
+    procedure LoadFromFunc(Size: TglBitmapPixelPosition; Func: TglBitmapFunction; Format: TglBitmapInternalFormat; CustomData: Pointer = nil);
 
     procedure SaveToFile(FileName: String; FileType: TglBitmapFileType);
     procedure SaveToStream(Stream: TStream; FileType: TglBitmapFileType); virtual;
 
-    function AddFunc(Source: TglBitmap; Func: TglBitmapFunction; CreateTemp: Boolean; Format: TglBitmapInternalFormat; Data: Pointer = nil): boolean; overload;
-    function AddFunc(Func: TglBitmapFunction; CreateTemp: Boolean; Data: Pointer = nil): boolean; overload;
+    function AddFunc(Source: TglBitmap; Func: TglBitmapFunction; CreateTemp: Boolean; Format: TglBitmapInternalFormat; CustomData: Pointer = nil): boolean; overload;
+    function AddFunc(Func: TglBitmapFunction; CreateTemp: Boolean; CustomData: Pointer = nil): boolean; overload;
 
-    function AssignToBitmap(const Bitmap: TBitmap): boolean; virtual; abstract;
-    function AssignFromBitmap(const Bitmap: TBitmap): boolean; virtual; abstract;
-    function AssignAlphaToBitmap(const Bitmap: TBitmap): boolean; virtual; abstract;
+    {$ifdef GLB_SDL}
+      function AssignToSurface(out Surface: PSDL_Surface): boolean;
+      function AssignFromSurface(const Surface: PSDL_Surface): boolean;
+      function AssignAlphaToSurface(out Surface: PSDL_Surface): boolean;
 
-    function AddAlphaFromFunc(Func: TglBitmapFunction; Data: Pointer = nil): boolean; virtual;
-    function AddAlphaFromBitmap(Bitmap: TBitmap; Func: TglBitmapFunction = nil; Data: Pointer = nil): boolean;
-    function AddAlphaFromFile(FileName: String; Func: TglBitmapFunction = nil; Data: Pointer = nil): boolean;
-    function AddAlphaFromStream(Stream: TStream; Func: TglBitmapFunction = nil; Data: Pointer = nil): boolean;
-    function AddAlphaFromResource(Instance: Cardinal; Resource: String; ResType: PAnsiChar = nil; Func: TglBitmapFunction = nil; Data: Pointer = nil): boolean;
-    function AddAlphaFromResourceID(Instance: Cardinal; ResourceID: Integer; ResType: PAnsiChar; Func: TglBitmapFunction = nil; Data: Pointer = nil): boolean;
-    function AddAlphaFromglBitmap(glBitmap: TglBitmap; Func: TglBitmapFunction = nil; Data: Pointer = nil): boolean;
+      function AddAlphaFromSurface(Surface: PSDL_Surface; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
+    {$endif}
+    {$ifdef GLB_DELPHI}
+      function AssignToBitmap(const Bitmap: TBitmap): boolean;
+      function AssignFromBitmap(const Bitmap: TBitmap): boolean;
+      function AssignAlphaToBitmap(const Bitmap: TBitmap): boolean;
+
+      function AddAlphaFromBitmap(Bitmap: TBitmap; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
+    {$endif}
+
+    function AddAlphaFromFunc(Func: TglBitmapFunction; CustomData: Pointer = nil): boolean; virtual;
+    function AddAlphaFromFile(FileName: String; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
+    function AddAlphaFromStream(Stream: TStream; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
+    {$ifdef GLB_DELPHI}
+      function AddAlphaFromResource(Instance: Cardinal; Resource: String; ResType: PChar = nil; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
+      function AddAlphaFromResourceID(Instance: Cardinal; ResourceID: Integer; ResType: PChar; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
+    {$endif}
+    function AddAlphaFromglBitmap(glBitmap: TglBitmap; Func: TglBitmapFunction = nil; CustomData: Pointer = nil): boolean;
 
     function AddAlphaFromColorKey(Red, Green, Blue: Byte; Deviation: Byte = 0): Boolean;
     function AddAlphaFromColorKeyRange(Red, Green, Blue: Cardinal; Deviation: Cardinal = 0): Boolean;
@@ -673,7 +902,7 @@ type
   TglBitmap2D = class(TglBitmap)
   protected
     // Bildeinstellungen
-    FLines: array of PByte;
+    fLines: array of PByte;
 
     procedure GetDXTColorBlock(pData: pByte; relX, relY: Integer; var Pixel: TglBitmapPixelData);
     procedure GetPixel2DDXT1(const Pos: TglBitmapPixelPosition; var Pixel: TglBitmapPixelData);
@@ -685,7 +914,7 @@ type
 
     function GetScanline(Index: Integer): Pointer;
 
-    procedure SetDataPtr(Ptr: PByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1; Depth: Integer = -1); override;
+    procedure SetDataPointer(Data: pByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1); override;
     procedure UploadData (Target, Format, InternalFormat, Typ: Cardinal; BuildWithGlu: Boolean);
   public
     // propertys
@@ -695,10 +924,6 @@ type
     property Scanline[Index: Integer]: Pointer read GetScanline;
 
     procedure AfterConstruction; override;
-
-    function AssignToBitmap(const Bitmap: TBitmap): boolean; override;
-    function AssignFromBitmap(const Bitmap: TBitmap): boolean; override;
-    function AssignAlphaToBitmap(const Bitmap: TBitmap): boolean; override;
 
     procedure GrabScreen(Top, Left, Right, Bottom: Integer; Format: TglBitmapInternalFormat);
     procedure GetDataFromTexture;
@@ -714,7 +939,7 @@ type
   end;
 
 
-  TglBitmapCubeMap = class(TglBitmap2d)
+  TglBitmapCubeMap = class(TglBitmap2D)
   protected
     fGenMode: Integer;
 
@@ -742,17 +967,13 @@ type
   protected
     procedure GetPixel1DUnmap(const Pos: TglBitmapPixelPosition; var Pixel: TglBitmapPixelData);
 
-    procedure SetDataPtr(Ptr: PByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1; Depth: Integer = -1); override;
+    procedure SetDataPointer(Data: pByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1); override;
     procedure UploadData (Target, Format, InternalFormat, Typ: Cardinal; BuildWithGlu: Boolean);
   public
     // propertys
     property Width;
 
     procedure AfterConstruction; override;
-
-    function AssignToBitmap(const Bitmap: TBitmap): boolean; override;
-    function AssignFromBitmap(const Bitmap: TBitmap): boolean; override;
-    function AssignAlphaToBitmap(const Bitmap: TBitmap): boolean; override;
 
     // Other
     function FlipHorz: Boolean; override;
@@ -777,23 +998,29 @@ procedure glBitmapGetDefaultTextureWrap(var S, T, R: Integer);
 function glBitmapGetDefaultDeleteTextureOnFree: Boolean;
 function glBitmapGetDefaultFreeDataAfterGenTexture: Boolean;
 
-// Formatfunctions
-function glBitmapPosition(X: Integer = -1; Y: Integer = -1; Z: Integer = -1): TglBitmapPixelPosition;
+// position / size
+function glBitmapPosition(X: Integer = -1; Y: Integer = -1): TglBitmapPixelPosition;
 
+// Formatfunctions
 function FormatGetSize (Format: TglBitmapInternalFormat): Single;
+
 function FormatIsCompressed(Format: TglBitmapInternalFormat): boolean;
 function FormatIsUncompressed(Format: TglBitmapInternalFormat): boolean;
 function FormatIsEmpty(Format: TglBitmapInternalFormat): boolean;
 function FormatHasAlpha(Format: TglBitmapInternalFormat): Boolean;
+
 procedure FormatPreparePixel(var Pixel: TglBitmapPixelData; Format: TglBitmapInternalFormat);
+
 function FormatGetWithoutAlpha(Format: TglBitmapInternalFormat): TglBitmapInternalFormat;
 function FormatGetWithAlpha(Format: TglBitmapInternalFormat): TglBitmapInternalFormat;
 
+function FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask: Cardinal; Format: TglBitmapInternalFormat): boolean;
+
 
 // Call LoadingMethods
-function LoadTexture(Filename: String; var Texture: Cardinal; LoadFromRes : Boolean; Instance: Cardinal = 0): Boolean;
+function LoadTexture(Filename: String; var Texture: Cardinal{$ifdef GLB_DELPHI}; LoadFromRes : Boolean; Instance: Cardinal = 0{$endif}): Boolean;
 
-function LoadCubeMap(PositiveX, NegativeX, PositiveY, NegativeY, PositiveZ, NegativeZ: String; var Texture: Cardinal; LoadFromRes : Boolean; Instance: Cardinal = 0): Boolean;
+function LoadCubeMap(PositiveX, NegativeX, PositiveY, NegativeY, PositiveZ, NegativeZ: String; var Texture: Cardinal{$ifdef GLB_DELPHI}; LoadFromRes : Boolean; Instance: Cardinal = 0{$endif}): Boolean;
 
 function LoadNormalMap(Size: Integer; var Texture: Cardinal): Boolean;
 
@@ -809,8 +1036,9 @@ var
   glBitmapDefaultDeleteTextureOnFree: Boolean;
   glBitmapDefaultFreeDataAfterGenTextures: Boolean;
 
-
+{$ifdef GLB_DELPHI}
 function CreateGrayPalette: HPALETTE;
+{$endif}
 
 
 implementation
@@ -819,63 +1047,77 @@ uses
   Math;
 
 
-{$ifndef NO_NATIVE_GL}
+{$ifndef GLB_NO_NATIVE_GL}
 procedure ReadOpenGLExtensions;
 var
+  {$ifdef GLB_DELPHI}
   Context: HGLRC;
-  Buffer: String;
+  {$endif}
+  Buffer: AnsiString;
   MajorVersion, MinorVersion: Integer;
 
 
-  procedure TrimVersionString(Buffer: string; var Major, Minor: Integer);
+  procedure TrimVersionString(Buffer: AnsiString; var Major, Minor: Integer);
   var
     Separator: Integer;
   begin
     Minor := 0;
     Major := 0;
 
-    Separator := Pos('.', Buffer);
+    Separator := Pos(AnsiString('.'), Buffer);
 
     if (Separator > 1) and (Separator < Length(Buffer)) and
        (Buffer[Separator - 1] in ['0'..'9']) and
        (Buffer[Separator + 1] in ['0'..'9']) then begin
 
       Dec(Separator);
-      while (Separator > 0) and (Buffer[Separator] in ['0'..'9'])
-        do Dec(Separator);
+      while (Separator > 0) and (Buffer[Separator] in ['0'..'9']) do
+        Dec(Separator);
 
       Delete(Buffer, 1, Separator);
-      Separator := Pos('.', Buffer) + 1;
+      Separator := Pos(AnsiString('.'), Buffer) + 1;
 
       while (Separator <= Length(Buffer)) and (AnsiChar(Buffer[Separator]) in ['0'..'9']) do
         Inc(Separator);
 
       Delete(Buffer, Separator, 255);
-      Separator := Pos('.', Buffer);
+      Separator := Pos(AnsiString('.'), Buffer);
 
-      Major := StrToInt(Copy(Buffer, 1, Separator - 1));
-      Minor := StrToInt(Copy(Buffer, Separator + 1, 1));
+      Major := StrToInt(Copy(String(Buffer), 1, Separator - 1));
+      Minor := StrToInt(Copy(String(Buffer), Separator + 1, 1));
     end;
   end;
 
 
-  function CheckExtension(const Extension: string): Boolean;
+  function CheckExtension(const Extension: AnsiString): Boolean;
   var
     ExtPos: Integer;
   begin
     ExtPos := Pos(Extension, Buffer);
     Result := ExtPos > 0;
-    if Result
-      then Result :=
-        ((ExtPos + Length(Extension) - 1) = Length(Buffer)) or not (Buffer[ExtPos + Length(Extension)] in ['_', 'A'..'Z', 'a'..'z']);
+
+    if Result then
+      Result := ((ExtPos + Length(Extension) - 1) = Length(Buffer)) or not (Buffer[ExtPos + Length(Extension)] in ['_', 'A'..'Z', 'a'..'z']);
+  end;
+
+
+  function glLoad (aFunc: pAnsiChar): pointer;
+  begin
+    {$ifdef LINUX}
+      Result := glXGetProcAddress(aFunc);
+    {$else}
+      Result := wglGetProcAddress(aFunc);
+    {$endif}
   end;
 
 
 begin
+  {$ifdef GLB_DELPHI}
   Context := wglGetCurrentContext;
 
   if Context <> gLastContext then begin
     gLastContext := Context;
+  {$endif}
 
     // Version
     Buffer := glGetString(GL_VERSION);
@@ -888,19 +1130,18 @@ begin
 
     if MajorVersion = 1 then begin
       if MinorVersion >= 1 then begin
-        if MinorVersion >= 2
-          then GL_VERSION_1_2 := True;
+        if MinorVersion >= 2 then
+          GL_VERSION_1_2 := True;
 
-        if MinorVersion >= 3
-          then GL_VERSION_1_3 := True;
+        if MinorVersion >= 3 then
+          GL_VERSION_1_3 := True;
 
-        if MinorVersion >= 4
-          then GL_VERSION_1_4 := True;
+        if MinorVersion >= 4 then
+          GL_VERSION_1_4 := True;
       end;
     end;
 
-    if MajorVersion >= 2 then
-    begin
+    if MajorVersion >= 2 then begin
       GL_VERSION_1_2 := True;
       GL_VERSION_1_3 := True;
       GL_VERSION_1_4 := True;
@@ -928,21 +1169,25 @@ begin
     // Funtions
     if GL_VERSION_1_3 then begin
       // Loading Core
-      glCompressedTexImage1D := wglGetProcAddress('glCompressedTexImage1D');
-      glCompressedTexImage2D := wglGetProcAddress('glCompressedTexImage2D');
-      glGetCompressedTexImage := wglGetProcAddress('glGetCompressedTexImage');
-    end else begin
+      glCompressedTexImage1D := glLoad('glCompressedTexImage1D');
+      glCompressedTexImage2D := glLoad('glCompressedTexImage2D');
+      glGetCompressedTexImage := glLoad('glGetCompressedTexImage');
+    end else
+
+    begin
       // Try loading Extension
-      glCompressedTexImage1D := wglGetProcAddress('glCompressedTexImage1DARB');
-      glCompressedTexImage2D := wglGetProcAddress('glCompressedTexImage2DARB');
-      glGetCompressedTexImage := wglGetProcAddress('glGetCompressedTexImageARB');
+      glCompressedTexImage1D := glLoad('glCompressedTexImage1DARB');
+      glCompressedTexImage2D := glLoad('glCompressedTexImage2DARB');
+      glGetCompressedTexImage := glLoad('glGetCompressedTexImageARB');
     end;
+  {$ifdef GLB_DELPHI}
   end;
+  {$endif}
 end;
 {$endif}
 
 
-function glBitmapPosition(X, Y, Z: Integer): TglBitmapPixelPosition;
+function glBitmapPosition(X, Y: Integer): TglBitmapPixelPosition;
 begin
   Result.Fields := [];
 
@@ -950,12 +1195,9 @@ begin
     Result.Fields := Result.Fields + [ffX];
   if Y >= 0 then
     Result.Fields := Result.Fields + [ffY];
-  if Z >= 0 then
-    Result.Fields := Result.Fields + [ffZ];
 
   Result.X := Max(0, X);
   Result.Y := Max(0, Y);
-  Result.Z := Max(0, Z);
 end;
 
 
@@ -1034,9 +1276,9 @@ const
     BlueRange  : $3FF; BlueShift  :  0;
     AlphaRange : $003; AlphaShift : 30 );
 
-(*
+{*
 ** Mapping
-*)
+*}
 
 procedure MapAlpha(const Pixel: TglBitmapPixelData; var pDest: pByte);
 begin
@@ -1181,15 +1423,15 @@ begin
     ifRGBA8:          Result := MapRGBA8;
     ifBGRA8:          Result := MapBGRA8;
     ifRGB10A2:        Result := MapRGB10A2;
-  else
-    raise EglBitmapUnsupportedInternalFormat.Create('FormatGetMapFunc - ' + UNSUPPORTED_INTERNAL_FORMAT);
+    else
+      raise EglBitmapUnsupportedInternalFormat.Create('FormatGetMapFunc - ' + UNSUPPORTED_INTERNAL_FORMAT);
   end;
 end;
 
 
-(*
+{*
 ** Unmapping
-*)
+*}
 procedure UnMapAlpha(var pData: pByte; var Pixel: TglBitmapPixelData);
 begin
   Pixel.Alpha := pData^;
@@ -1372,36 +1614,31 @@ begin
     ifRGBA8:          Result := UnMapRGBA8;
     ifBGRA8:          Result := UnMapBGRA8;
     ifRGB10A2:        Result := UnMapRGB10A2;
-  else
-    raise EglBitmapUnsupportedInternalFormat.Create('FormatGetUnMapFunc - ' + UNSUPPORTED_INTERNAL_FORMAT);
+    else
+      raise EglBitmapUnsupportedInternalFormat.Create('FormatGetUnMapFunc - ' + UNSUPPORTED_INTERNAL_FORMAT);
   end;
 end;
 
-(*
+{*
 ** Tools
-*)
+*}
 function FormatGetSize (Format: TglBitmapInternalFormat): Single;
 begin
   case Format of
     ifEmpty:
       Result := 0;
-
     ifDXT1:
       Result := 0.5;
-
     ifAlpha, ifLuminance, ifDepth8, ifDXT3, ifDXT5:
       Result := 1;
-
     ifLuminanceAlpha, ifRGBA4, ifRGB5A1, ifR5G6B5:
       Result := 2;
-
     ifBGR8, ifRGB8:
       Result := 3;
-
     ifBGRA8, ifRGBA8, ifRGB10A2:
       Result := 4;
-  else
-    raise EglBitmapUnsupportedInternalFormat.Create('FormatGetSize - ' + UNSUPPORTED_INTERNAL_FORMAT);
+    else
+      raise EglBitmapUnsupportedInternalFormat.Create('FormatGetSize - ' + UNSUPPORTED_INTERNAL_FORMAT);
   end;
 end;
 
@@ -1485,8 +1722,8 @@ begin
       Result := ifRGB8;
     ifRGB10A2:
       Result := ifRGB8;
-  else
-    Result := Format;
+    else
+      Result := Format;
   end;
 end;
 
@@ -1502,8 +1739,8 @@ begin
       Result := ifBGRA8;
     ifRGB8:
       Result := ifRGBA8;
-  else
-    Result := Format;
+    else
+      Result := Format;
   end;
 end;
 
@@ -1517,42 +1754,79 @@ begin
       Result := ifRGBA8;
     ifDXT5:
       Result := ifRGBA8;
-  else
-    Result := Format;
+    else
+      Result := Format;
   end;
 end;
 
 
 function FormatGetImageSize(Size: TglBitmapPixelPosition; Format: TglBitmapInternalFormat): Integer;
 begin
-  if (Size.X = 0) and (Size.Y = 0) and (Size.Z = 0) then
+  if (Size.X = 0) and (Size.Y = 0) then
     Result := 0
   else
-    Result := Trunc(Max(Size.Z, 1) * Max(Size.Y, 1) * Max(Size.X, 1) * FormatGetSize(Format));
+    Result := Trunc(Max(Size.Y, 1) * Max(Size.X, 1) * FormatGetSize(Format));
 end;
 
 
 function FormatGetSupportedFiles(Format: TglBitmapInternalFormat): TglBitmapFileTypes;
 begin
-  Result := [ftDDS];
+  Result := [];
 
-  if Format in [ifLuminance, ifAlpha, ifDepth8, ifR5G6B5, ifBGR8] then
-    Result := Result + [ftBMP];
-
-  {$ifdef pngimage}
-  if Format in [ifLuminance, ifAlpha, ifDepth8, ifLuminanceAlpha, ifBGR8, ifBGRA8] then
+  {$ifdef GLB_SUPPORT_PNG_WRITE}
+  if Format in [ifLuminance, ifAlpha, ifDepth8, ifLuminanceAlpha, ifBGR8, ifBGRA8, ifRGB8, ifRGBA8] then
     Result := Result + [ftPNG];
   {$endif}
 
-  if Format in [ifLuminance, ifAlpha, ifDepth8, ifLuminanceAlpha, ifBGR8, ifBGRA8] then
+  {$ifdef GLB_SUPPORT_JPEG_WRITE}
+  if Format in [ifLuminance, ifAlpha, ifDepth8, ifRGB8, ifBGR8] then
+    Result := Result + [ftJPEG];
+  {$endif}
+
+  Result := Result + [ftDDS];
+
+  if Format in [ifLuminance, ifAlpha, ifDepth8, ifLuminanceAlpha, ifBGR8, ifRGB8, ifBGRA8, ifRGBA8] then
     Result := Result + [ftTGA];
 
-  if Format in [ifLuminance, ifAlpha, ifDepth8, ifBGR8] then
-    Result := Result + [ftJPEG];
+  if Format in [ifLuminance, ifAlpha, ifDepth8, ifLuminanceAlpha, ifRGBA4, ifRGB5A1, ifR5G6B5, ifRGB8, ifBGR8, ifRGBA8, ifBGRA8, ifRGB10A2] then
+    Result := Result + [ftBMP];
 end;
 
 
-function IsPowerOfTwo (Number: Integer): Boolean;
+function FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask: Cardinal; Format: TglBitmapInternalFormat): boolean;
+var
+  Pix: TglBitmapPixelData;
+begin
+  Result := False;
+
+  if (RedMask = 0) and (GreenMask = 0) and (BlueMask = 0) and (AlphaMask = 0) then
+    raise EglBitmapException.Create('FormatCheckFormat - All Masks are 0');
+
+  FormatPreparePixel(Pix, Format);
+
+  with Pix.PixelDesc do begin
+    if RedMask <> 0 then
+      if (RedMask <> (RedRange shl RedShift)) then
+        Exit;
+
+    if GreenMask <> 0 then
+      if (GreenMask <> (GreenRange shl GreenShift)) then
+        Exit;
+
+    if BlueMask <> 0 then
+      if (BlueMask <> (BlueRange shl BlueShift)) then
+        Exit;
+
+    if AlphaMask <> 0 then
+      if (AlphaMask <> (AlphaRange shl AlphaShift)) then
+        Exit;
+
+    Result := True;
+  end;
+end;
+
+
+function IsPowerOfTwo(Number: Integer): Boolean;
 begin
   while Number and 1 = 0 do
     Number := Number shr 1;
@@ -1561,6 +1835,42 @@ begin
 end;
 
 
+function GetBitSize(BitSet: Cardinal): Integer;
+begin
+  Result := 0;
+
+  while BitSet > 0 do begin
+    if (BitSet and $1) = 1 then
+      Inc(Result);
+
+    BitSet := BitSet shr 1;
+  end;
+end;
+
+
+procedure SwapRGB(pData: pByte; Width: Integer; HasAlpha: Boolean);
+type
+  PRGBPix = ^TRGBPix;
+  TRGBPix = array [0..2] of byte;
+var
+  Temp: Byte;
+begin
+  while Width > 0 do begin
+    Temp := pRGBPIX(pData)^[0];
+    pRGBPIX(pData)^[0] := pRGBPIX(pData)^[2];
+    pRGBPIX(pData)^[2] := Temp;
+
+    if HasAlpha then
+      Inc(pData, 4)
+    else
+      Inc(pData, 3);
+
+    Dec(Width);
+  end;
+end;
+
+
+{$ifdef GLB_DELPHI}
 function CreateGrayPalette: HPALETTE;
 var
   Idx: Integer;
@@ -1572,7 +1882,7 @@ begin
   Pal.palNumEntries := 256;
 
   {$IFOPT R+}
-    {$DEFINE TEMPRANGECHECK}
+    {$DEFINE GLB_TEMPRANGECHECK}
     {$R-}
   {$ENDIF}
 
@@ -1583,8 +1893,8 @@ begin
     Pal.palPalEntry[Idx].peFlags := 0;
   end;
 
-  {$IFDEF TEMPRANGECHECK}
-    {$UNDEF TEMPRANGECHECK}
+  {$IFDEF GLB_TEMPRANGECHECK}
+    {$UNDEF GLB_TEMPRANGECHECK}
     {$R+}
   {$ENDIF}
 
@@ -1592,24 +1902,69 @@ begin
 
   FreeMem(Pal);
 end;
+{$endif}
 
 
-(*
+{$ifdef GLB_SDL_IMAGE}
+function glBitmapRWseek(context: PSDL_RWops; offset: Integer; whence: Integer): Integer; cdecl;
+begin
+  Result := TStream(context^.unknown.data1).Seek(offset, whence);
+end;
+
+
+function glBitmapRWread(context: PSDL_RWops; Ptr: Pointer; size: Integer; maxnum : Integer): Integer; cdecl;
+begin
+  Result := TStream(context^.unknown.data1).Read(Ptr^, size * maxnum);
+end;
+
+
+function glBitmapRWwrite(context: PSDL_RWops; Ptr: Pointer; size: Integer; num: Integer): Integer; cdecl;
+begin
+  Result := TStream(context^.unknown.data1).Write(Ptr^, size * num);
+end;
+
+
+function glBitmapRWclose(context: PSDL_RWops): Integer; cdecl;
+begin
+  Result := 0;
+end;
+
+
+function glBitmapCreateRWops(Stream: TStream): PSDL_RWops;
+begin
+  Result := SDL_AllocRW;
+
+  if Result = nil then
+    raise EglBitmapException.Create('glBitmapCreateRWops - SDL_AllocRW failed.');
+
+  Result^.seek := glBitmapRWseek;
+  Result^.read := glBitmapRWread;
+  Result^.write := glBitmapRWwrite;
+  Result^.close := glBitmapRWclose;
+  Result^.unknown.data1 := Stream;
+end;
+{$endif}
+
+
+{*
 ** Helper functions
-*)
-function LoadTexture(Filename: String; var Texture: Cardinal; LoadFromRes : Boolean; Instance: Cardinal): Boolean;
+*}
+function LoadTexture(Filename: String; var Texture: Cardinal{$ifdef GLB_DELPHI}; LoadFromRes : Boolean; Instance: Cardinal{$endif}): Boolean;
 var
   glBitmap: TglBitmap2D;
 begin
   Result := false;
   Texture := 0;
 
+  {$ifdef GLB_DELPHI}
   if Instance = 0 then
     Instance := HInstance;
 
-  if (LoadFromRes)
-    then glBitmap := TglBitmap2D.CreateFromResourceName(Instance, FileName)
-    else glBitmap := TglBitmap2D.Create(FileName);
+  if (LoadFromRes) then
+    glBitmap := TglBitmap2D.CreateFromResourceName(Instance, FileName)
+  else
+  {$endif}
+    glBitmap := TglBitmap2D.Create(FileName);
 
   try
     glBitmap.DeleteTextureOnFree := False;
@@ -1625,48 +1980,68 @@ begin
 end;
 
 
-function LoadCubeMap(PositiveX, NegativeX, PositiveY, NegativeY, PositiveZ, NegativeZ: String; var Texture: Cardinal; LoadFromRes : Boolean; Instance: Cardinal): Boolean;
+function LoadCubeMap(PositiveX, NegativeX, PositiveY, NegativeY, PositiveZ, NegativeZ: String; var Texture: Cardinal{$ifdef GLB_DELPHI}; LoadFromRes : Boolean; Instance: Cardinal{$endif}): Boolean;
 var
   CM: TglBitmapCubeMap;
 begin
   Texture := 0;
 
+  {$ifdef GLB_DELPHI}
   if Instance = 0 then
     Instance := HInstance;
+  {$endif}
 
   CM := TglBitmapCubeMap.Create;
   try
     CM.DeleteTextureOnFree := False;
 
     // Maps
-    if (LoadFromRes)
-      then CM.LoadFromResource(Instance, PositiveX)
-      else CM.LoadFromFile(PositiveX);
+    {$ifdef GLB_DELPHI}
+    if (LoadFromRes) then
+      CM.LoadFromResource(Instance, PositiveX)
+    else
+    {$endif}
+      CM.LoadFromFile(PositiveX);
     CM.GenerateCubeMap(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
 
-    if (LoadFromRes)
-      then CM.LoadFromResource(Instance, NegativeX)
-      else CM.LoadFromFile(NegativeX);
+    {$ifdef GLB_DELPHI}
+    if (LoadFromRes) then
+      CM.LoadFromResource(Instance, NegativeX)
+    else
+    {$endif}
+      CM.LoadFromFile(NegativeX);
     CM.GenerateCubeMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
 
-    if (LoadFromRes)
-      then CM.LoadFromResource(Instance, PositiveY)
-      else CM.LoadFromFile(PositiveY);
+    {$ifdef GLB_DELPHI}
+    if (LoadFromRes) then
+      CM.LoadFromResource(Instance, PositiveY)
+    else
+    {$endif}
+      CM.LoadFromFile(PositiveY);
     CM.GenerateCubeMap(GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
 
-    if (LoadFromRes)
-      then CM.LoadFromResource(Instance, NegativeY)
-      else CM.LoadFromFile(NegativeY);
+    {$ifdef GLB_DELPHI}
+    if (LoadFromRes) then
+      CM.LoadFromResource(Instance, NegativeY)
+    else
+    {$endif}
+      CM.LoadFromFile(NegativeY);
     CM.GenerateCubeMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
 
-    if (LoadFromRes)
-      then CM.LoadFromResource(Instance, PositiveZ)
-      else CM.LoadFromFile(PositiveZ);
+    {$ifdef GLB_DELPHI}
+    if (LoadFromRes) then
+      CM.LoadFromResource(Instance, PositiveZ)
+    else
+    {$endif}
+      CM.LoadFromFile(PositiveZ);
     CM.GenerateCubeMap(GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
 
-    if (LoadFromRes)
-      then CM.LoadFromResource(Instance, NegativeZ)
-      else CM.LoadFromFile(NegativeZ);
+    {$ifdef GLB_DELPHI}
+    if (LoadFromRes) then
+      CM.LoadFromResource(Instance, NegativeZ)
+    else
+    {$endif}
+      CM.LoadFromFile(NegativeZ);
     CM.GenerateCubeMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
 
     Texture := CM.ID;
@@ -1696,9 +2071,9 @@ begin
 end;
 
 
-(*
+{*
 ** Defaults
-*)
+*}
 procedure glBitmapSetDefaultFormat(Format: TglBitmapFormat);
 begin
   glBitmapDefaultFormat := Format;
@@ -1713,74 +2088,16 @@ end;
 
 procedure glBitmapSetDefaultFilter(Min, Mag: Integer);
 begin
-  case min of
-    GL_NEAREST:
-      glBitmapDefaultFilterMin := GL_NEAREST;
-    GL_LINEAR:
-      glBitmapDefaultFilterMin := GL_LINEAR;
-    GL_NEAREST_MIPMAP_NEAREST:
-      glBitmapDefaultFilterMin := GL_NEAREST_MIPMAP_NEAREST;
-    GL_LINEAR_MIPMAP_NEAREST:
-      glBitmapDefaultFilterMin := GL_LINEAR_MIPMAP_NEAREST;
-    GL_NEAREST_MIPMAP_LINEAR:
-      glBitmapDefaultFilterMin := GL_NEAREST_MIPMAP_LINEAR;
-    GL_LINEAR_MIPMAP_LINEAR:
-      glBitmapDefaultFilterMin := GL_LINEAR_MIPMAP_LINEAR;
-  else
-    raise EglBitmapException.Create('glBitmapSetDefaultFilter - Unknow Minfilter.');
-  end;
-
-  case mag of
-    GL_NEAREST:
-      glBitmapDefaultFilterMag := GL_NEAREST;
-    GL_LINEAR:
-      glBitmapDefaultFilterMag := GL_LINEAR;
-  else
-    raise EglBitmapException.Create('glBitmapSetDefaultFilter - Unknow Magfilter.');
-  end;
+  glBitmapDefaultFilterMin := Min;
+  glBitmapDefaultFilterMag := Mag;
 end;
 
 
 procedure glBitmapSetDefaultWrap(S: Integer; T: Integer; R: Integer);
 begin
-  case S of
-    GL_CLAMP:
-      glBitmapDefaultWrapS := GL_CLAMP;
-    GL_REPEAT:
-      glBitmapDefaultWrapS := GL_REPEAT;
-    GL_CLAMP_TO_EDGE:
-      glBitmapDefaultWrapS := GL_CLAMP_TO_EDGE;
-    GL_CLAMP_TO_BORDER:
-      glBitmapDefaultWrapS := GL_CLAMP_TO_BORDER;
-  else
-    raise EglBitmapException.Create('glBitmapSetDefaultWrap - Unknow Texturewrap(s).');
-  end;
-
-  case T of
-    GL_CLAMP:
-      glBitmapDefaultWrapT := GL_CLAMP;
-    GL_REPEAT:
-      glBitmapDefaultWrapT := GL_REPEAT;
-    GL_CLAMP_TO_EDGE:
-      glBitmapDefaultWrapT := GL_CLAMP_TO_EDGE;
-    GL_CLAMP_TO_BORDER:
-      glBitmapDefaultWrapT := GL_CLAMP_TO_BORDER;
-  else
-    raise EglBitmapException.Create('glBitmapSetDefaultWrap - Unknow Texturewrap(t).');
-  end;
-
-  case R of
-    GL_CLAMP:
-      glBitmapDefaultWrapR := GL_CLAMP;
-    GL_REPEAT:
-      glBitmapDefaultWrapR := GL_REPEAT;
-    GL_CLAMP_TO_EDGE:
-      glBitmapDefaultWrapR := GL_CLAMP_TO_EDGE;
-    GL_CLAMP_TO_BORDER:
-      glBitmapDefaultWrapR := GL_CLAMP_TO_BORDER;
-  else
-    raise EglBitmapException.Create('glBitmapSetDefaultWrap - Unknow Texturewrap(r).');
-  end;
+  glBitmapDefaultWrapS := S;
+  glBitmapDefaultWrapT := T;
+  glBitmapDefaultWrapR := R;
 end;
 
 
@@ -1829,28 +2146,28 @@ procedure TglBitmap.AfterConstruction;
 begin
   inherited;
 
-  FID := 0;
-  FTarget := 0;
-  FMipMap := mmMipmap;
-  FIsResident := False;
+  fID := 0;
+  fTarget := 0;
+  fMipMap := mmMipmap;
+  fIsResident := False;
 
   // get defaults
-  FFreeDataAfterGenTexture := glBitmapGetDefaultFreeDataAfterGenTexture;
-  FDeleteTextureOnFree := glBitmapGetDefaultDeleteTextureOnFree;
+  fFreeDataAfterGenTexture := glBitmapGetDefaultFreeDataAfterGenTexture;
+  fDeleteTextureOnFree := glBitmapGetDefaultDeleteTextureOnFree;
 
-  FFormat := glBitmapGetDefaultFormat;
+  fFormat := glBitmapGetDefaultFormat;
 
-  glBitmapGetDefaultFilter(FFilterMin, FFilterMag);
-  glBitmapGetDefaultTextureWrap(FWrapS, FWrapT, FWrapR);
+  glBitmapGetDefaultFilter(fFilterMin, fFilterMag);
+  glBitmapGetDefaultTextureWrap(fWrapS, fWrapT, fWrapR);
 end;
 
 
 procedure TglBitmap.BeforeDestruction;
 begin
-  SetDataPtr(nil, ifEmpty);
+  SetDataPointer(nil, ifEmpty);
 
-  if ((ID > 0) and (FDeleteTextureOnFree))
-    then glDeleteTextures(1, @ID);
+  if ((ID > 0) and (fDeleteTextureOnFree)) then
+    glDeleteTextures(1, @ID);
 
   inherited;
 end;
@@ -1858,12 +2175,12 @@ end;
 
 constructor TglBitmap.Create;
 begin
-  {$ifndef NO_NATIVE_GL}
-  ReadOpenGLExtensions;
+  {$ifndef GLB_NO_NATIVE_GL}
+    ReadOpenGLExtensions;
   {$endif}
 
   if (ClassType = TglBitmap) then
-    raise EglBitmapException.Create('Don''t create TglBitmap directly. Use TglBitmap1D or TglBitmap2D.');
+    raise EglBitmapException.Create('Don''t create TglBitmap directly. Use one of the deviated classes (TglBitmap2D) instead.');
 
   inherited Create;
 end;
@@ -1876,21 +2193,6 @@ begin
 end;
 
 
-constructor TglBitmap.CreateFromResourceName(Instance: Cardinal; Resource: String; ResType: PAnsiChar);
-begin
-  Create;
-  LoadFromResource(Instance, Resource, ResType);
-end;
-
-
-constructor TglBitmap.Create(Instance: Cardinal; Resource: String;
-  ResType: PAnsiChar);
-begin
-  Create;
-  LoadFromResource(Instance, Resource, ResType);
-end;
-
-
 constructor TglBitmap.Create(Stream: TStream);
 begin
   Create;
@@ -1898,11 +2200,28 @@ begin
 end;
 
 
-constructor TglBitmap.Create(Instance: Cardinal; ResourceID: Integer; ResType: PAnsiChar);
+{$ifdef GLB_DELPHI}
+constructor TglBitmap.CreateFromResourceName(Instance: Cardinal; Resource: String; ResType: PChar);
+begin
+  Create;
+  LoadFromResource(Instance, Resource, ResType);
+end;
+
+
+constructor TglBitmap.Create(Instance: Cardinal; Resource: String; ResType: PChar);
+begin
+  Create;
+  LoadFromResource(Instance, Resource, ResType);
+end;
+
+
+
+constructor TglBitmap.Create(Instance: Cardinal; ResourceID: Integer; ResType: PChar);
 begin
   Create;
   LoadFromResourceID(Instance, ResourceID, ResType);
 end;
+{$endif}
 
 
 constructor TglBitmap.Create(Size: TglBitmapPixelPosition;
@@ -1918,18 +2237,19 @@ begin
   try
     FillChar(Image^, ImageSize, #$FF);
 
-    SetDataPtr(Image, Format, Size.X, Size.Y, Size.Z);
+    SetDataPointer(Image, Format, Size.X, Size.Y);
   except
     FreeMem(Image);
+    raise;
   end;
 end;
 
 
 constructor TglBitmap.Create(Size: TglBitmapPixelPosition;
-  Format: TglBitmapInternalFormat; Func: TglBitmapFunction; Data: Pointer);
+  Format: TglBitmapInternalFormat; Func: TglBitmapFunction; CustomData: Pointer);
 begin
   Create;
-  LoadFromFunc(Size, Func, Format, Data);
+  LoadFromFunc(Size, Func, Format, CustomData);
 end;
 
 
@@ -1939,35 +2259,46 @@ var
   TempPtr: pByte;
   Size: Integer;
 begin
-  Result := nil;
-
   Temp := ClassType.Create as TglBitmap;
   try
-    Size := FormatGetImageSize(glBitmapPosition(Width, Height, Depth), FInternalFormat);
+    // copy texture data if assigned
+    if Assigned(Data) then begin
+      Size := FormatGetImageSize(glBitmapPosition(Width, Height), InternalFormat);
 
-    GetMem(TempPtr, Size);
-    try
-      Move(GetData^, TempPtr^, Size);
-      Temp.SetDataPtr(TempPtr, FInternalFormat, Width, Height, Depth);
+      GetMem(TempPtr, Size);
+      try
+        Move(Data^, TempPtr^, Size);
+        Temp.SetDataPointer(TempPtr, InternalFormat, Width, Height);
+      except
+        FreeMem(TempPtr);
+        raise;
+      end;
+    end else
+      Temp.SetDataPointer(nil, InternalFormat, Width, Height);
 
-      Temp.FTarget := FTarget;
-      Temp.FFormat := FFormat;
-      Temp.FMipMap := FMipMap;
-      Temp.FAnisotropic := FAnisotropic;
-      Temp.FDeleteTextureOnFree := FDeleteTextureOnFree;
-      Temp.FFreeDataAfterGenTexture := FFreeDataAfterGenTexture;
-      Temp.FFilterMin := FFilterMin;
-      Temp.FFilterMag := FFilterMag;
-      Temp.FWrapS := FWrapS;
-      Temp.FWrapT := FWrapT;
-      Temp.FWrapR := FWrapR;
+	// copy properties
+    Temp.fID := ID;
+    Temp.fTarget := Target;
+    Temp.fFormat := Format;
+    Temp.fMipMap := MipMap;
+    Temp.fAnisotropic := Anisotropic;
+    Temp.fBorderColor := fBorderColor;
+    Temp.fDeleteTextureOnFree := DeleteTextureOnFree;
+    Temp.fFreeDataAfterGenTexture := FreeDataAfterGenTexture;
+    Temp.fFilterMin := fFilterMin;
+    Temp.fFilterMag := fFilterMag;
+    Temp.fWrapS := fWrapS;
+    Temp.fWrapT := fWrapT;
+    Temp.fWrapR := fWrapR;
+    Temp.fFilename := fFilename;
+    Temp.fCustomName := fCustomName;
+    Temp.fCustomNameW := fCustomNameW;
+    Temp.fCustomDataPointer := fCustomDataPointer;
 
-      Result := Temp;
-    except
-      FreeMem(TempPtr);
-    end;
+    Result := Temp;
   except
     FreeAndNil(Temp);
+    raise;
   end;
 end;
 
@@ -1976,9 +2307,12 @@ procedure TglBitmap.LoadFromFile(FileName: String);
 var
   FS: TFileStream;
 begin
+  fFilename := FileName;
+
   FS := TFileStream.Create(FileName, fmOpenRead);
   try
     FS.Position := 0;
+    
     LoadFromStream(FS);
   finally
     FS.Free;
@@ -1988,27 +2322,26 @@ end;
 
 procedure TglBitmap.LoadFromStream(Stream: TStream);
 begin
-  {$ifdef pngimage}
-  if (not LoadPng(Stream))
-    then
+  {$ifdef GLB_SUPPORT_PNG_READ}
+  if not LoadPNG(Stream) then
   {$endif}
-  if (not LoadDDS(Stream))
-    then
-  if (not LoadTga(Stream))
-    then
-  if (not LoadJpg(Stream))
-    then
-  if (not LoadBmp(Stream))
-    then raise EglBitmapException.Create('TglBitmap.LoadFromStream - Couldn''t load Stream. It''s possible to be an unknow Streamtype.');
+  {$ifdef GLB_SUPPORT_JPEG_READ}
+  if not LoadJPEG(Stream) then
+  {$endif}
+  if not LoadDDS(Stream) then
+  if not LoadTGA(Stream) then
+  if not LoadBMP(Stream) then
+    raise EglBitmapException.Create('LoadFromStream - Couldn''t load Stream. It''s possible to be an unknow Streamtype.');
 end;
 
 
-procedure TglBitmap.LoadFromResource(Instance: Cardinal; Resource: String; ResType: PAnsiChar);
+{$ifdef GLB_DELPHI}
+procedure TglBitmap.LoadFromResource(Instance: Cardinal; Resource: String; ResType: PChar);
 var
   RS: TResourceStream;
   TempPos: Integer;
   ResTypeStr: String;
-  TempResType: PAnsiChar;
+  TempResType: PChar;
 begin
   if Assigned(ResType) then
     TempResType := ResType
@@ -2017,7 +2350,7 @@ begin
       TempPos := Pos('.', Resource);
       ResTypeStr := UpperCase(Copy(Resource, TempPos + 1, Length(Resource) - TempPos));
       Resource   := UpperCase(Copy(Resource, 0, TempPos -1));
-      TempResType := PAnsiChar(ResTypeStr);
+      TempResType := PChar(ResTypeStr);
     end;
 
   RS := TResourceStream.Create(Instance, Resource, TempResType);
@@ -2029,7 +2362,7 @@ begin
 end;
 
 
-procedure TglBitmap.LoadFromResourceID(Instance: Cardinal; ResourceID: Integer; ResType: PAnsiChar);
+procedure TglBitmap.LoadFromResourceID(Instance: Cardinal; ResourceID: Integer; ResType: PChar);
 var
   RS: TResourceStream;
 begin
@@ -2040,10 +2373,12 @@ begin
     RS.Free;
   end;
 end;
+{$endif}
+
 
 
 procedure TglBitmap.LoadFromFunc(Size: TglBitmapPixelPosition;
-  Func: TglBitmapFunction; Format: TglBitmapInternalFormat; Data: Pointer);
+  Func: TglBitmapFunction; Format: TglBitmapInternalFormat; CustomData: Pointer);
 var
   Image: pByte;
   ImageSize: Integer;
@@ -2053,12 +2388,13 @@ begin
   try
     FillChar(Image^, ImageSize, #$FF);
 
-    SetDataPtr(Image, Format, Size.X, Size.Y, Size.Z);
+    SetDataPointer(Image, Format, Size.X, Size.Y);
   except
     FreeMem(Image);
+    raise;
   end;
 
-  AddFunc(Self, Func, False, Format, Data)
+  AddFunc(Self, Func, False, Format, CustomData)
 end;
 
 
@@ -2076,22 +2412,377 @@ begin
 end;
 
 
-procedure TglBitmap.SaveToStream(Stream: TStream; FileType: TglBitmapFileType); 
+procedure TglBitmap.SaveToStream(Stream: TStream; FileType: TglBitmapFileType);
 begin
   case FileType of
-    ftBMP: SaveBMP(Stream);
-    ftTGA: SaveTGA(Stream);
-    ftJPEG: SaveJPG(Stream);
-    {$ifdef pngimage}
-    ftPNG: SavePng(Stream);
+    {$ifdef GLB_SUPPORT_PNG_WRITE}
+    ftPNG:  SavePng(Stream);
     {$endif}
-    ftDDS: SaveDDS(Stream);
+    {$ifdef GLB_SUPPORT_JPEG_WRITE}
+    ftJPEG: SaveJPEG(Stream);
+    {$endif}
+    ftDDS:  SaveDDS(Stream);
+    ftTGA:  SaveTGA(Stream);
+    ftBMP:  SaveBMP(Stream);
   end;
 end;
 
 
-function TglBitmap.AddAlphaFromBitmap(Bitmap: TBitmap;
-  Func: TglBitmapFunction; Data: Pointer): boolean;
+{$ifdef GLB_SDL}
+function TglBitmap.AssignToSurface(out Surface: PSDL_Surface): boolean;
+var
+  Row, RowSize: Integer;
+  pSource, pData: PByte;
+  TempDepth: Integer;
+  Pix: TglBitmapPixelData;
+
+  function GetRowPointer(Row: Integer): pByte;
+  begin
+    Result := Surface.pixels;
+    Inc(Result, Row * RowSize);
+  end;
+
+begin
+  Result := False;
+
+  if not FormatIsUncompressed(InternalFormat) then 
+    raise EglBitmapUnsupportedInternalFormat.Create('AssignToSurface - ' + UNSUPPORTED_INTERNAL_FORMAT);
+
+  if Assigned(Data) then begin
+    case Trunc(FormatGetSize(InternalFormat)) of
+      1: TempDepth :=  8;
+      2: TempDepth := 16;
+      3: TempDepth := 24;
+      4: TempDepth := 32;
+      else
+        raise EglBitmapException.Create('AssignToSurface - ' + UNSUPPORTED_INTERNAL_FORMAT);
+    end;
+
+    FormatPreparePixel(Pix, InternalFormat);
+
+    with Pix.PixelDesc do
+      Surface := SDL_CreateRGBSurface(SDL_SWSURFACE, Width, Height, TempDepth, RedRange shl RedShift, GreenRange shl GreenShift, BlueRange shl BlueShift, AlphaRange shl AlphaShift);
+
+    pSource := Data;
+    RowSize := Trunc(FileWidth * FormatGetSize(InternalFormat));
+
+    for Row := 0 to FileHeight -1 do begin
+      pData := GetRowPointer(Row);
+
+      if Assigned(pData) then begin
+        Move(pSource^, pData^, RowSize);
+        Inc(pSource, RowSize);
+      end;
+    end;
+
+    Result := True;
+  end;
+end;
+
+
+function TglBitmap.AssignFromSurface(const Surface: PSDL_Surface): boolean;
+var
+  pSource, pData, pTempData: PByte;
+  Row, RowSize, TempWidth, TempHeight: Integer;
+  IntFormat: TglBitmapInternalFormat;
+
+  function GetRowPointer(Row: Integer): pByte;
+  begin
+    Result := Surface^.pixels;
+    Inc(Result, Row * RowSize);
+  end;
+
+begin
+  Result := False;
+
+  if (Assigned(Surface)) then begin
+    with Surface^.format^ do begin
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifLuminance) then
+        IntFormat := ifLuminance
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifLuminanceAlpha) then
+        IntFormat := ifLuminanceAlpha
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifRGBA4) then
+        IntFormat := ifRGBA4
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifR5G6B5) then
+        IntFormat := ifR5G6B5
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifRGB5A1) then
+        IntFormat := ifRGB5A1
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifBGR8) then
+        IntFormat := ifBGR8
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifRGB8) then
+        IntFormat := ifRGB8
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifBGRA8) then
+        IntFormat := ifBGRA8
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifRGBA8) then
+        IntFormat := ifRGBA8
+      else
+
+      if FormatCheckFormat(RMask, GMask, BMask, AMask, ifRGB10A2) then
+        IntFormat := ifRGB10A2
+      else
+        raise EglBitmapException.Create('AssignFromSurface - Invalid Pixelformat.');
+    end;
+
+    TempWidth := Surface^.w;
+    TempHeight := Surface^.h;
+
+    RowSize := Trunc(TempWidth * FormatGetSize(IntFormat));
+
+    GetMem(pData, TempHeight * RowSize);
+    try
+      pTempData := pData;
+
+      for Row := 0 to TempHeight -1 do begin
+        pSource := GetRowPointer(Row);
+
+        if (Assigned(pSource)) then begin
+          Move(pSource^, pTempData^, RowSize);
+          Inc(pTempData, RowSize);
+        end;
+      end;
+
+      SetDataPointer(pData, IntFormat, TempWidth, TempHeight);
+
+      Result := True;
+    except
+      FreeMem(pData);
+      raise;
+    end;
+  end;
+end;
+
+
+function TglBitmap.AssignAlphaToSurface(out Surface: PSDL_Surface): boolean;
+var
+  Row, Col, AlphaInterleave: Integer;
+  pSource, pDest: PByte;
+
+  function GetRowPointer(Row: Integer): pByte;
+  begin
+    Result := Surface.pixels;
+    Inc(Result, Row * Width);
+  end;
+
+begin
+  Result := False;
+
+  if Assigned(Data) then begin
+    if InternalFormat in [ifAlpha, ifLuminanceAlpha, ifBGRA8, ifRGBA8] then begin
+      Surface := SDL_CreateRGBSurface(SDL_SWSURFACE, Width, Height, 8, $FF, $FF, $FF, 0);
+
+      case InternalFormat of
+        ifLuminanceAlpha:
+          AlphaInterleave := 1;
+        ifBGRA8, ifRGBA8:
+          AlphaInterleave := 3;
+        else
+          AlphaInterleave := 0;
+      end;
+
+      // Copy Data
+      pSource := Data;
+
+      for Row := 0 to Height -1 do begin
+        pDest := GetRowPointer(Row);
+
+        if Assigned(pDest) then begin
+          for Col := 0 to Width -1 do begin
+            Inc(pSource, AlphaInterleave);
+            pDest^ := pSource^;
+            Inc(pDest);
+            Inc(pSource);
+          end;
+        end;
+      end;
+
+      Result := True;
+    end;
+  end;
+end;
+
+
+function TglBitmap.AddAlphaFromSurface(Surface: PSDL_Surface; Func: TglBitmapFunction; CustomData: Pointer): boolean;
+var
+  glBitmap: TglBitmap2D;
+begin
+  glBitmap := TglBitmap2D.Create;
+  try
+    glBitmap.AssignFromSurface(Surface);
+
+    Result := AddAlphaFromglBitmap(glBitmap, Func, CustomData);
+  finally
+    glBitmap.Free;
+  end;
+end;
+{$endif}
+
+
+{$ifdef GLB_DELPHI}
+function TglBitmap.AssignFromBitmap(const Bitmap: TBitmap): boolean;
+var
+  pSource, pData, pTempData: PByte;
+  Row, RowSize, TempWidth, TempHeight: Integer;
+  IntFormat: TglBitmapInternalFormat;
+begin
+  Result := False;
+
+  if (Assigned(Bitmap)) then begin
+    case Bitmap.PixelFormat of
+      pf8bit:
+        IntFormat := ifLuminance;
+      pf15bit:
+        IntFormat := ifRGB5A1;
+      pf16bit:
+        IntFormat := ifR5G6B5;
+      pf24bit:
+        IntFormat := ifBGR8;
+      pf32bit:
+        IntFormat := ifBGRA8;
+      else
+        raise EglBitmapException.Create('AssignFromBitmap - Invalid Pixelformat.');
+    end;
+
+    TempWidth := Bitmap.Width;
+    TempHeight := Bitmap.Height;
+
+    RowSize := Trunc(TempWidth * FormatGetSize(IntFormat));
+
+    GetMem(pData, TempHeight * RowSize);
+    try
+      pTempData := pData;
+
+      for Row := 0 to TempHeight -1 do begin
+        pSource := Bitmap.Scanline[Row];
+
+        if (Assigned(pSource)) then begin
+          Move(pSource^, pTempData^, RowSize);
+          Inc(pTempData, RowSize);
+        end;
+      end;
+
+      SetDataPointer(pData, IntFormat, TempWidth, TempHeight);
+
+      Result := True;
+    except
+      FreeMem(pData);
+      raise;
+    end;
+  end;
+end;
+
+
+function TglBitmap.AssignToBitmap(const Bitmap: TBitmap): boolean;
+var
+  Row: Integer;
+  pSource, pData: PByte;
+begin
+  Result := False;
+
+  if Assigned(Data) then begin
+    if Assigned(Bitmap) then begin
+      Bitmap.Width := Width;
+      Bitmap.Height := Height;
+
+      case InternalFormat of
+        ifAlpha, ifLuminance, ifDepth8:
+          begin
+            Bitmap.PixelFormat := pf8bit;
+            Bitmap.Palette := CreateGrayPalette;
+          end;
+        ifRGB5A1:
+          Bitmap.PixelFormat := pf15bit;
+        ifR5G6B5:
+          Bitmap.PixelFormat := pf16bit;
+        ifRGB8, ifBGR8:
+          Bitmap.PixelFormat := pf24bit;
+        ifRGBA8, ifBGRA8:
+          Bitmap.PixelFormat := pf32bit;
+        else
+          raise EglBitmapException.Create('AssignToBitmap - Invalid Pixelformat.');
+      end;
+
+      pSource := Data;
+      for Row := 0 to FileHeight -1 do begin
+        pData := Bitmap.Scanline[Row];
+
+        Move(pSource^, pData^, fRowSize);
+        Inc(pSource, fRowSize);
+
+        // swap RGB(A) to BGR(A)
+        if InternalFormat in [ifRGB8, ifRGBA8] then
+          SwapRGB(pData, FileWidth, InternalFormat = ifRGBA8);
+      end;
+
+      Result := True;
+    end;
+  end;
+end;
+
+
+function TglBitmap.AssignAlphaToBitmap(const Bitmap: TBitmap): boolean;
+var
+  Row, Col, AlphaInterleave: Integer;
+  pSource, pDest: PByte;
+begin
+  Result := False;
+
+  if Assigned(Data) then begin
+    if InternalFormat in [ifAlpha, ifLuminanceAlpha, ifRGBA8, ifBGRA8] then begin
+      if Assigned(Bitmap) then begin
+        Bitmap.PixelFormat := pf8bit;
+        Bitmap.Palette := CreateGrayPalette;
+        Bitmap.Width := Width;
+        Bitmap.Height := Height;
+
+        case InternalFormat of
+          ifLuminanceAlpha:
+            AlphaInterleave := 1;
+          ifRGBA8, ifBGRA8:
+            AlphaInterleave := 3;
+          else
+            AlphaInterleave := 0;
+        end;
+
+        // Copy Data
+        pSource := Data;
+
+        for Row := 0 to Height -1 do begin
+          pDest := Bitmap.Scanline[Row];
+
+          if Assigned(pDest) then begin
+            for Col := 0 to Width -1 do begin
+              Inc(pSource, AlphaInterleave);
+              pDest^ := pSource^;
+              Inc(pDest);
+              Inc(pSource);
+            end;
+          end;
+        end;
+
+        Result := True;
+      end;
+    end;
+  end;
+end;
+
+
+function TglBitmap.AddAlphaFromBitmap(Bitmap: TBitmap; Func: TglBitmapFunction; CustomData: Pointer): boolean;
 var
   glBitmap: TglBitmap2D;
 begin
@@ -2099,50 +2790,48 @@ begin
   try
     glBitmap.AssignFromBitmap(Bitmap);
 
-    Result := AddAlphaFromglBitmap(glBitmap, Func, Data);
+    Result := AddAlphaFromglBitmap(glBitmap, Func, CustomData);
   finally
     glBitmap.Free;
   end;
 end;
+{$endif}
 
 
-function TglBitmap.AddAlphaFromFile(FileName: String;
-  Func: TglBitmapFunction; Data: Pointer): boolean;
+function TglBitmap.AddAlphaFromFile(FileName: String; Func: TglBitmapFunction; CustomData: Pointer): boolean;
 var
   FS: TFileStream;
 begin
   FS := TFileStream.Create(FileName, fmOpenRead);
   try
-    Result := AddAlphaFromStream(FS, Func, Data);
+    Result := AddAlphaFromStream(FS, Func, CustomData);
   finally
     FS.Free;
   end;
 end;
 
 
-function TglBitmap.AddAlphaFromStream(Stream: TStream;
-  Func: TglBitmapFunction; Data: Pointer): boolean;
+function TglBitmap.AddAlphaFromStream(Stream: TStream; Func: TglBitmapFunction; CustomData: Pointer): boolean;
 var
   glBitmap: TglBitmap2D;
 begin
-  assert(Assigned(GetData()), 'TglBitmap.AddAlphaFromStream - AddAlpha can only called if data where loaded.');
-
   glBitmap := TglBitmap2D.Create(Stream);
   try
-    Result := AddAlphaFromglBitmap(glBitmap, Func, Data);
+    Result := AddAlphaFromglBitmap(glBitmap, Func, CustomData);
   finally
     glBitmap.Free;
   end;
 end;
 
 
+{$ifdef GLB_DELPHI}
 function TglBitmap.AddAlphaFromResource(Instance: Cardinal; Resource: String;
-  ResType: PAnsiChar; Func: TglBitmapFunction; Data: Pointer): boolean;
+  ResType: PChar; Func: TglBitmapFunction; CustomData: Pointer): boolean;
 var
   RS: TResourceStream;
   TempPos: Integer;
   ResTypeStr: String;
-  TempResType: PAnsiChar;
+  TempResType: PChar;
 begin
   if Assigned(ResType) then
     TempResType := ResType
@@ -2151,12 +2840,12 @@ begin
       TempPos := Pos('.', Resource);
       ResTypeStr := UpperCase(Copy(Resource, TempPos + 1, Length(Resource) - TempPos));
       Resource   := UpperCase(Copy(Resource, 0, TempPos -1));
-      TempResType := PAnsiChar(ResTypeStr);
+      TempResType := PChar(ResTypeStr);
     end;
 
   RS := TResourceStream.Create(Instance, Resource, TempResType);
   try
-    Result := AddAlphaFromStream(RS, Func, Data);
+    Result := AddAlphaFromStream(RS, Func, CustomData);
   finally
     RS.Free;
   end;
@@ -2164,17 +2853,18 @@ end;
 
 
 function TglBitmap.AddAlphaFromResourceID(Instance: Cardinal; ResourceID: Integer;
-  ResType: PAnsiChar; Func: TglBitmapFunction; Data: Pointer): boolean;
+  ResType: PChar; Func: TglBitmapFunction; CustomData: Pointer): boolean;
 var
   RS: TResourceStream;
 begin
   RS := TResourceStream.CreateFromID(Instance, ResourceID, ResType);
   try
-    Result := AddAlphaFromStream(RS, Func, Data);
+    Result := AddAlphaFromStream(RS, Func, CustomData);
   finally
     RS.Free;
   end;
 end;
+{$endif}
 
 
 procedure glBitmapColorKeyAlphaFunc(var FuncRec: TglBitmapFunctionRec);
@@ -2184,12 +2874,13 @@ begin
     Dest.Green := Source.Green;
     Dest.Blue  := Source.Blue;
 
-    with TglBitmapPixelData(Data^) do
+    with TglBitmapPixelData(CustomData^) do
       if ((Dest.Red   <= Red  ) and (Dest.Red   >= PixelDesc.RedRange  ) and
           (Dest.Green <= Green) and (Dest.Green >= PixelDesc.GreenRange) and
-          (Dest.Blue  <= Blue ) and (Dest.Blue  >= PixelDesc.BlueRange ))
-        then Dest.Alpha := 0
-        else Dest.Alpha := Dest.PixelDesc.AlphaRange;
+          (Dest.Blue  <= Blue ) and (Dest.Blue  >= PixelDesc.BlueRange )) then
+        Dest.Alpha := 0
+      else
+        Dest.Alpha := Dest.PixelDesc.AlphaRange;
   end;
 end;
 
@@ -2202,42 +2893,42 @@ end;
 
 function TglBitmap.AddAlphaFromColorKeyRange(Red, Green, Blue: Cardinal; Deviation: Cardinal = 0): Boolean;
 var
-  Data: TglBitmapPixelData;
+  PixelData: TglBitmapPixelData;
 begin
-  FormatPreparePixel(Data, FormatGetWithAlpha(FInternalFormat));
+  FormatPreparePixel(PixelData, FormatGetWithAlpha(InternalFormat));
 
   Result := AddAlphaFromColorKeyFloat(
-    Red   / Data.PixelDesc.RedRange,
-    Green / Data.PixelDesc.GreenRange,
-    Blue  / Data.PixelDesc.BlueRange,
-    Deviation / Max(Data.PixelDesc.RedRange, Max(Data.PixelDesc.GreenRange, Data.PixelDesc.BlueRange)));
+    Red   / PixelData.PixelDesc.RedRange,
+    Green / PixelData.PixelDesc.GreenRange,
+    Blue  / PixelData.PixelDesc.BlueRange,
+    Deviation / Max(PixelData.PixelDesc.RedRange, Max(PixelData.PixelDesc.GreenRange, PixelData.PixelDesc.BlueRange)));
 end;
 
 
 function TglBitmap.AddAlphaFromColorKeyFloat(Red, Green, Blue: Single; Deviation: Single = 0): Boolean;
 var
   TempR, TempG, TempB: Cardinal;
-  Data: TglBitmapPixelData;
+  PixelData: TglBitmapPixelData;
 begin
-  FormatPreparePixel(Data, FormatGetWithAlpha(FInternalFormat));
+  FormatPreparePixel(PixelData, FormatGetWithAlpha(InternalFormat));
 
   // Calculate Colorrange
-  with Data.PixelDesc do begin
+  with PixelData.PixelDesc do begin
     TempR := Trunc(RedRange   * Deviation);
     TempG := Trunc(GreenRange * Deviation);
     TempB := Trunc(BlueRange  * Deviation);
 
-    Data.Red   := Min(RedRange,   Trunc(RedRange   * Red)   + TempR);
-    RedRange   := Max(0,          Trunc(RedRange   * Red)   - TempR);
-    Data.Green := Min(GreenRange, Trunc(GreenRange * Green) + TempG);
-    GreenRange := Max(0,          Trunc(GreenRange * Green) - TempG);
-    Data.Blue  := Min(BlueRange,  Trunc(BlueRange  * Blue)  + TempB);
-    BlueRange  := Max(0,          Trunc(BlueRange  * Blue)  - TempB);
-    Data.Alpha := 0;
-    AlphaRange := 0;
+    PixelData.Red   := Min(RedRange,   Trunc(RedRange   * Red)   + TempR);
+    RedRange        := Max(0,          Trunc(RedRange   * Red)   - TempR);
+    PixelData.Green := Min(GreenRange, Trunc(GreenRange * Green) + TempG);
+    GreenRange      := Max(0,          Trunc(GreenRange * Green) - TempG);
+    PixelData.Blue  := Min(BlueRange,  Trunc(BlueRange  * Blue)  + TempB);
+    BlueRange       := Max(0,          Trunc(BlueRange  * Blue)  - TempB);
+    PixelData.Alpha := 0;
+    AlphaRange      := 0;
   end;
 
-  Result := AddAlphaFromFunc(glBitmapColorKeyAlphaFunc, @Data);
+  Result := AddAlphaFromFunc(glBitmapColorKeyAlphaFunc, @PixelData);
 end;
 
 
@@ -2248,7 +2939,7 @@ begin
     Dest.Green := Source.Green;
     Dest.Blue  := Source.Blue;
 
-    with TglBitmapPixelData(Data^) do
+    with TglBitmapPixelData(CustomData^) do
       Dest.Alpha := Alpha;
   end;
 end;
@@ -2262,24 +2953,24 @@ end;
 
 function TglBitmap.AddAlphaFromValueFloat(Alpha: Single): Boolean;
 var
-  Data: TglBitmapPixelData;
+  PixelData: TglBitmapPixelData;
 begin
-  FormatPreparePixel(Data, FormatGetWithAlpha(FInternalFormat));
+  FormatPreparePixel(PixelData, FormatGetWithAlpha(InternalFormat));
 
-  with Data.PixelDesc do 
-    Data.Alpha := Min(AlphaRange, Max(0, Round(AlphaRange * Alpha)));
+  with PixelData.PixelDesc do
+    PixelData.Alpha := Min(AlphaRange, Max(0, Round(AlphaRange * Alpha)));
 
-  Result := AddAlphaFromFunc(glBitmapValueAlphaFunc, @Data);
+  Result := AddAlphaFromFunc(glBitmapValueAlphaFunc, @PixelData);
 end;
 
 
 function TglBitmap.AddAlphaFromValueRange(Alpha: Cardinal): Boolean;
 var
-  Data: TglBitmapPixelData;
+  PixelData: TglBitmapPixelData;
 begin
-  FormatPreparePixel(Data, FormatGetWithAlpha(FInternalFormat));
+  FormatPreparePixel(PixelData, FormatGetWithAlpha(InternalFormat));
 
-  Result := AddAlphaFromValueFloat(Alpha / Data.PixelDesc.AlphaRange);
+  Result := AddAlphaFromValueFloat(Alpha / PixelData.PixelDesc.AlphaRange);
 end;
 
 
@@ -2291,13 +2982,13 @@ begin
     Dest.Blue  := Source.Blue;
     Dest.Alpha := Source.Alpha;
 
-    if (Integer(Data) and $1 > 0) then begin
+    if (Integer(CustomData) and $1 > 0) then begin
       Dest.Red   := Dest.Red   xor Dest.PixelDesc.RedRange;
       Dest.Green := Dest.Green xor Dest.PixelDesc.GreenRange;
       Dest.Blue  := Dest.Blue  xor Dest.PixelDesc.BlueRange;
     end;
 
-    if (Integer(Data) and $2 > 0) then begin
+    if (Integer(CustomData) and $2 > 0) then begin
       Dest.Alpha := Dest.Alpha xor Dest.PixelDesc.AlphaRange;
     end;
   end;
@@ -2306,8 +2997,8 @@ end;
 
 procedure TglBitmap.Invert(UseRGB, UseAlpha: Boolean);
 begin
-  if ((UseRGB) or (UseAlpha))
-    then AddFunc(glBitmapInvertFunc, False, Pointer(Integer(UseAlpha) shl 1 or Integer(UseRGB)));
+  if ((UseRGB) or (UseAlpha)) then
+    AddFunc(glBitmapInvertFunc, False, Pointer(Integer(UseAlpha) shl 1 or Integer(UseRGB)));
 end;
 
 
@@ -2315,46 +3006,47 @@ procedure TglBitmap.SetFilter(Min, Mag: Integer);
 begin
   case Min of
     GL_NEAREST:
-      FFilterMin := GL_NEAREST;
+      fFilterMin := GL_NEAREST;
     GL_LINEAR:
-      FFilterMin := GL_LINEAR;
+      fFilterMin := GL_LINEAR;
     GL_NEAREST_MIPMAP_NEAREST:
-      FFilterMin := GL_NEAREST_MIPMAP_NEAREST;
+      fFilterMin := GL_NEAREST_MIPMAP_NEAREST;
     GL_LINEAR_MIPMAP_NEAREST:
-      FFilterMin := GL_LINEAR_MIPMAP_NEAREST;
+      fFilterMin := GL_LINEAR_MIPMAP_NEAREST;
     GL_NEAREST_MIPMAP_LINEAR:
-      FFilterMin := GL_NEAREST_MIPMAP_LINEAR;
+      fFilterMin := GL_NEAREST_MIPMAP_LINEAR;
     GL_LINEAR_MIPMAP_LINEAR:
-      FFilterMin := GL_LINEAR_MIPMAP_LINEAR;
-  else
-    raise EglBitmapException.Create('TglBitmap.SetFilter - Unknow Minfilter.');
+      fFilterMin := GL_LINEAR_MIPMAP_LINEAR;
+    else
+      raise EglBitmapException.Create('SetFilter - Unknow Minfilter.');
   end;
 
   case Mag of
     GL_NEAREST:
-      FFilterMag := GL_NEAREST;
+      fFilterMag := GL_NEAREST;
     GL_LINEAR:
-      FFilterMag := GL_LINEAR;
-  else
-    raise EglBitmapException.Create('TglBitmap.SetFilter - Unknow Magfilter.');
+      fFilterMag := GL_LINEAR;
+    else
+      raise EglBitmapException.Create('SetFilter - Unknow Magfilter.');
   end;
 
   // If texture is created then assign filter
   if ID > 0 then begin
     Bind(False);
 
-    glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, FFilterMag);
+    glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, fFilterMag);
+
     if (MipMap = mmNone) or (Target = GL_TEXTURE_RECTANGLE_ARB) then begin
-      case FFilterMin of
+      case fFilterMin of
         GL_NEAREST, GL_LINEAR:
-          glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, FFilterMin);
+          glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, fFilterMin);
         GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR:
           glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR:
           glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       end;
     end else
-      glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, FFilterMin);
+      glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, fFilterMin);
   end;
 end;
 
@@ -2363,180 +3055,650 @@ procedure TglBitmap.SetWrap(S: Integer; T: Integer; R: Integer);
 begin
   case S of
     GL_CLAMP:
-      FWrapS := GL_CLAMP;
+      fWrapS := GL_CLAMP;
     GL_REPEAT:
-      FWrapS := GL_REPEAT;
+      fWrapS := GL_REPEAT;
     GL_CLAMP_TO_EDGE:
       begin
         if GL_VERSION_1_2 or GL_EXT_texture_edge_clamp then
-          FWrapS := GL_CLAMP_TO_EDGE
+          fWrapS := GL_CLAMP_TO_EDGE
         else
-          FWrapS := GL_CLAMP;
+          fWrapS := GL_CLAMP;
       end;
     GL_CLAMP_TO_BORDER:
       begin
         if GL_VERSION_1_3 or GL_ARB_texture_border_clamp then
-          FWrapS := GL_CLAMP_TO_BORDER
+          fWrapS := GL_CLAMP_TO_BORDER
         else
-          FWrapS := GL_CLAMP;
+          fWrapS := GL_CLAMP;
       end;
     GL_MIRRORED_REPEAT:
       begin
         if GL_VERSION_1_4 or GL_ARB_texture_mirrored_repeat or GL_IBM_texture_mirrored_repeat then
-          FWrapS := GL_MIRRORED_REPEAT
+          fWrapS := GL_MIRRORED_REPEAT
         else
-          raise EglBitmapException.Create('TglBitmap.SetWrap - Unsupported Texturewrap GL_MIRRORED_REPEAT (S).');
+          raise EglBitmapException.Create('SetWrap - Unsupported Texturewrap GL_MIRRORED_REPEAT (S).');
       end;
-  else
-    raise EglBitmapException.Create('TglBitmap.SetWrap - Unknow Texturewrap (S).');
+    else
+      raise EglBitmapException.Create('SetWrap - Unknow Texturewrap (S).');
   end;
 
   case T of
     GL_CLAMP:
-      FWrapT := GL_CLAMP;
+      fWrapT := GL_CLAMP;
     GL_REPEAT:
-      FWrapT := GL_REPEAT;
+      fWrapT := GL_REPEAT;
     GL_CLAMP_TO_EDGE:
       begin
         if GL_VERSION_1_2 or GL_EXT_texture_edge_clamp then
-          FWrapT := GL_CLAMP_TO_EDGE
+          fWrapT := GL_CLAMP_TO_EDGE
         else
-          FWrapT := GL_CLAMP;
+          fWrapT := GL_CLAMP;
       end;
     GL_CLAMP_TO_BORDER:
       begin
         if GL_VERSION_1_3 or GL_ARB_texture_border_clamp then
-          FWrapT := GL_CLAMP_TO_BORDER
+          fWrapT := GL_CLAMP_TO_BORDER
         else
-          FWrapT := GL_CLAMP;
+          fWrapT := GL_CLAMP;
       end;
     GL_MIRRORED_REPEAT:
       begin
         if GL_VERSION_1_4 or GL_ARB_texture_mirrored_repeat or GL_IBM_texture_mirrored_repeat then
-          FWrapT := GL_MIRRORED_REPEAT
+          fWrapT := GL_MIRRORED_REPEAT
         else
-          raise EglBitmapException.Create('TglBitmap.SetWrap - Unsupported Texturewrap GL_MIRRORED_REPEAT (T).');
+          raise EglBitmapException.Create('SetWrap - Unsupported Texturewrap GL_MIRRORED_REPEAT (T).');
       end;
-  else
-    raise EglBitmapException.Create('TglBitmap.SetWrap - Unknow Texturewrap (T).');
+    else
+      raise EglBitmapException.Create('SetWrap - Unknow Texturewrap (T).');
   end;
 
   case R of
     GL_CLAMP:
-      FWrapR := GL_CLAMP;
+      fWrapR := GL_CLAMP;
     GL_REPEAT:
-      FWrapR := GL_REPEAT;
+      fWrapR := GL_REPEAT;
     GL_CLAMP_TO_EDGE:
       begin
         if GL_VERSION_1_2 or GL_EXT_texture_edge_clamp then
-          FWrapR := GL_CLAMP_TO_EDGE
+          fWrapR := GL_CLAMP_TO_EDGE
         else
-          FWrapR := GL_CLAMP;
+          fWrapR := GL_CLAMP;
       end;
     GL_CLAMP_TO_BORDER:
       begin
         if GL_VERSION_1_3 or GL_ARB_texture_border_clamp then
-          FWrapR := GL_CLAMP_TO_BORDER
+          fWrapR := GL_CLAMP_TO_BORDER
         else
-          FWrapR := GL_CLAMP;
+          fWrapR := GL_CLAMP;
       end;
     GL_MIRRORED_REPEAT:
       begin
         if GL_VERSION_1_4 or GL_ARB_texture_mirrored_repeat or GL_IBM_texture_mirrored_repeat then
-          FWrapR := GL_MIRRORED_REPEAT
+          fWrapR := GL_MIRRORED_REPEAT
         else
-          raise EglBitmapException.Create('TglBitmap.SetWrap - Unsupported Texturewrap GL_MIRRORED_REPEAT (R).');
+          raise EglBitmapException.Create('SetWrap - Unsupported Texturewrap GL_MIRRORED_REPEAT (R).');
       end;
-  else
-    raise EglBitmapException.Create('TglBitmap.SetWrap - Unknow Texturewrap (R).');
+    else
+      raise EglBitmapException.Create('SetWrap - Unknow Texturewrap (R).');
   end;
 
   if ID > 0 then begin
     Bind (False);
-    glTexParameteri(Target, GL_TEXTURE_WRAP_S, FWrapS);
-    glTexParameteri(Target, GL_TEXTURE_WRAP_T, FWrapT);
-    glTexParameteri(Target, GL_TEXTURE_WRAP_R, FWrapR);
+    glTexParameteri(Target, GL_TEXTURE_WRAP_S, fWrapS);
+    glTexParameteri(Target, GL_TEXTURE_WRAP_T, fWrapT);
+    glTexParameteri(Target, GL_TEXTURE_WRAP_R, fWrapR);
   end;
 end;
 
 
-function TglBitmap.GetData: PByte;
-begin
-  Result := FDataPtr;
-end;
-
-
-procedure TglBitmap.SetDataPtr(Ptr: PByte; Format: TglBitmapInternalFormat; Width, Height, Depth: Integer);
+procedure TglBitmap.SetDataPointer(NewData: PByte; Format: TglBitmapInternalFormat; Width, Height: Integer);
 begin
   // Data
-  if FDataPtr <> Ptr then begin
-    if (Assigned(FDataPtr))
-      then FreeMem(FDataPtr);
+  if Data <> NewData then begin
+    if (Assigned(Data))
+      then FreeMem(Data);
 
-    FDataPtr := Ptr;
+    fData := NewData;
   end;
 
-  if Ptr = nil then begin
-    FInternalFormat := ifEmpty;
-    FPixelSize := 0;
-    FLineSize := 0;
+  if Data = nil then begin
+    fInternalFormat := ifEmpty;
+    fPixelSize := 0;
+    fRowSize := 0;
   end else begin
     if Width <> -1 then begin
-      FDimension.Fields := FDimension.Fields + [ffX];
-      FDimension.X := Width;
+      fDimension.Fields := fDimension.Fields + [ffX];
+      fDimension.X := Width;
     end;
 
     if Height <> -1 then begin
-      FDimension.Fields := FDimension.Fields + [ffY];
-      FDimension.Y := Height;
+      fDimension.Fields := fDimension.Fields + [ffY];
+      fDimension.Y := Height;
     end;
 
-    if Depth <> -1 then begin
-      FDimension.Fields := FDimension.Fields + [ffZ];
-      FDimension.Z := Depth;
-    end;
-
-    FInternalFormat := Format;
-    FPixelSize := Trunc(FormatGetSize(FInternalFormat));
-    FLineSize :=  Trunc(FormatGetSize(FInternalFormat) * Self.Width);
+    fInternalFormat := Format;
+    fPixelSize := Trunc(FormatGetSize(InternalFormat));
+    fRowSize :=  Trunc(FormatGetSize(InternalFormat) * Self.Width);
   end;
 end;
 
+{$ifdef GLB_SUPPORT_PNG_READ}
+{$ifdef GLB_LIB_PNG}
+procedure glBitmap_libPNG_read_func(png: png_structp; buffer: png_bytep; size: cardinal); cdecl;
+begin
+  TStream(png_get_io_ptr(png)).Read(buffer^, size);
+end;
+{$endif}
 
-function TglBitmap.LoadBmp(const Stream: TStream): Boolean;
+
+function TglBitmap.LoadPNG(Stream: TStream): Boolean;
+{$ifdef GLB_SDL_IMAGE}
 var
-  bmp: TBitmap;
-  StreamPos: Int64;
-  Temp: array[0..1]of char;
+  Surface: PSDL_Surface;
+  RWops: PSDL_RWops;
 begin
   Result := False;
 
-  // reading first two bytes to test file and set cursor back to begin
+  RWops := glBitmapCreateRWops(Stream);
+  try
+    if IMG_isPNG(RWops) > 0 then begin
+      Surface := IMG_LoadPNG_RW(RWops);
+      try
+        AssignFromSurface(Surface);
+        Result := True;
+      finally
+        SDL_FreeSurface(Surface);
+      end;
+    end;
+  finally
+    SDL_FreeRW(RWops);
+  end;
+end;
+{$endif}
+{$ifdef GLB_LIB_PNG}
+var
+  StreamPos: Int64;
+  signature: array [0..7] of byte;
+  png: png_structp;
+  png_info: png_infop;
+
+  TempHeight, TempWidth: Integer;
+  Format: TglBitmapInternalFormat;
+
+  png_data: pByte;
+  png_rows: array of pByte;
+  Row, LineSize: Integer;
+begin
+  Result := False;
+
+  if not init_libPNG then
+    raise Exception.Create('LoadPNG - unable to initialize libPNG.');
+
+  try
+    // signature
+    StreamPos := Stream.Position;
+    Stream.Read(signature, 8);
+    Stream.Position := StreamPos;
+
+    if png_check_sig(@signature, 8) <> 0 then begin
+      // png read struct
+      png := png_create_read_struct(PNG_LIBPNG_VER_STRING, nil, nil, nil);
+      if png = nil then
+        raise EglBitmapException.Create('LoadPng - couldn''t create read struct.');
+
+      // png info
+      png_info := png_create_info_struct(png);
+      if png_info = nil then begin
+        png_destroy_read_struct(@png, nil, nil);
+        raise EglBitmapException.Create('LoadPng - couldn''t create info struct.');
+      end;
+
+      // set read callback
+      png_set_read_fn(png, stream, glBitmap_libPNG_read_func);
+
+      // read informations
+      png_read_info(png, png_info);
+
+      // size 
+      TempHeight := png_get_image_height(png, png_info);
+      TempWidth := png_get_image_width(png, png_info);
+
+      // format
+      case png_get_color_type(png, png_info) of
+        PNG_COLOR_TYPE_GRAY:
+          Format := ifLuminance;
+        PNG_COLOR_TYPE_GRAY_ALPHA:
+          Format := ifLuminanceAlpha;
+        PNG_COLOR_TYPE_RGB:
+          Format := ifRGB8;
+        PNG_COLOR_TYPE_RGB_ALPHA:
+          Format := ifRGBA8;
+        else
+          raise EglBitmapException.Create ('LoadPng - Unsupported Colortype found.');
+      end;
+
+      // cut upper 8 bit from 16 bit formats
+      if png_get_bit_depth(png, png_info) > 8 then
+        png_set_strip_16(png);
+
+      // expand bitdepth smaller than 8
+      if png_get_bit_depth(png, png_info) < 8 then
+        png_set_expand(png);
+
+      // allocating mem for scanlines
+      LineSize := png_get_rowbytes(png, png_info);
+      GetMem(png_data, TempHeight * LineSize);
+      try
+        SetLength(png_rows, TempHeight);
+        for Row := Low(png_rows) to High(png_rows) do begin
+          png_rows[Row] := png_data;
+          Inc(png_rows[Row], Row * LineSize);
+        end;
+
+        // read complete image into scanlines
+        png_read_image(png, @png_rows[0]);
+
+        // read end
+        png_read_end(png, png_info);
+
+        // destroy read struct
+        png_destroy_read_struct(@png, @png_info, nil);
+
+        SetLength(png_rows, 0);
+
+        // set new data
+        SetDataPointer(png_data, Format, TempWidth, TempHeight);
+
+        Result := True;
+      except
+        FreeMem(png_data);
+        raise;
+      end;
+    end;
+  finally
+    quit_libPNG;
+  end;
+end;
+{$endif}
+{$ifdef GLB_PNGIMAGE}
+var
+  StreamPos: Int64;
+  Png: TPNGObject;
+  Header: Array[0..7] of Byte;
+  Row, Col, PixSize, LineSize: Integer;
+  NewImage, pSource, pDest, pAlpha: pByte;
+  Format: TglBitmapInternalFormat;
+
+const
+  PngHeader: Array[0..7] of Byte = (#137, #80, #78, #71, #13, #10, #26, #10);
+
+begin
+  Result := False;
+
   StreamPos := Stream.Position;
-  Stream.Read(Temp[0], 2);
+  Stream.Read(Header[0], SizeOf(Header));
   Stream.Position := StreamPos;
 
-  // if Bitmap then read file.
-  if ((Temp[0] = 'B') and (Temp[1] = 'M')) then begin
-    bmp := TBitmap.Create;
+  {Test if the header matches}
+  if Header = PngHeader then begin
+    Png := TPNGObject.Create;
     try
-      bmp.LoadFromStream(Stream);
-      if bmp.PixelFormat in [pfDevice, pf1Bit, pf4Bit, pf15Bit, pfCustom]
-        then bmp.PixelFormat := pf24bit;
-      Result := AssignFromBitmap(bmp);
+      Png.LoadFromStream(Stream);
+
+      case Png.Header.ColorType of
+        COLOR_GRAYSCALE:
+          Format := ifLuminance;
+        COLOR_GRAYSCALEALPHA:
+          Format := ifLuminanceAlpha;
+        COLOR_RGB:
+          Format := ifBGR8;
+        COLOR_RGBALPHA:
+          Format := ifBGRA8;
+        else
+          raise EglBitmapException.Create ('LoadPng - Unsupported Colortype found.');
+      end;
+
+      PixSize := Trunc(FormatGetSize(Format));
+      LineSize := Integer(Png.Header.Width) * PixSize;
+
+      GetMem(NewImage, LineSize * Integer(Png.Header.Height));
+      try
+        pDest := NewImage;
+
+        case Png.Header.ColorType of
+          COLOR_RGB, COLOR_GRAYSCALE:
+            begin
+              for Row := 0 to Png.Height -1 do begin
+                Move (Png.Scanline[Row]^, pDest^, LineSize);
+                Inc(pDest, LineSize);
+              end;
+            end;
+          COLOR_RGBALPHA, COLOR_GRAYSCALEALPHA:
+            begin
+              PixSize := PixSize -1;
+
+              for Row := 0 to Png.Height -1 do begin
+                pSource := Png.Scanline[Row];
+                pAlpha := pByte(Png.AlphaScanline[Row]);
+
+                for Col := 0 to Png.Width -1 do begin
+                  Move (pSource^, pDest^, PixSize);
+                  Inc(pSource, PixSize);
+                  Inc(pDest, PixSize);
+
+                  pDest^ := pAlpha^;
+                  inc(pAlpha);
+                  Inc(pDest);
+                end;
+              end;
+            end;
+          else
+            raise EglBitmapException.Create ('LoadPng - Unsupported Colortype found.');
+        end;
+
+        SetDataPointer(NewImage, Format, Png.Header.Width, Png.Header.Height);
+
+        Result := True;
+      except
+        FreeMem(NewImage);
+        raise;
+      end;
     finally
-      bmp.Free;
+      Png.Free;
+    end;
+  end;
+end;
+{$endif}
+{$endif}
+
+
+{$ifdef GLB_LIB_JPEG}
+type
+  glBitmap_libJPEG_source_mgr_ptr = ^glBitmap_libJPEG_source_mgr;
+  glBitmap_libJPEG_source_mgr = record
+    pub: jpeg_source_mgr;
+
+    SrcStream: TStream;
+    SrcBuffer: array [1..4096] of byte;
+  end;
+
+
+  glBitmap_libJPEG_dest_mgr_ptr = ^glBitmap_libJPEG_dest_mgr;
+  glBitmap_libJPEG_dest_mgr = record
+    pub: jpeg_destination_mgr;
+
+    DestStream: TStream;
+    DestBuffer: array [1..4096] of byte;
+  end;
+
+
+
+procedure glBitmap_libJPEG_error_exit(cinfo: j_common_ptr); cdecl;
+//var
+//  Msg: String;
+begin
+//  SetLength(Msg, 256);
+//  cinfo^.err^.format_message(cinfo, pChar(Msg));
+
+//  Writeln('ERROR [' + IntToStr(cinfo^.err^.msg_code) + '] ' + Msg);
+
+//  cinfo^.global_state := 0;
+
+//  jpeg_abort(cinfo);
+end;
+
+
+procedure glBitmap_libJPEG_output_message(cinfo: j_common_ptr); cdecl;
+//var
+//  Msg: String;
+begin
+//  SetLength(Msg, 256);
+//  cinfo^.err^.format_message(cinfo, pChar(Msg));
+
+//  Writeln('OUTPUT [' + IntToStr(cinfo^.err^.msg_code) + '] ' + Msg);
+
+//  cinfo^.global_state := 0;
+end;
+
+
+procedure glBitmap_libJPEG_init_source(cinfo: j_decompress_ptr); cdecl;
+begin
+end;
+
+
+function glBitmap_libJPEG_fill_input_buffer(cinfo: j_decompress_ptr): boolean; cdecl;
+var
+  src: glBitmap_libJPEG_source_mgr_ptr;
+  bytes: integer;
+begin
+  src := glBitmap_libJPEG_source_mgr_ptr(cinfo^.src);
+
+  bytes := src^.SrcStream.Read(src^.SrcBuffer[1], 4096);
+	if (bytes <= 0) then begin
+		src^.SrcBuffer[1] := $FF;
+		src^.SrcBuffer[2] := JPEG_EOI;
+		bytes := 2;
+	end;
+
+	src^.pub.next_input_byte := @(src^.SrcBuffer[1]);
+	src^.pub.bytes_in_buffer := bytes;
+
+  result := true;
+end;
+
+
+procedure glBitmap_libJPEG_skip_input_data(cinfo: j_decompress_ptr; num_bytes: Longint); cdecl;
+var
+  src: glBitmap_libJPEG_source_mgr_ptr;
+begin
+  src := glBitmap_libJPEG_source_mgr_ptr(cinfo^.src);
+
+  if num_bytes > 0 then begin
+    // wanted byte isn't in buffer so set stream position and read buffer
+    if num_bytes > src^.pub.bytes_in_buffer then begin
+      src^.SrcStream.Position := src^.SrcStream.Position + num_bytes - src^.pub.bytes_in_buffer;
+      src^.pub.fill_input_buffer(cinfo);
+    end else begin
+      // wanted byte is in buffer so only skip
+  		inc(src^.pub.next_input_byte, num_bytes);
+	  	dec(src^.pub.bytes_in_buffer, num_bytes);
     end;
   end;
 end;
 
 
-function TglBitmap.LoadJpg(const Stream: TStream): Boolean;
+procedure glBitmap_libJPEG_term_source(cinfo: j_decompress_ptr); cdecl;
+begin
+end;
+
+
+procedure glBitmap_libJPEG_init_destination(cinfo: j_compress_ptr); cdecl;
+begin
+end;
+
+
+function glBitmap_libJPEG_empty_output_buffer(cinfo: j_compress_ptr): boolean; cdecl;
+var
+  dest: glBitmap_libJPEG_dest_mgr_ptr;
+begin
+  dest := glBitmap_libJPEG_dest_mgr_ptr(cinfo^.dest);
+
+  if dest^.pub.free_in_buffer < Cardinal(Length(dest^.DestBuffer)) then begin
+    // write complete buffer
+    dest^.DestStream.Write(dest^.DestBuffer[1], SizeOf(dest^.DestBuffer));
+
+    // reset buffer
+    dest^.pub.next_output_byte := @dest^.DestBuffer[1];
+    dest^.pub.free_in_buffer := Length(dest^.DestBuffer);
+  end;
+
+  Result := True;
+end;
+
+
+procedure glBitmap_libJPEG_term_destination(cinfo: j_compress_ptr); cdecl;
+var
+  Idx: Integer;
+  dest: glBitmap_libJPEG_dest_mgr_ptr;
+begin
+  dest := glBitmap_libJPEG_dest_mgr_ptr(cinfo^.dest);
+
+  for Idx := Low(dest^.DestBuffer) to High(dest^.DestBuffer) do begin
+    // check for endblock
+    if (Idx < High(dest^.DestBuffer)) and (dest^.DestBuffer[Idx] = $FF) and (dest^.DestBuffer[Idx +1] = JPEG_EOI) then begin
+      // write endblock
+      dest^.DestStream.Write(dest^.DestBuffer[Idx], 2);
+
+      // leave
+      Break;
+    end else
+      dest^.DestStream.Write(dest^.DestBuffer[Idx], 1);
+  end;
+end;
+{$endif}
+
+
+{$ifdef GLB_SUPPORT_JPEG_READ}
+function TglBitmap.LoadJPEG(Stream: TStream): Boolean;
+{$ifdef GLB_SDL_IMAGE}
+var
+  Surface: PSDL_Surface;
+  RWops: PSDL_RWops;
+begin
+  Result := False;
+
+  RWops := glBitmapCreateRWops(Stream);
+  try
+    if IMG_isJPG(RWops) > 0 then begin
+      Surface := IMG_LoadJPG_RW(RWops);
+      try
+        AssignFromSurface(Surface);
+        Result := True;
+      finally
+        SDL_FreeSurface(Surface);
+      end;
+    end;
+  finally
+    SDL_FreeRW(RWops);
+  end;
+end;
+{$endif}
+{$ifdef GLB_LIB_JPEG}
+var
+  StreamPos: Int64;
+  Temp: array[0..1]of Byte;
+
+  jpeg: jpeg_decompress_struct;
+  jpeg_err: jpeg_error_mgr;
+
+  IntFormat: TglBitmapInternalFormat;
+  pImage: pByte;
+  TempHeight, TempWidth: Integer;
+
+  pTemp: pByte;
+  Row: Integer;
+begin
+  Result := False;
+
+  if not init_libJPEG then
+    raise Exception.Create('LoadJPG - unable to initialize libJPEG.');
+
+  try
+    // reading first two bytes to test file and set cursor back to begin
+    StreamPos := Stream.Position;
+    Stream.Read(Temp[0], 2);
+    Stream.Position := StreamPos;
+
+    // if Bitmap then read file.
+    if ((Temp[0] = $FF) and (Temp[1] = $D8)) then begin
+      FillChar(jpeg, SizeOf(jpeg_decompress_struct), $00);
+      FillChar(jpeg_err, SizeOf(jpeg_error_mgr), $00);
+
+      // error managment
+      jpeg.err := jpeg_std_error(@jpeg_err);
+      jpeg_err.error_exit := glBitmap_libJPEG_error_exit;
+      jpeg_err.output_message := glBitmap_libJPEG_output_message;
+
+      // decompression struct
+      jpeg_create_decompress(@jpeg);
+
+      // allocation space for streaming methods
+      jpeg.src := jpeg.mem^.alloc_small(@jpeg, JPOOL_PERMANENT, SizeOf(glBitmap_libJPEG_source_mgr));
+
+      // seeting up custom functions
+      with glBitmap_libJPEG_source_mgr_ptr(jpeg.src)^ do begin
+        pub.init_source       := glBitmap_libJPEG_init_source;
+        pub.fill_input_buffer := glBitmap_libJPEG_fill_input_buffer;
+        pub.skip_input_data   := glBitmap_libJPEG_skip_input_data;
+        pub.resync_to_restart := jpeg_resync_to_restart; // use default method
+        pub.term_source       := glBitmap_libJPEG_term_source;
+
+        pub.bytes_in_buffer := 0;     // forces fill_input_buffer on first read
+        pub.next_input_byte := nil;   // until buffer loaded
+
+        SrcStream := Stream;
+      end;
+
+      // set global decoding state
+      jpeg.global_state := DSTATE_START;
+
+      // read header of jpeg
+      jpeg_read_header(@jpeg, False);
+
+      // setting output parameter
+      case jpeg.jpeg_color_space of
+        JCS_GRAYSCALE:
+          begin
+            jpeg.out_color_space := JCS_GRAYSCALE;
+            IntFormat := ifLuminance;
+          end;
+        else
+          jpeg.out_color_space := JCS_RGB;
+          IntFormat := ifRGB8;
+      end;
+
+      // reading image
+      jpeg_start_decompress(@jpeg);
+
+      TempHeight := jpeg.output_height;
+      TempWidth := jpeg.output_width;
+
+      // creating new image
+      GetMem(pImage, FormatGetImageSize(glBitmapPosition(TempWidth, TempHeight), IntFormat));
+      try
+        pTemp := pImage;
+
+        for Row := 0 to TempHeight -1 do begin
+          jpeg_read_scanlines(@jpeg, @pTemp, 1);
+          Inc(pTemp, Trunc(FormatGetSize(IntFormat) * TempWidth));
+        end;
+
+        // finish decompression
+        jpeg_finish_decompress(@jpeg);
+
+        // destroy decompression
+        jpeg_destroy_decompress(@jpeg);
+
+        SetDataPointer(pImage, IntFormat, TempWidth, TempHeight);
+
+        Result := True;
+      except
+        FreeMem(pImage);
+        raise;
+      end;
+    end;
+  finally
+    quit_libJPEG;
+  end;
+end;
+{$endif}
+{$ifdef GLB_DELPHI_JPEG}
 var
   bmp: TBitmap;
   jpg: TJPEGImage;
   StreamPos: Int64;
-  Temp: array[0..1]of char;
+  Temp: array[0..1]of Byte;
 begin
   Result := False;
 
@@ -2546,7 +3708,7 @@ begin
   Stream.Position := StreamPos;
 
   // if Bitmap then read file.
-  if ((Temp[0] = chr($FF)) and (Temp[1] = chr($D8))) then begin
+  if ((Temp[0] = $FF) and (Temp[1] = $D8)) then begin
     bmp := TBitmap.Create;
     try
       jpg := TJPEGImage.Create;
@@ -2561,6 +3723,187 @@ begin
       bmp.Free;
     end;
   end;
+end;
+{$endif}
+{$endif}
+
+
+const
+  BMP_MAGIC          = $4D42;
+
+  BMP_COMP_RGB       = 0;
+  BMP_COMP_RLE8      = 1;
+  BMP_COMP_RLE4      = 2;
+  BMP_COMP_BITFIELDS = 3;
+
+type
+  TBMPHeader = packed record
+    bfType: Word;
+    bfSize: Cardinal;
+    bfReserved1: Word;
+    bfReserved2: Word;
+    bfOffBits: Cardinal;
+  end;
+
+  TBMPInfo = packed record
+    biSize: Cardinal;
+    biWidth: Longint;
+    biHeight: Longint;
+    biPlanes: Word;
+    biBitCount: Word;
+    biCompression: Cardinal;
+    biSizeImage: Cardinal;
+    biXPelsPerMeter: Longint;
+    biYPelsPerMeter: Longint;
+    biClrUsed: Cardinal;
+    biClrImportant: Cardinal;
+  end;
+
+  TBMPInfoOS = packed record
+    biSize: Cardinal;
+    biWidth: Longint;
+    biHeight: Longint;
+    biPlanes: Word;
+    biBitCount: Word;
+  end;
+
+//  TBMPPalette = record
+//    case Boolean of
+//      True : (Colors: array[Byte] of TRGBQUAD);
+//      False: (redMask, greenMask, blueMask: Cardinal);
+//  end;
+
+function TglBitmap.LoadBMP(Stream: TStream): Boolean;
+var
+  StreamPos: Int64;
+  Header: TBMPHeader;
+  Info: TBMPInfo;
+  NewImage, pData: pByte;
+
+  Format: TglBitmapInternalFormat;
+  LineSize, Padding, LineIdx: Integer;
+  RedMask, GreenMask, BlueMask, AlphaMask: Cardinal;
+
+  PaddingBuff: Cardinal;
+
+
+  function GetLineWidth : Integer;
+  begin
+    Result := ((Info.biWidth * Info.biBitCount + 31) and - 32) shr 3;
+  end;
+
+  
+begin
+  Result := False;
+
+  RedMask := 0;
+  GreenMask := 0;
+  BlueMask := 0;
+  Format := ifEmpty;
+
+  // Header
+  StreamPos := Stream.Position;
+  Stream.Read(Header, SizeOf(Header));
+
+  if Header.bfType = BMP_MAGIC then begin
+    Stream.Read(Info, SizeOf(Info));
+
+    // Check for Compression
+    if Info.biCompression <> BMP_COMP_RGB then begin
+      if Info.biCompression = BMP_COMP_BITFIELDS then begin
+        // Read Bitmasks for 16 or 32 Bit (24 Bit dosn't support Bitmasks!)
+        if (Info.biBitCount = 16) or (Info.biBitCount = 32) then begin
+          Stream.Read(RedMask,   SizeOf(Cardinal));
+          Stream.Read(GreenMask, SizeOf(Cardinal));
+          Stream.Read(BlueMask,  SizeOf(Cardinal));
+          Stream.Read(AlphaMask, SizeOf(Cardinal));
+        end;
+      end else begin
+        // RLE compression is unsupported
+        Stream.Position := StreamPos;
+
+        Exit;
+      end;
+    end;
+
+    // Skip palette
+    if Info.biBitCount < 16 then
+      Stream.Position := Stream.Position + Info.biClrUsed * 4;
+
+    // Jump to the data
+    Stream.Position := StreamPos + Header.bfOffBits;
+
+    // Select Format
+    case Info.biBitCount of
+      8 : Format := ifLuminance;
+      16:
+        begin
+          if (RedMask = 0) and (GreenMask = 0) and (BlueMask = 0) then begin
+              Format := ifRGB5A1;
+          end else begin
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask, ifLuminanceAlpha) then
+              Format := ifLuminanceAlpha;
+
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask, ifRGBA4) then
+              Format := ifRGBA4;
+
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, 0, ifRGB5A1) then
+              Format := ifRGB5A1;
+
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, 0, ifR5G6B5) then
+              Format := ifR5G6B5;
+          end;
+        end;
+      24: Format := ifBGR8;
+      32:
+        begin
+          if (RedMask = 0) and (GreenMask = 0) and (BlueMask = 0) then begin
+            Format := ifBGRA8;
+          end else begin
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask, ifRGBA8) then
+              Format := ifRGBA8;
+
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask, ifBGRA8) then
+              Format := ifBGRA8;
+
+            if FormatCheckFormat(RedMask, GreenMask, BlueMask, AlphaMask, ifRGB10A2) then
+              Format := ifRGB10A2;
+          end;
+        end;
+    end;
+
+    if Format <> ifEmpty then begin
+       LineSize := Trunc(Info.biWidth * FormatGetSize(Format));
+      Padding := GetLineWidth - LineSize;
+
+      // copying data
+      GetMem(NewImage, Info.biHeight * LineSize);
+      try
+        FillChar(NewImage^, Info.biHeight * LineSize, $FF);
+
+        // Set pData to last Line
+        pData := NewImage;
+        Inc(pData, LineSize * (Info.biHeight -1));
+
+        // Copy Image Data
+        for LineIdx := 0 to Info.biHeight - 1 do begin
+          Stream.Read(pData^, LineSize);
+          Dec(pData, LineSize);
+
+          Stream.Read(PaddingBuff, Padding);
+        end;
+
+        // Set new Image
+        SetDataPointer(NewImage, Format, Info.biWidth, Info.biHeight);
+
+        Result := True;
+      except
+        FreeMem(NewImage);
+        raise;
+      end;
+    end;
+  end
+    else Stream.Position := StreamPos;
 end;
 
 
@@ -2622,42 +3965,25 @@ type
   end;
 
   TDDSHeader = packed record
-(*
-    case boolean of
-    TRUE:
-    (
-*)
-      dwMagic: Cardinal;
-      dwSize: Cardinal;
-      dwFlags: Cardinal;
-      dwHeight: Cardinal;
-      dwWidth: Cardinal;
-      dwPitchOrLinearSize: Cardinal;
-      dwDepth: Cardinal;
-      dwMipMapCount: Cardinal;
-      dwReserved: array[0..10] of Cardinal;
-      PixelFormat: TDDSPixelFormat;
-      Caps: TDDSCaps;
-      dwReserved2: Cardinal;
-(*
-    );
-    FALSE:
-    (
-      Data: array[0..127] of byte;
-    );
-*)
-
+    dwMagic: Cardinal;
+    dwSize: Cardinal;
+    dwFlags: Cardinal;
+    dwHeight: Cardinal;
+    dwWidth: Cardinal;
+    dwPitchOrLinearSize: Cardinal;
+    dwDepth: Cardinal;
+    dwMipMapCount: Cardinal;
+    dwReserved: array[0..10] of Cardinal;
+    PixelFormat: TDDSPixelFormat;
+    Caps: TDDSCaps;
+    dwReserved2: Cardinal;
   end;
 
 
-function TglBitmap.LoadDDS(const Stream: TStream): Boolean;
-
+function TglBitmap.LoadDDS(Stream: TStream): Boolean;
 var
-
   Header: TDDSHeader;
-
   StreamPos: Int64;
-
   Y, LineSize: Cardinal;
 
 //  MipMapCount, X, Y, XSize, YSize: Cardinal;
@@ -2665,25 +3991,14 @@ var
   NewImage, pData: pByte;
   Format: TglBitmapInternalFormat;
 
+
   function RaiseEx : Exception;
   begin
-    Result := EglBitmapException.Create('TglBitmap.LoadDDS - unsupported Pixelformat found.');
+    Result := EglBitmapException.Create('LoadDDS - unsupported Pixelformat found.');
   end;
 
+  
   function GetInternalFormat: TglBitmapInternalFormat;
-
-    function GetBitSize(BitSet: Cardinal): Integer;
-    begin
-      Result := 0;
-
-      while BitSet > 0 do begin
-        if (BitSet and $1) = 1
-          then Inc(Result);
-
-        BitSet := BitSet shr 1;
-      end;
-    end;
-
   begin
     with Header.PixelFormat do begin
       // Compresses
@@ -2692,8 +4007,8 @@ var
           D3DFMT_DXT1: Result := ifDXT1;
           D3DFMT_DXT3: Result := ifDXT3;
           D3DFMT_DXT5: Result := ifDXT5;
-        else
-          raise RaiseEx;
+          else
+            raise RaiseEx;
         end;
       end else
 
@@ -2702,9 +4017,10 @@ var
         case dwRGBBitCount of
            8:
             begin
-              if dwFlags and DDPF_ALPHAPIXELS > 0
-                then Result := ifAlpha
-                else Result := ifLuminance;
+              if dwFlags and DDPF_ALPHAPIXELS > 0 then
+                Result := ifAlpha
+              else
+                Result := ifLuminance;
             end;
           16:
             begin
@@ -2723,22 +4039,24 @@ var
             end;
           24:
             begin
-              if dwRBitMask > dwBBitMask
-                then Result := ifBGR8
-                else Result := ifRGB8;
+              if dwRBitMask > dwBBitMask then
+                Result := ifBGR8
+              else
+                Result := ifRGB8;
             end;
           32:
             begin
-              if GetBitSize(dwRBitMask) = 10
-                then Result := ifRGB10A2
-                else
+              if GetBitSize(dwRBitMask) = 10 then
+                Result := ifRGB10A2
+              else
 
-              if dwRBitMask > dwBBitMask
-                then Result := ifBGRA8
-                else Result := ifRGBA8;
+              if dwRBitMask > dwBBitMask then
+                Result := ifBGRA8
+              else
+                Result := ifRGBA8;
             end;
-        else
-          raise RaiseEx;
+          else
+            raise RaiseEx;
         end;
       end else
         raise RaiseEx;
@@ -2768,7 +4086,6 @@ begin
 
   GetMem(NewImage, Header.dwHeight * LineSize);
   try
-
     pData := NewImage;
 
     // Compressed
@@ -2792,18 +4109,19 @@ begin
     end
       else raise RaiseEx;
 
-    SetDataPtr(NewImage, Format, Header.dwWidth, Header.dwHeight);
+    SetDataPointer(NewImage, Format, Header.dwWidth, Header.dwHeight);
 
     Result := True;
   except
     FreeMem(NewImage);
+    raise;
   end;
 end;
 
 
 type
   TTGAHeader = packed record
-    aType: Byte;
+    ImageID: Byte;
     ColorMapType: Byte;
     ImageType: Byte;
     ColorMapSpec: Array[0..4] of Byte;
@@ -2821,13 +4139,18 @@ const
   TGA_COMPRESSED_RGB = 10;
   TGA_COMPRESSED_GRAY = 11;
 
-function TglBitmap.LoadTga(const Stream: TStream): Boolean;
+
+
+function TglBitmap.LoadTGA(Stream: TStream): Boolean;
 var
   Header: TTGAHeader;
   NewImage, pData: PByte;
   StreamPos: Int64;
   PixelSize, LineSize, YStart, YEnd, YInc: Integer;
   Format: TglBitmapInternalFormat;
+
+const
+  CACHE_SIZE = $4000;
 
   procedure ReadUncompressed;
   var
@@ -2845,17 +4168,26 @@ var
     end;
   end;
 
+
   procedure ReadCompressed;
   var
+    HeaderWidth, HeaderHeight: Integer;
+    LinePixelsRead, ImgPixelsRead, ImgPixelsToRead: Integer;
+
+    Cache: PByte;
+    CacheSize, CachePos: Integer;
+
     Temp: Byte;
-    TempBuf: Array [0..3]of Byte;
-    Idx, LinePixels, PixelsRead, PixelsToRead: Integer;
-    CacheStream: TMemoryStream;
+    TempBuf: Array [0..15] of Byte;
+
+    PixelRepeat: Boolean;
+    PixelToRead, TempPixels: Integer;
+
 
     procedure CheckLine;
     begin
-      if LinePixels >= Header.Width then begin
-        LinePixels := 0;
+      if LinePixelsRead >= HeaderWidth then begin
+        LinePixelsRead := 0;
         pData := NewImage;
         Inc(YStart, YInc);
         Inc(pData, YStart * LineSize);
@@ -2863,74 +4195,127 @@ var
     end;
 
 
-    procedure Read(var Buffer; Count: Integer);
+    procedure CachedRead(var Buffer; Count: Integer);
     var
       BytesRead: Integer;
     begin
-      if (CacheStream.Position + Count) > CacheStream.Size then begin
+      if (CachePos + Count) > CacheSize then begin
         BytesRead := 0;
 
         // Read Data
-        if CacheStream.Size - CacheStream.Position > 0 then begin
-          BytesRead := CacheStream.Size - CacheStream.Position;
-          CacheStream.Read(Buffer, CacheStream.Size - CacheStream.Position);
+        if CacheSize - CachePos > 0 then begin
+          BytesRead := CacheSize - CachePos;
+
+          Move(pByteArray(Cache)^[CachePos], Buffer, BytesRead);
+          Inc(CachePos, BytesRead);
         end;
 
         // Reload Data
-        CacheStream.Size := Min(2048, Stream.Size - Stream.Position);
-        CacheStream.Position := 0;
-        CacheStream.CopyFrom(Stream, CacheStream.Size);
-        CacheStream.Position := 0;
+        CacheSize := Min(CACHE_SIZE, Stream.Size - Stream.Position);
+        Stream.Read(Cache^, CacheSize);
+        CachePos := 0;
 
         // Read else
-        if Count - BytesRead > 0 then
-          CacheStream.Read(pByteArray(@Buffer)^[BytesRead], Count - BytesRead);
-      end else
-        CacheStream.Read(Buffer, Count);
+        if Count - BytesRead > 0 then begin
+          Move(pByteArray(Cache)^[CachePos], TByteArray(Buffer)[BytesRead], Count - BytesRead);
+          Inc(CachePos, Count - BytesRead);
+        end;
+      end else begin
+        Move(pByteArray(Cache)^[CachePos], Buffer, Count);
+        Inc(CachePos, Count);
+      end;
     end;
 
 
   begin
-    CacheStream := TMemoryStream.Create;
+    CacheSize := 0;
+    CachePos := 0;
+
+    HeaderWidth := Header.Width;
+    HeaderHeight := Header.Height;
+
+    GetMem(Cache, CACHE_SIZE); // 16K Buffer
     try
-      PixelsToRead := Header.Width * Header.Height;
-      PixelsRead := 0;
-      LinePixels := 0;
+      ImgPixelsToRead := HeaderWidth * HeaderHeight;
+      ImgPixelsRead := 0;
+      LinePixelsRead := 0;
 
       pData := NewImage;
       Inc(pData, YStart * LineSize);
 
       // Read until all Pixels
       repeat
-        Read(Temp, 1);
+        CachedRead(Temp, 1);
 
-        if Temp and $80 > 0 then begin
-          Read(TempBuf, PixelSize);
+        PixelRepeat := Temp and $80 > 0;
+        PixelToRead := (Temp and $7F) + 1; 
+
+        Inc(ImgPixelsRead, PixelToRead);
+
+        if PixelRepeat then begin
+          // repeat one pixel x times
+          CachedRead(TempBuf[0], PixelSize);
 
           // repeat Pixel
-          for Idx := 0 to Temp and $7F do begin
+          while PixelToRead > 0 do begin
             CheckLine;
 
-            Move(TempBuf, pData^, PixelSize);
-            Inc(pData, PixelSize);
+            TempPixels := HeaderWidth - LinePixelsRead;
+            if PixelToRead < TempPixels then
+              TempPixels := PixelToRead;
+              
+            Inc(LinePixelsRead, TempPixels);
+            Dec(PixelToRead, TempPixels);
 
-            Inc(PixelsRead);
-            Inc(LinePixels);
+            while TempPixels > 0 do begin
+              case PixelSize of
+                1:
+                  begin
+                    pData^ := TempBuf[0];
+                    Inc(pData);
+                  end;
+                2:
+                  begin
+                    pWord(pData)^ := pWord(@TempBuf[0])^;
+                    Inc(pData, 2);
+                  end;
+                3:
+                  begin
+                    pWord(pData)^ := pWord(@TempBuf[0])^;
+                    Inc(pData, 2);
+                    pData^ := TempBuf[2];
+                    Inc(pData);
+                  end;
+                4:
+                  begin
+                    pDWord(pData)^ := pDWord(@TempBuf[0])^;
+                    Inc(pData, 4);
+                  end;
+              end;
+
+              Dec(TempPixels);
+            end;
           end;
         end else begin
-          for Idx := 0 to Temp and $7F do begin
+          // copy x pixels
+          while PixelToRead > 0 do begin
             CheckLine;
 
-            Read(pData^, PixelSize);
-            Inc(pData, PixelSize);
+            TempPixels := HeaderWidth - LinePixelsRead;
+            if PixelToRead < TempPixels then
+              TempPixels := PixelToRead;
 
-            Inc(PixelsRead);
-            Inc(LinePixels);
+            CachedRead(pData^, PixelSize * TempPixels);
+            Inc(pData, PixelSize * TempPixels);
+
+            Inc(LinePixelsRead, TempPixels);
+
+            Dec(PixelToRead, TempPixels);
           end;
         end;
-      until PixelsRead >= PixelsToRead;
+      until ImgPixelsRead >= ImgPixelsToRead;
     finally
-      FreeAndNil(CacheStream);
+      FreeMem(Cache)
     end;
   end;
 
@@ -2940,7 +4325,6 @@ begin
   // reading header to test file and set cursor back to begin
   StreamPos := Stream.Position;
   Stream.Read(Header, SizeOf(Header));
-  Stream.Position := StreamPos;
 
   // no colormapped files
   if (Header.ColorMapType = 0) then begin
@@ -2950,18 +4334,19 @@ begin
         16: Format := ifLuminanceAlpha;
         24: Format := ifBGR8;
         32: Format := ifBGRA8;
-      else
-        raise EglBitmapException.Create('TglBitmap.LoadTga - unsupported BitsPerPixel found.');
+        else
+          raise EglBitmapException.Create('LoadTga - unsupported BitsPerPixel found.');
       end;
+
+      // skip image ID
+      if Header.ImageID <> 0 then
+        Stream.Position := Stream.Position + Header.ImageID;
 
       PixelSize := Trunc(FormatGetSize(Format));
       LineSize := Trunc(Header.Width * PixelSize);
 
       GetMem(NewImage, LineSize * Header.Height);
       try
-        // Set Streampos to start of data
-        Stream.Position := StreamPos + SizeOf(Header);
-
         // Row direction
         if (Header.ImageDes and $20 > 0) then begin
           YStart := 0;
@@ -2981,110 +4366,112 @@ begin
             ReadCompressed;
         end;
 
-        SetDataPtr(NewImage, Format, Header.Width, Header.Height);
+        SetDataPointer(NewImage, Format, Header.Width, Header.Height);
 
         Result := True;
       except
         FreeMem(NewImage);
+        raise;
       end;
-    end;
-  end;
+    end
+      else Stream.Position := StreamPos;
+  end
+    else Stream.Position := StreamPos;
 end;
 
 
-{$ifdef pngimage}
-function TglBitmap.LoadPng(const Stream: TStream): Boolean;
-var
-  StreamPos: Int64;
-  Png: TPNGObject;
-  Header: Array[0..7] of Char;
-  Row, Col, PixSize, LineSize: Integer;
-  NewImage, pSource, pDest, pAlpha: pByte;
-  Format: TglBitmapInternalFormat;
-
-const
-  PngHeader: Array[0..7] of Char = (#137, #80, #78, #71, #13, #10, #26, #10);
-
+{$ifdef GLB_SUPPORT_PNG_WRITE}
+{$ifdef GLB_LIB_PNG}
+procedure glBitmap_libPNG_write_func(png: png_structp; buffer: png_bytep; size: cardinal); cdecl;
 begin
-  Result := False;
-
-  StreamPos := Stream.Position;
-  Stream.Read(Header[0], SizeOf(Header));
-  Stream.Position := StreamPos;
-
-  {Test if the header matches}
-  if Header = PngHeader then begin
-    Png := TPNGObject.Create;
-    try
-      Png.LoadFromStream(Stream);
-
-      case Png.Header.ColorType of
-        COLOR_GRAYSCALE:
-          Format := ifLuminance;
-        COLOR_GRAYSCALEALPHA:
-          Format := ifLuminanceAlpha;
-        COLOR_RGB:
-          Format := ifBGR8;
-        COLOR_RGBALPHA:
-          Format := ifBGRA8;
-      else
-        raise EglBitmapException.Create ('TglBitmap.LoadPng - Unsupported Colortype found.');
-      end;
-
-      PixSize := Trunc(FormatGetSize(Format));
-      LineSize := Integer(Png.Header.Width) * PixSize;
-
-      GetMem(NewImage, LineSize * Integer(Png.Header.Height));
-      try
-        pDest := NewImage;
-
-        case Png.Header.ColorType of
-          COLOR_RGB, COLOR_GRAYSCALE:
-            begin
-              for Row := 0 to Png.Height -1 do begin
-                Move (Png.Scanline[Row]^, pDest^, LineSize);
-                Inc(pDest, LineSize);
-              end;
-            end;
-          COLOR_RGBALPHA, COLOR_GRAYSCALEALPHA:
-            begin
-              PixSize := PixSize -1;
-
-              for Row := 0 to Png.Height -1 do begin
-                pSource := Png.Scanline[Row];
-                pAlpha := pByte(Png.AlphaScanline[Row]);
-
-                for Col := 0 to Png.Width -1 do begin
-                  Move (pSource^, pDest^, PixSize);
-                  Inc(pSource, PixSize);
-                  Inc(pDest, PixSize);
-
-                  pDest^ := pAlpha^;
-                  inc(pAlpha);
-                  Inc(pDest);
-                end;
-              end;
-            end;
-          else
-            raise EglBitmapException.Create ('TglBitmap.LoadPng - Unsupported Colortype found.');
-        end;
-
-        SetDataPtr(NewImage, Format, Png.Header.Width, Png.Header.Height);
-
-        Result := True;
-      except
-        FreeMem(NewImage);
-      end;
-    finally
-      Png.Free;
-    end;
-  end;
+  TStream(png_get_io_ptr(png)).Write(buffer^, size);
 end;
 {$endif}
 
+procedure TglBitmap.SavePNG(Stream: TStream);
+{$ifdef GLB_LIB_PNG}
+var
+  png: png_structp;
+  png_info: png_infop;
+  png_rows: array of pByte;
+  LineSize: Integer;
+  ColorType: Integer;
+  Row: Integer;
+begin
+  if not (ftPNG in FormatGetSupportedFiles (InternalFormat)) then
+    raise EglBitmapUnsupportedInternalFormat.Create('SavePng - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-{$ifdef pngimage}
-procedure TglBitmap.SavePng(const Stream: TStream); 
+  if not init_libPNG then
+    raise Exception.Create('SavePNG - unable to initialize libPNG.');
+
+  try
+    case FInternalFormat of
+      ifAlpha, ifLuminance, ifDepth8:
+        ColorType := PNG_COLOR_TYPE_GRAY;
+      ifLuminanceAlpha:
+        ColorType := PNG_COLOR_TYPE_GRAY_ALPHA;
+      ifBGR8, ifRGB8:
+        ColorType := PNG_COLOR_TYPE_RGB;
+      ifBGRA8, ifRGBA8:
+        ColorType := PNG_COLOR_TYPE_RGBA;
+      else
+        raise EglBitmapUnsupportedInternalFormat.Create('SavePng - ' + UNSUPPORTED_INTERNAL_FORMAT);
+    end;
+
+    LineSize := Trunc(FormatGetSize(FInternalFormat) * Width);
+
+    // creating array for scanline
+    SetLength(png_rows, Height);
+    try
+      for Row := 0 to Height - 1 do begin
+        png_rows[Row] := Data;
+        Inc(png_rows[Row], Row * LineSize)
+      end;
+
+      // write struct
+      png := png_create_write_struct(PNG_LIBPNG_VER_STRING, nil, nil, nil);
+      if png = nil then
+        raise EglBitmapException.Create('SavePng - couldn''t create write struct.');
+
+      // create png info
+      png_info := png_create_info_struct(png);
+      if png_info = nil then begin
+        png_destroy_write_struct(@png, nil);
+        raise EglBitmapException.Create('SavePng - couldn''t create info struct.');
+      end;
+
+      // set read callback
+      png_set_write_fn(png, stream, glBitmap_libPNG_write_func, nil);
+
+      // set compression
+      png_set_compression_level(png, 6);
+
+      if InternalFormat in [ifBGR8, ifBGRA8] then
+        png_set_bgr(png);
+
+      // setup header
+      png_set_IHDR(png, png_info, Width, Height, 8, ColorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+      // write info
+      png_write_info(png, png_info);
+
+      // write image data
+      png_write_image(png, @png_rows[0]);
+
+      // write end
+      png_write_end(png, png_info);
+
+      // destroy write struct
+      png_destroy_write_struct(@png, @png_info);
+    finally
+      SetLength(png_rows, 0);
+    end;
+  finally
+    quit_libPNG;
+  end;
+end;
+{$endif}
+{$ifdef GLB_PNGIMAGE}
 var
   Png: TPNGObject;
 
@@ -3092,229 +4479,543 @@ var
   X, Y, PixSize: Integer;
   ColorType: Cardinal;
   Alpha: Boolean;
+
+  pTemp: pByte;
+  Temp: Byte;
 begin
-  if ftPNG in FormatGetSupportedFiles (InternalFormat) then begin
-    case FInternalFormat of
-      ifAlpha, ifLuminance, ifDepth8:
-        begin
-          ColorType := COLOR_GRAYSCALE;
-          PixSize := 1;
-          Alpha := False;
-        end;
-      ifLuminanceAlpha:
-        begin
-          ColorType := COLOR_GRAYSCALEALPHA;
-          PixSize := 1;
-          Alpha := True;
-        end;
-      ifBGR8, ifRGB8:
-        begin
-          ColorType := COLOR_RGB;
-          PixSize := 3;
-          Alpha := False;
-        end;
-      ifBGRA8, ifRGBA8:
-        begin
-          ColorType := COLOR_RGBALPHA;
-          PixSize := 3;
-          Alpha := True
-        end;
-      else
-        raise EglBitmapUnsupportedInternalFormat.Create('SavePng - ' + UNSUPPORTED_INTERNAL_FORMAT);
-    end;
+  if not (ftPNG in FormatGetSupportedFiles (InternalFormat)) then 
+    raise EglBitmapUnsupportedInternalFormat.Create('SavePng - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-    Png := TPNGObject.CreateBlank(ColorType, 8, Width, Height);
-    try
-      // Copy ImageData
-      pSource := GetData;
-      for Y := 0 to Height -1 do begin
-        pDest := png.ScanLine[Y];
+  case FInternalFormat of
+    ifAlpha, ifLuminance, ifDepth8:
+      begin
+        ColorType := COLOR_GRAYSCALE;
+        PixSize := 1;
+        Alpha := False;
+      end;
+    ifLuminanceAlpha:
+      begin
+        ColorType := COLOR_GRAYSCALEALPHA;
+        PixSize := 1;
+        Alpha := True;
+      end;
+    ifBGR8, ifRGB8:
+      begin
+        ColorType := COLOR_RGB;
+        PixSize := 3;
+        Alpha := False;
+      end;
+    ifBGRA8, ifRGBA8:
+      begin
+        ColorType := COLOR_RGBALPHA;
+        PixSize := 3;
+        Alpha := True
+      end;
+    else
+      raise EglBitmapUnsupportedInternalFormat.Create('SavePng - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  end;
 
-        for X := 0 to Width -1 do begin
-          Move(pSource^, pDest^, PixSize);
+  Png := TPNGObject.CreateBlank(ColorType, 8, Width, Height);
+  try
+    // Copy ImageData
+    pSource := Data;
+    for Y := 0 to Height -1 do begin
+      pDest := png.ScanLine[Y];
 
-          Inc(pDest, PixSize);
-          Inc(pSource, PixSize);
+      for X := 0 to Width -1 do begin
+        Move(pSource^, pDest^, PixSize);
 
-          if Alpha then begin
-            png.AlphaScanline[Y]^[X] := pSource^;
-            Inc(pSource);
-          end;
+        Inc(pDest, PixSize);
+        Inc(pSource, PixSize);
+
+        if Alpha then begin
+          png.AlphaScanline[Y]^[X] := pSource^;
+          Inc(pSource);
         end;
       end;
 
-      // Save to Stream
-      Png.SaveToStream(Stream);
-    finally
-      FreeAndNil(Png);
+      // convert RGB line to BGR
+      if InternalFormat in [ifRGB8, ifRGBA8] then begin
+        pTemp := png.ScanLine[Y];
+
+        for X := 0 to Width -1 do begin
+          Temp := pByteArray(pTemp)^[0];
+          pByteArray(pTemp)^[0] := pByteArray(pTemp)^[2];
+          pByteArray(pTemp)^[2] := Temp;
+
+          Inc(pTemp, 3);
+        end;
+      end;
     end;
-  end
-    else raise EglBitmapUnsupportedInternalFormat.Create('SavePng - ' + UNSUPPORTED_INTERNAL_FORMAT);
+
+    // Save to Stream
+    Png.CompressionLevel := 6; 
+    Png.SaveToStream(Stream);
+  finally
+    FreeAndNil(Png);
+  end;
 end;
+{$endif}
 {$endif}
 
 
-procedure TglBitmap.SaveDDS(const Stream: TStream);
+procedure TglBitmap.SaveDDS(Stream: TStream);
 var
   Header: TDDSHeader;
   Pix: TglBitmapPixelData;
 begin
-  if FormatIsUncompressed(FInternalFormat) then begin
-    if FInternalFormat = ifAlpha
-      then FormatPreparePixel(Pix, ifLuminance)
-      else FormatPreparePixel(Pix, FInternalFormat);
+  if not FormatIsUncompressed(InternalFormat) then
+    raise EglBitmapUnsupportedInternalFormat.Create('SaveDDS - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-    // Generell
-    ZeroMemory(@Header, SizeOf(Header));
+  if InternalFormat = ifAlpha then
+    FormatPreparePixel(Pix, ifLuminance)
+  else
+    FormatPreparePixel(Pix, InternalFormat);
 
-    Header.dwMagic := DDS_MAGIC;
-    Header.dwSize := 124;
-    Header.dwFlags := DDSD_PITCH or DDSD_CAPS or DDSD_PIXELFORMAT;
+  // Generell
+  FillChar(Header, SizeOf(Header), 0);
 
-    if Width > 0 then begin
-      Header.dwWidth := Width;
-      Header.dwFlags := Header.dwFlags or DDSD_WIDTH;
-    end;
+  Header.dwMagic := DDS_MAGIC;
+  Header.dwSize := 124;
+  Header.dwFlags := DDSD_PITCH or DDSD_CAPS or DDSD_PIXELFORMAT;
 
-    if Height > 0 then begin
-      Header.dwHeight := Height;
-      Header.dwFlags := Header.dwFlags or DDSD_HEIGHT;
-    end;
+  if Width > 0 then begin
+    Header.dwWidth := Width;
+    Header.dwFlags := Header.dwFlags or DDSD_WIDTH;
+  end;
 
-    if Depth > 0 then begin
-      Header.dwDepth := Depth;
-      Header.dwFlags := Header.dwFlags or DDSD_DEPTH;
-    end;
+  if Height > 0 then begin
+    Header.dwHeight := Height;
+    Header.dwFlags := Header.dwFlags or DDSD_HEIGHT;
+  end;
 
-    Header.dwPitchOrLinearSize := FLineSize;
-    Header.dwMipMapCount := 1;
+  Header.dwPitchOrLinearSize := fRowSize;
+  Header.dwMipMapCount := 1;
 
-    // Caps
-    Header.Caps.dwCaps1 := DDSCAPS_TEXTURE;
+  // Caps
+  Header.Caps.dwCaps1 := DDSCAPS_TEXTURE;
 
-    // Pixelformat
-    Header.PixelFormat.dwSize := Sizeof(Header.PixelFormat);
-    Header.PixelFormat.dwFlags := DDPF_RGB;
+  // Pixelformat
+  Header.PixelFormat.dwSize := Sizeof(Header.PixelFormat);
+  Header.PixelFormat.dwFlags := DDPF_RGB;
 
-    if FormatHasAlpha(FInternalFormat) and (FInternalFormat <> ifAlpha)
-      then Header.PixelFormat.dwFlags := Header.PixelFormat.dwFlags or DDPF_ALPHAPIXELS;
+  if FormatHasAlpha(InternalFormat) and (InternalFormat <> ifAlpha)
+    then Header.PixelFormat.dwFlags := Header.PixelFormat.dwFlags or DDPF_ALPHAPIXELS;
 
-    Header.PixelFormat.dwRGBBitCount  := Trunc(FormatGetSize(FInternalFormat) * 8);
-    Header.PixelFormat.dwRBitMask     := Pix.PixelDesc.RedRange   shl Pix.PixelDesc.RedShift;
-    Header.PixelFormat.dwGBitMask     := Pix.PixelDesc.GreenRange shl Pix.PixelDesc.GreenShift;
-    Header.PixelFormat.dwBBitMask     := Pix.PixelDesc.BlueRange  shl Pix.PixelDesc.BlueShift;
-    Header.PixelFormat.dwAlphaBitMask := Pix.PixelDesc.AlphaRange shl Pix.PixelDesc.AlphaShift;
+  Header.PixelFormat.dwRGBBitCount  := Trunc(FormatGetSize(InternalFormat) * 8);
+  Header.PixelFormat.dwRBitMask     := Pix.PixelDesc.RedRange   shl Pix.PixelDesc.RedShift;
+  Header.PixelFormat.dwGBitMask     := Pix.PixelDesc.GreenRange shl Pix.PixelDesc.GreenShift;
+  Header.PixelFormat.dwBBitMask     := Pix.PixelDesc.BlueRange  shl Pix.PixelDesc.BlueShift;
+  Header.PixelFormat.dwAlphaBitMask := Pix.PixelDesc.AlphaRange shl Pix.PixelDesc.AlphaShift;
 
-    // Write
-    Stream.Write(Header, SizeOf(Header));
+  // Write
+  Stream.Write(Header, SizeOf(Header));
 
-    Stream.Write(GetData^, FormatGetImageSize(glBitmapPosition(Width, Height, Depth), FInternalFormat));
-  end
-    else raise EglBitmapUnsupportedInternalFormat.Create('SaveDDS - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  Stream.Write(Data^, FormatGetImageSize(glBitmapPosition(Width, Height), InternalFormat));
 end;
 
 
-procedure TglBitmap.SaveTga(const Stream: TStream);
+procedure TglBitmap.SaveTGA(Stream: TStream);
 var
   Header: TTGAHeader;
+  Size: Integer;
+  pTemp: pByte;
+
+
+  procedure ConvertData(pTemp: pByte);
+  var
+    Idx, PixelSize: Integer;
+    Temp: byte;
+  begin
+    PixelSize := fPixelSize;
+
+    for Idx := 0 to Height * Width do begin
+      Temp := pByteArray(pTemp)^[2];
+      pByteArray(pTemp)^[2] := pByteArray(pTemp)^[0];
+      pByteArray(pTemp)^[0] := Temp;
+
+      Inc(pTemp, PixelSize);
+    end;
+  end;
+
+
 begin
-  if ftTGA in FormatGetSupportedFiles (InternalFormat) then begin
-    ZeroMemory(@Header, SizeOf(Header));
-    case FInternalFormat of
-      ifAlpha, ifLuminance, ifDepth8, ifLuminanceAlpha:
-        begin
-          Header.ImageType := TGA_UNCOMPRESSED_GRAY;
-          if FInternalFormat <> ifLuminanceAlpha
-            then Header.Bpp := 8
-            else Header.Bpp := 16;
-        end;
-      ifBGR8, ifBGRA8:
-        begin
-          Header.ImageType := TGA_UNCOMPRESSED_RGB;
-          if FInternalFormat <> ifBGRA8
-            then Header.Bpp := 24
-            else Header.Bpp := 32;
-        end;
+  if not (ftTGA in FormatGetSupportedFiles (InternalFormat)) then 
+    raise EglBitmapUnsupportedInternalFormat.Create('SaveTGA - ' + UNSUPPORTED_INTERNAL_FORMAT);
+
+  FillChar(Header, SizeOf(Header), 0);
+
+  case InternalFormat of
+    ifAlpha, ifLuminance, ifDepth8:
+      begin
+        Header.ImageType := TGA_UNCOMPRESSED_GRAY;
+        Header.Bpp := 8;
+      end;
+    ifLuminanceAlpha:
+      begin
+        Header.ImageType := TGA_UNCOMPRESSED_GRAY;
+        Header.Bpp := 16;
+      end;
+    ifRGB8, ifBGR8:
+      begin
+        Header.ImageType := TGA_UNCOMPRESSED_RGB;
+        Header.Bpp := 24;
+      end;
+    ifRGBA8, ifBGRA8:
+      begin
+        Header.ImageType := TGA_UNCOMPRESSED_RGB;
+        Header.Bpp := 32;
+      end;
+    else
+      raise EglBitmapUnsupportedInternalFormat.Create('SaveTGA - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  end;
+
+  Header.Width := Width;
+  Header.Height := Height;
+  Header.ImageDes := $20;
+
+  if FormatHasAlpha(InternalFormat) then
+    Header.ImageDes := Header.ImageDes or $08;
+
+  Stream.Write(Header, SizeOf(Header));
+
+  // convert RGB(A) to BGR(A)
+  Size := FormatGetImageSize(glBitmapPosition(Width, Height), InternalFormat);
+  if InternalFormat in [ifRGB8, ifRGBA8] then begin
+    GetMem(pTemp, Size);
+  end else
+    pTemp := Data;
+
+  try
+    // convert data
+    if InternalFormat in [ifRGB8, ifRGBA8] then begin
+      Move(Data^, pTemp^, Size);
+      ConvertData(pTemp);
     end;
 
-    Header.Width := Width;
-    Header.Height := Height;
-    Header.ImageDes := $20;
-
-    if FInternalFormat in [ifLuminanceAlpha, ifBGRA8]
-      then Header.ImageDes := Header.ImageDes or $08;
-
-    Stream.Write(Header, SizeOf(Header));
-
-    Stream.Write(GetData^, FormatGetImageSize(glBitmapPosition(Width, Height, Depth), FInternalFormat));
-  end
-    else raise EglBitmapUnsupportedInternalFormat.Create('SaveTga - ' + UNSUPPORTED_INTERNAL_FORMAT);
+    // write data
+    Stream.Write(pTemp^, Size);
+  finally
+    // free tempdata
+    if InternalFormat in [ifRGB8, ifRGBA8] then
+      FreeMem(pTemp);
+  end;
 end;
 
 
-procedure TglBitmap.SaveJpg(const Stream: TStream);
+{$ifdef GLB_SUPPORT_JPEG_WRITE}
+procedure TglBitmap.SaveJPEG(Stream: TStream);
+{$ifdef GLB_LIB_JPEG}
+var
+  jpeg: jpeg_compress_struct;
+  jpeg_err: jpeg_error_mgr;
+  Row: Integer;
+  pTemp, pTemp2: pByte;
+
+
+  procedure CopyRow(pDest, pSource: pByte);
+  var
+    X: Integer;
+  begin
+    for X := 0 to Width - 1 do begin
+      pByteArray(pDest)^[0] := pByteArray(pSource)^[2];
+      pByteArray(pDest)^[1] := pByteArray(pSource)^[1];
+      pByteArray(pDest)^[2] := pByteArray(pSource)^[0];
+
+      Inc(pDest, 3);
+      Inc(pSource, 3); 
+    end;
+  end;
+
+begin
+  if not (ftJPEG in FormatGetSupportedFiles(InternalFormat)) then
+    raise EglBitmapUnsupportedInternalFormat.Create('SaveJpg - ' + UNSUPPORTED_INTERNAL_FORMAT);
+
+  if not init_libJPEG then
+    raise Exception.Create('SaveJPG - unable to initialize libJPEG.');
+
+  try
+    FillChar(jpeg, SizeOf(jpeg_compress_struct), $00);
+    FillChar(jpeg_err, SizeOf(jpeg_error_mgr), $00);
+
+    // error managment
+    jpeg.err := jpeg_std_error(@jpeg_err);
+    jpeg_err.error_exit := glBitmap_libJPEG_error_exit;
+    jpeg_err.output_message := glBitmap_libJPEG_output_message;
+
+    // compression struct
+    jpeg_create_compress(@jpeg);
+
+    // allocation space for streaming methods
+    jpeg.dest := jpeg.mem^.alloc_small(@jpeg, JPOOL_PERMANENT, SizeOf(glBitmap_libJPEG_dest_mgr));
+
+    // seeting up custom functions
+    with glBitmap_libJPEG_dest_mgr_ptr(jpeg.dest)^ do begin
+      pub.init_destination    := glBitmap_libJPEG_init_destination;
+      pub.empty_output_buffer := glBitmap_libJPEG_empty_output_buffer;
+      pub.term_destination    := glBitmap_libJPEG_term_destination;
+
+      pub.next_output_byte  := @DestBuffer[1];
+      pub.free_in_buffer    := Length(DestBuffer);
+
+      DestStream := Stream;
+    end;
+
+    // very important state
+    jpeg.global_state := CSTATE_START;
+
+    jpeg.image_width := Width;
+    jpeg.image_height := Height;
+    case InternalFormat of
+      ifAlpha, ifLuminance, ifDepth8:
+        begin
+          jpeg.input_components := 1;
+          jpeg.in_color_space := JCS_GRAYSCALE;
+        end;
+      ifRGB8, ifBGR8:
+        begin
+          jpeg.input_components := 3;
+          jpeg.in_color_space := JCS_RGB;
+        end;
+    end;
+
+    // setting defaults
+    jpeg_set_defaults(@jpeg);
+
+    // compression quality
+    jpeg_set_quality(@jpeg, 95, True);
+
+    // start compression
+    jpeg_start_compress(@jpeg, true);
+
+    // write rows
+    pTemp := Data;
+
+    // initialing row  
+    if InternalFormat = ifBGR8 then
+      GetMem(pTemp2, fRowSize)
+    else
+      pTemp2 := pTemp;
+
+    try
+      for Row := 0 to jpeg.image_height -1 do begin
+        // prepare row
+        if InternalFormat = ifBGR8 then
+          CopyRow(pTemp2, pTemp)
+        else
+          pTemp2 := pTemp;
+
+        // write row
+        jpeg_write_scanlines(@jpeg, @pTemp2, 1);
+        inc(pTemp, fRowSize);
+      end;
+    finally
+      // free memory
+      if InternalFormat = ifBGR8 then
+        FreeMem(pTemp2);
+    end;
+
+    // finish compression
+    jpeg_finish_compress(@jpeg);
+
+    // destroy compression
+    jpeg_destroy_compress(@jpeg);
+  finally
+    quit_libJPEG;
+  end;
+end;
+{$endif}
+{$ifdef GLB_DELPHI_JPEG}
 var
   Bmp: TBitmap;
   Jpg: TJPEGImage;
 begin
-  if ftJPEG in FormatGetSupportedFiles (InternalFormat) then begin
-    Bmp := TBitmap.Create;
-    try
-      Jpg := TJPEGImage.Create;
-      try
-        AssignToBitmap(Bmp);
+  if not (ftJPEG in FormatGetSupportedFiles (InternalFormat)) then 
+    raise EglBitmapUnsupportedInternalFormat.Create('SaveJpg - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-        if FInternalFormat in [ifAlpha, ifLuminance, ifDepth8] then begin
-          Jpg.Grayscale := True;
-          Jpg.PixelFormat := jf8Bit;
-        end;
-
-        Jpg.Assign(Bmp);
-
-        Jpg.SaveToStream(Stream);
-      finally
-        FreeAndNil(Jpg);
-      end;
-    finally
-      FreeAndNil(Bmp);
-    end;
-  end
-    else raise EglBitmapUnsupportedInternalFormat.Create('SaveJpg - ' + UNSUPPORTED_INTERNAL_FORMAT);
-end;
-
-
-procedure TglBitmap.SaveBmp(const Stream: TStream); 
-var
-  Bmp: TBitmap;
-begin
-  if ftBMP in FormatGetSupportedFiles (InternalFormat) then begin
-    Bmp := TBitmap.Create;
+  Bmp := TBitmap.Create;
+  try
+    Jpg := TJPEGImage.Create;
     try
       AssignToBitmap(Bmp);
 
-      Bmp.SaveToStream(Stream);
+      if FInternalFormat in [ifAlpha, ifLuminance, ifDepth8] then begin
+        Jpg.Grayscale := True;
+        Jpg.PixelFormat := jf8Bit;
+      end;
+
+      Jpg.Assign(Bmp);
+
+      Jpg.SaveToStream(Stream);
     finally
-      FreeAndNil(Bmp);
+      FreeAndNil(Jpg);
     end;
-  end
-    else raise EglBitmapUnsupportedInternalFormat.Create('SaveBmp - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  finally
+    FreeAndNil(Bmp);
+  end;
+end;
+{$endif}
+{$endif}
+
+
+procedure TglBitmap.SaveBMP(Stream: TStream);
+var
+  Header: TBMPHeader;
+  Info: TBMPInfo;
+  pData, pTemp: pByte;
+
+  PixelFormat: TglBitmapPixelData;
+  ImageSize, LineSize, Padding, LineIdx, ColorIdx: Integer;
+  Temp, RedMask, GreenMask, BlueMask, AlphaMask: Cardinal;
+
+  PaddingBuff: Cardinal;
+
+
+  function GetLineWidth : Integer;
+  begin
+    Result := ((Info.biWidth * Info.biBitCount + 31) and - 32) shr 3;
+  end;
+
+
+begin
+  if not (ftBMP in FormatGetSupportedFiles(InternalFormat)) then
+    raise EglBitmapUnsupportedInternalFormat.Create('SaveBMP - ' + UNSUPPORTED_INTERNAL_FORMAT);
+
+  ImageSize := Trunc(Width * Height * FormatGetSize(InternalFormat));
+
+  Header.bfType := BMP_MAGIC;
+  Header.bfSize := SizeOf(Header) + SizeOf(Info) + ImageSize;
+  Header.bfReserved1 := 0;
+  Header.bfReserved2 := 0;
+  Header.bfOffBits := SizeOf(Header) + SizeOf(Info);
+
+  FillChar(Info, SizeOf(Info), 0);
+  Info.biSize := SizeOf(Info);
+  Info.biWidth := Width;
+  Info.biHeight := Height;
+  Info.biPlanes := 1;
+  Info.biCompression := BMP_COMP_RGB;
+  Info.biSizeImage := ImageSize;
+  case InternalFormat of
+    ifAlpha, ifLuminance, ifDepth8:
+      begin
+        Info.biBitCount :=  8;
+
+        Header.bfSize := Header.bfSize + 256 * SizeOf(Cardinal);
+        Header.bfOffBits := Header.bfOffBits + 256 * SizeOf(Cardinal);
+
+        Info.biClrUsed := 256;
+        Info.biClrImportant := 256;
+      end;
+    ifLuminanceAlpha, ifRGBA4, ifR5G6B5, ifRGB5A1:
+      begin
+        Info.biBitCount := 16;
+        Info.biCompression := BMP_COMP_BITFIELDS;
+      end;
+    ifBGR8, ifRGB8:
+      Info.biBitCount := 24;
+    ifBGRA8, ifRGBA8, ifRGB10A2:
+      begin
+        Info.biBitCount := 32;
+        Info.biCompression := BMP_COMP_BITFIELDS;
+      end;
+    else
+      raise EglBitmapUnsupportedInternalFormat.Create('SaveBMP - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  end;
+  Info.biXPelsPerMeter := 2835;
+  Info.biYPelsPerMeter := 2835;
+
+  // prepare bitmasks
+  if Info.biCompression = BMP_COMP_BITFIELDS then begin
+    Info.biSize := Info.biSize + 4 * SizeOf(Cardinal);
+    Header.bfSize := Header.bfSize + 4 * SizeOf(Cardinal);
+    Header.bfOffBits := Header.bfOffBits + 4 * SizeOf(Cardinal);
+
+    FormatPreparePixel(PixelFormat, InternalFormat);
+
+    with PixelFormat.PixelDesc do begin
+      RedMask   := RedRange   shl RedShift;
+      GreenMask := GreenRange shl GreenShift;
+      BlueMask  := BlueRange  shl BlueShift;
+      AlphaMask := AlphaRange shl AlphaShift;
+    end;
+  end;
+
+  // headers
+  Stream.Write(Header, SizeOf(Header));
+  Stream.Write(Info, SizeOf(Info));
+
+  // colortable
+  if Info.biBitCount = 8 then begin
+    Temp := 0;
+    for ColorIdx := Low(Byte) to High(Byte) do begin
+      Stream.Write(Temp, 4);
+      Temp := Temp + $00010101;
+    end;
+  end;
+
+  // bitmasks
+  if Info.biCompression = BMP_COMP_BITFIELDS then begin
+    Stream.Write(RedMask, SizeOf(Cardinal));
+    Stream.Write(GreenMask, SizeOf(Cardinal));
+    Stream.Write(BlueMask, SizeOf(Cardinal));
+    Stream.Write(AlphaMask, SizeOf(Cardinal));
+  end;
+
+  // image data
+  LineSize := Trunc(Width * FormatGetSize(InternalFormat));
+  Padding := GetLineWidth - LineSize;
+  PaddingBuff := 0;
+
+  pData := Data;
+  Inc(pData, (Height -1) * LineSize);
+
+  // prepare row buffer. But only for RGB because RGBA supports color masks
+  // so it's possible to change color within the image.
+  if InternalFormat = ifRGB8 then
+    GetMem(pTemp, fRowSize)
+  else
+    pTemp := nil;
+
+  try
+    // write image data
+    for LineIdx := 0 to Height - 1 do begin
+      // preparing row
+      if InternalFormat = ifRGB8 then begin
+        Move(pData^, pTemp^, fRowSize);
+        SwapRGB(pTemp, Width, False);
+      end else
+        pTemp := pData;
+
+      Stream.Write(pTemp^, LineSize);
+
+      Dec(pData, LineSize);
+
+      if Padding > 0 then
+        Stream.Write(PaddingBuff, Padding);
+    end;
+  finally
+    // destroy row buffer
+    if InternalFormat = ifRGB8 then
+      FreeMem(pTemp);
+  end;
 end;
 
 
 procedure TglBitmap.Bind(EnableTextureUnit: Boolean);
 begin
-  if EnableTextureUnit
-    then glEnable(Target);
+  if EnableTextureUnit then
+    glEnable(Target);
 
-  if ID > 0
-    then glBindTexture(Target, ID);
+  if ID > 0 then
+    glBindTexture(Target, ID);
 end;
 
 
 procedure TglBitmap.Unbind(DisableTextureUnit: Boolean);
 begin
-  if DisableTextureUnit
-    then glDisable(Target);
+  if DisableTextureUnit then
+    glDisable(Target);
 
   glBindTexture(Target, 0);
 end;
@@ -3323,24 +5024,24 @@ end;
 procedure TglBitmap.GetPixel(const Pos: TglBitmapPixelPosition;
   var Pixel: TglBitmapPixelData);
 begin
-  if Assigned (FGetPixelFunc)
-    then FGetPixelFunc(Pos, Pixel);
+  if Assigned (fGetPixelFunc) then
+    fGetPixelFunc(Pos, Pixel);
 end;
 
 
 procedure TglBitmap.SetPixel (const Pos: TglBitmapPixelPosition;
   const Pixel: TglBitmapPixelData);
 begin
-  if Assigned (FSetPixelFunc)
-    then FSetPixelFunc(Pos, Pixel);
+  if Assigned (fSetPixelFunc) then
+    fSetPixelFunc(Pos, Pixel);
 end;
 
 
 procedure TglBitmap.CreateID;
 begin
   // Generate Texture
-  if ID <> 0
-    then glDeleteTextures(1, @ID);
+  if ID <> 0 then
+    glDeleteTextures(1, @ID);
 
   glGenTextures(1, @ID);
 
@@ -3351,37 +5052,38 @@ end;
 procedure TglBitmap.SetupParameters(var BuildWithGlu: Boolean);
 begin
   // Set up parameters
-  SetWrap(FWrapS, FWrapT, FWrapR);
-  SetFilter(FFilterMin, FFilterMag);
-  SetAnisotropic(FAnisotropic);
-  SetBorderColor(FBorderColor[0], FBorderColor[1], FBorderColor[2], FBorderColor[3]);
+  SetWrap(fWrapS, fWrapT, fWrapR);
+  SetFilter(fFilterMin, fFilterMag);
+  SetAnisotropic(fAnisotropic);
+  SetBorderColor(fBorderColor[0], fBorderColor[1], fBorderColor[2], fBorderColor[3]);
 
   // Mip Maps generation Mode
   BuildWithGlu := False;
 
   if (MipMap = mmMipmap) then begin
-    if (GL_VERSION_1_4 or GL_SGIS_generate_mipmap)
-      then glTexParameteri(Target, GL_GENERATE_MIPMAP, GL_TRUE)
-      else BuildWithGlu := True;
+    if (GL_VERSION_1_4 or GL_SGIS_generate_mipmap) then
+      glTexParameteri(Target, GL_GENERATE_MIPMAP, GL_TRUE)
+    else
+      BuildWithGlu := True;
   end else
-  if (MipMap = mmMipmapGlu)
-    then BuildWithGlu := True;
+  if (MipMap = mmMipmapGlu) then
+    BuildWithGlu := True;
 end;
 
 
-procedure TglBitmap.SelectFormat(Format: TglBitmapInternalFormat; var glFormat, glInternalFormat, glType: Cardinal; CanConvertImage: Boolean = True);
+procedure TglBitmap.SelectFormat(DataFormat: TglBitmapInternalFormat; var glFormat, glInternalFormat, glType: Cardinal; CanConvertImage: Boolean = True);
 
   procedure Check12;
   begin
     if not GL_VERSION_1_2 then
-      raise EglBitmapUnsupportedInternalFormat.Create('TglBitmap.SelectFormat - You need at least OpenGL 1.2 to support these format.');
+      raise EglBitmapUnsupportedInternalFormat.Create('SelectFormat - You need at least OpenGL 1.2 to support these format.');
   end;
 
 begin
   glType := GL_UNSIGNED_BYTE;
 
   // selecting Format
-  case Format of
+  case DataFormat of
     ifAlpha:
       glFormat := GL_ALPHA;
     ifLuminance:
@@ -3395,8 +5097,8 @@ begin
         if (GL_VERSION_1_2 or GL_EXT_bgra) then begin
           glFormat := GL_BGR;
         end else begin
-          if CanConvertImage
-            then ConvertTo(ifRGB8);
+          if CanConvertImage then
+            ConvertTo(ifRGB8);
           glFormat := GL_RGB;
         end;
       end;
@@ -3405,8 +5107,8 @@ begin
         if (GL_VERSION_1_2 or GL_EXT_bgra) then begin
           glFormat := GL_BGRA;
         end else begin
-          if CanConvertImage
-            then ConvertTo(ifRGBA8);
+          if CanConvertImage then
+            ConvertTo(ifRGBA8);
           glFormat := GL_RGBA;
         end;
       end;
@@ -3418,7 +5120,7 @@ begin
       begin
         Check12;
         glFormat := GL_BGRA;
-        glType := GL_UNSIGNED_SHORT_4_4_4_4_REV;
+        glType := GL_UNSIGNED_SHORT_4_4_4_4_REV; 
       end;
     ifRGB5A1:
       begin
@@ -3435,19 +5137,19 @@ begin
     ifR5G6B5:
       begin
         Check12;
-        glFormat := GL_BGR;
-        glType := GL_UNSIGNED_SHORT_5_6_5_REV;
+        glFormat := GL_RGB;
+        glType := GL_UNSIGNED_SHORT_5_6_5;
       end;
-  else
-    glFormat := 0;
+    else
+      glFormat := 0;
   end;
 
   // Selecting InternalFormat
-  case Format of
+  case DataFormat of
     ifDXT1, ifDXT3, ifDXT5:
       begin
         if GL_EXT_texture_compression_s3tc then begin
-          case Format of
+          case DataFormat of
             ifDXT1:
               glInternalFormat := GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
             ifDXT3:
@@ -3457,44 +5159,46 @@ begin
           end;
         end else begin
           // Compression isn't supported so convert to RGBA
-          if CanConvertImage
-            then ConvertTo(ifRGBA8);
+          if CanConvertImage then
+            ConvertTo(ifRGBA8);
           glFormat := GL_RGBA;
           glInternalFormat := GL_RGBA8;
         end;
       end;
     ifAlpha:
       begin
-        case Self.Format of
+        case Format of
           tf4BitsPerChanel:
             glInternalFormat := GL_ALPHA4;
           tf8BitsPerChanel:
             glInternalFormat := GL_ALPHA8;
           tfCompressed:
             begin
-              if (GL_ARB_texture_compression or GL_VERSION_1_3)
-                then glInternalFormat := GL_COMPRESSED_ALPHA
-                else glInternalFormat := GL_ALPHA;
+              if (GL_ARB_texture_compression or GL_VERSION_1_3) then
+                glInternalFormat := GL_COMPRESSED_ALPHA
+              else
+                glInternalFormat := GL_ALPHA;
             end;
-        else
-          glInternalFormat := GL_ALPHA;
+          else
+            glInternalFormat := GL_ALPHA;
         end;
       end;
     ifLuminance:
       begin
-        case Self.Format of
+        case Format of
           tf4BitsPerChanel:
             glInternalFormat := GL_LUMINANCE4;
           tf8BitsPerChanel:
             glInternalFormat := GL_LUMINANCE8;
           tfCompressed:
             begin
-              if (GL_ARB_texture_compression or GL_VERSION_1_3)
-                then glInternalFormat := GL_COMPRESSED_LUMINANCE
-                else glInternalFormat := GL_LUMINANCE;
+              if (GL_ARB_texture_compression or GL_VERSION_1_3) then
+                glInternalFormat := GL_COMPRESSED_LUMINANCE
+              else
+                glInternalFormat := GL_LUMINANCE;
             end;
-        else
-          glInternalFormat := GL_LUMINANCE;
+          else
+            glInternalFormat := GL_LUMINANCE;
         end;
       end;
     ifDepth8:
@@ -3503,24 +5207,25 @@ begin
       end;
     ifLuminanceAlpha:
       begin
-        case Self.Format of
+        case Format of
           tf4BitsPerChanel:
             glInternalFormat := GL_LUMINANCE4_ALPHA4;
           tf8BitsPerChanel:
             glInternalFormat := GL_LUMINANCE8_ALPHA8;
           tfCompressed:
             begin
-              if (GL_ARB_texture_compression or GL_VERSION_1_3)
-                then glInternalFormat := GL_COMPRESSED_LUMINANCE_ALPHA
-                else glInternalFormat := GL_LUMINANCE_ALPHA;
+              if (GL_ARB_texture_compression or GL_VERSION_1_3) then
+                glInternalFormat := GL_COMPRESSED_LUMINANCE_ALPHA
+              else
+                glInternalFormat := GL_LUMINANCE_ALPHA;
             end;
-        else
-          glInternalFormat := GL_LUMINANCE_ALPHA;
+          else
+            glInternalFormat := GL_LUMINANCE_ALPHA;
         end;
       end;
     ifBGR8, ifRGB8:
       begin
-        case Self.Format of
+        case Format of
           tf4BitsPerChanel:
             glInternalFormat := GL_RGB4;
           tf8BitsPerChanel:
@@ -3530,18 +5235,19 @@ begin
               if (GL_ARB_texture_compression or GL_VERSION_1_3) then begin
                 glInternalFormat := GL_COMPRESSED_RGB
               end else begin
-                if (GL_EXT_texture_compression_s3tc)
-                  then glInternalFormat := GL_COMPRESSED_RGB_S3TC_DXT1_EXT
-                  else glInternalFormat := GL_RGB;
+                if (GL_EXT_texture_compression_s3tc) then
+                  glInternalFormat := GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+                else
+                  glInternalFormat := GL_RGB;
               end;
             end;
-        else
-          glInternalFormat := GL_RGB;
+          else
+            glInternalFormat := GL_RGB;
         end;
       end;
     ifBGRA8, ifRGBA8, ifRGBA4, ifRGB5A1, ifRGB10A2, ifR5G6B5:
       begin
-        case Self.Format of
+        case Format of
           tf4BitsPerChanel:
             glInternalFormat := GL_RGBA4;
           tf8BitsPerChanel:
@@ -3551,22 +5257,17 @@ begin
               if (GL_ARB_texture_compression or GL_VERSION_1_3) then begin
                 glInternalFormat := GL_COMPRESSED_RGBA
               end else begin
-                if (GL_EXT_texture_compression_s3tc)
-                  then glInternalFormat := GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
-                  else glInternalFormat := GL_RGBA;
+                if (GL_EXT_texture_compression_s3tc) then
+                  glInternalFormat := GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+                else
+                  glInternalFormat := GL_RGBA;
               end;
             end;
-        else
-          glInternalFormat := GL_RGBA;
+          else
+            glInternalFormat := GL_RGBA;
         end;
       end;
   end;
-end;
-
-
-function TglBitmap.FlipDepth: Boolean;
-begin
-  Result := False;
 end;
 
 
@@ -3582,15 +5283,21 @@ begin
 end;
 
 
+procedure TglBitmap.FreeData;
+begin
+  SetDataPointer(nil, ifEmpty);
+end;
+
+
 procedure glBitmapFillWithColorFunc(var FuncRec: TglBitmapFunctionRec);
 type
   PglBitmapPixelData = ^TglBitmapPixelData;
 begin
   with FuncRec do begin
-    Dest.Red   := PglBitmapPixelData(Data)^.Red;
-    Dest.Green := PglBitmapPixelData(Data)^.Green;
-    Dest.Blue  := PglBitmapPixelData(Data)^.Blue;
-    Dest.Alpha := PglBitmapPixelData(Data)^.Alpha;
+    Dest.Red   := PglBitmapPixelData(CustomData)^.Red;
+    Dest.Green := PglBitmapPixelData(CustomData)^.Green;
+    Dest.Blue  := PglBitmapPixelData(CustomData)^.Blue;
+    Dest.Alpha := PglBitmapPixelData(CustomData)^.Alpha;
   end;
 end;
 
@@ -3603,30 +5310,30 @@ end;
 
 procedure TglBitmap.FillWithColorFloat(Red, Green, Blue, Alpha: Single);
 var
-  Data: TglBitmapPixelData;
+  PixelData: TglBitmapPixelData;
 begin
-  FormatPreparePixel(Data, FInternalFormat);
+  FormatPreparePixel(PixelData, InternalFormat);
 
-  Data.Red   := Max(0, Min(Data.PixelDesc.RedRange,   Trunc(Data.PixelDesc.RedRange   * Red)));
-  Data.Green := Max(0, Min(Data.PixelDesc.GreenRange, Trunc(Data.PixelDesc.GreenRange * Green)));
-  Data.Blue  := Max(0, Min(Data.PixelDesc.BlueRange,  Trunc(Data.PixelDesc.BlueRange  * Blue)));
-  Data.Alpha := Max(0, Min(Data.PixelDesc.AlphaRange, Trunc(Data.PixelDesc.AlphaRange * Alpha)));
+  PixelData.Red   := Max(0, Min(PixelData.PixelDesc.RedRange,   Trunc(PixelData.PixelDesc.RedRange   * Red)));
+  PixelData.Green := Max(0, Min(PixelData.PixelDesc.GreenRange, Trunc(PixelData.PixelDesc.GreenRange * Green)));
+  PixelData.Blue  := Max(0, Min(PixelData.PixelDesc.BlueRange,  Trunc(PixelData.PixelDesc.BlueRange  * Blue)));
+  PixelData.Alpha := Max(0, Min(PixelData.PixelDesc.AlphaRange, Trunc(PixelData.PixelDesc.AlphaRange * Alpha)));
 
-  AddFunc(glBitmapFillWithColorFunc, False, @Data);
+  AddFunc(glBitmapFillWithColorFunc, False, @PixelData);
 end;
 
 
 procedure TglBitmap.FillWithColorRange(Red, Green, Blue, Alpha: Cardinal);
 var
-  Data: TglBitmapPixelData;
+  PixelData: TglBitmapPixelData;
 begin
-  FormatPreparePixel(Data, FormatGetWithAlpha(FInternalFormat));
+  FormatPreparePixel(PixelData, FormatGetWithAlpha(InternalFormat));
 
   FillWithColorFloat(
-    Red   / Data.PixelDesc.RedRange,
-    Green / Data.PixelDesc.GreenRange,
-    Blue  / Data.PixelDesc.BlueRange,
-    Alpha / Data.PixelDesc.AlphaRange);
+    Red   / PixelData.PixelDesc.RedRange,
+    Green / PixelData.PixelDesc.GreenRange,
+    Blue  / PixelData.PixelDesc.BlueRange,
+    Alpha / PixelData.PixelDesc.AlphaRange);
 end;
 
 
@@ -3634,22 +5341,22 @@ procedure TglBitmap.SetAnisotropic(const Value: Integer);
 var
   MaxAniso: Integer;
 begin
-  FAnisotropic := Value;
+  fAnisotropic := Value;
 
   if (ID > 0) then begin
     if GL_EXT_texture_filter_anisotropic then begin
-      if FAnisotropic > 0 then begin
+      if fAnisotropic > 0 then begin
         Bind(False);
 
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, @MaxAniso);
 
         if Value > MaxAniso then
-          FAnisotropic := MaxAniso;
+          fAnisotropic := MaxAniso;
 
-        glTexParameteri(Target, GL_TEXTURE_MAX_ANISOTROPY_EXT, FAnisotropic);
+        glTexParameteri(Target, GL_TEXTURE_MAX_ANISOTROPY_EXT, fAnisotropic);
       end;
     end else begin
-      FAnisotropic := 0;
+      fAnisotropic := 0;
     end;
   end;
 end;
@@ -3657,58 +5364,60 @@ end;
 
 procedure TglBitmap.SetInternalFormat(const Value: TglBitmapInternalFormat);
 begin
-  if FInternalFormat <> Value then
-    if FormatGetSize(Value) <> FormatGetSize(FInternalFormat) then
-      raise EglBitmapUnsupportedInternalFormat.Create('TglBitmap.SetInternalFormat - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  if InternalFormat <> Value then begin
+    if FormatGetSize(Value) <> FormatGetSize(InternalFormat) then
+      raise EglBitmapUnsupportedInternalFormat.Create('SetInternalFormat - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-  // Update whatever
-  SetDataPtr(GetData, Value);
+    // Update whatever
+    SetDataPointer(Data, Value);
+  end;
 end;
 
 
 function TglBitmap.AddFunc(Func: TglBitmapFunction; CreateTemp: Boolean;
-  Data: Pointer): boolean;
+  CustomData: Pointer): boolean;
 begin
-  Result := AddFunc(Self, Func, CreateTemp, FInternalFormat, Data);
+  Result := AddFunc(Self, Func, CreateTemp, InternalFormat, CustomData);
 end;
 
 
 function TglBitmap.AddFunc(Source: TglBitmap; Func: TglBitmapFunction;
-  CreateTemp: Boolean; Format: TglBitmapInternalFormat; Data: Pointer): boolean;
+  CreateTemp: Boolean; Format: TglBitmapInternalFormat; CustomData: Pointer): boolean;
 var
   pDest, NewImage, pSource: pByte;
-  TempDepth, TempHeight, TempWidth: Integer;
+  TempHeight, TempWidth: Integer;
   MapFunc: TglBitmapMapFunc;
   UnMapFunc: TglBitmapUnMapFunc;
 
   FuncRec: TglBitmapFunctionRec;
 begin
-  assert (Assigned (GetData()));
+  Assert(Assigned(Data));
+  Assert(Assigned(Source));
+  Assert(Assigned(Source.Data));
 
   Result := False;
 
-  if Assigned (Source.GetData()) and FormatIsUncompressed(Format) and
-     ((Source.Depth > 0) or (Source.Height > 0) or (Source.Width > 0)) then begin
+  if Assigned (Source.Data) and FormatIsUncompressed(Format) and
+     ((Source.Height > 0) or (Source.Width > 0)) then begin
 
     // inkompatible Formats so CreateTemp
-    if FormatGetSize(Format) <> FormatGetSize(FInternalFormat) then
+    if FormatGetSize(Format) <> FormatGetSize(InternalFormat) then
       CreateTemp := True;
 
     // Values
-    TempDepth := Max(1, Source.Depth);
     TempHeight := Max(1, Source.Height);
     TempWidth := Max(1, Source.Width);
 
     FuncRec.Sender := Self;
-    FuncRec.Data := Data;
+    FuncRec.CustomData := CustomData;
 
     NewImage := nil;
 
     if CreateTemp then begin
-      GetMem(NewImage, Trunc(FormatGetSize(Format) * TempDepth * TempHeight * TempWidth));
+      GetMem(NewImage, Trunc(FormatGetSize(Format) * TempHeight * TempWidth));
       pDest := NewImage;
     end
-      else pDest := GetData;
+      else pDest := Data;
 
     try
       // Mapping
@@ -3721,61 +5430,54 @@ begin
 
       if FormatIsUncompressed(Source.InternalFormat) then begin
         // Uncompressed Images
-        pSource := Source.GetData;
+        pSource := Source.Data;
         UnMapFunc := FormatGetUnMapFunc(Source.InternalFormat);
 
-        FuncRec.Position.Z := 0;
-        while FuncRec.Position.Z < TempDepth do begin
-          FuncRec.Position.Y := 0;
-          while FuncRec.Position.Y < TempHeight do begin
-            FuncRec.Position.X := 0;
-            while FuncRec.Position.X < TempWidth do begin
-              // Get Data
-              UnMapFunc(pSource, FuncRec.Source);
-              // Func
-              Func(FuncRec);
-              // Set Data
-              MapFunc(FuncRec.Dest, pDest);
-              Inc(FuncRec.Position.X);
-            end;
-            Inc(FuncRec.Position.Y);
+        FuncRec.Position.Y := 0;
+        while FuncRec.Position.Y < TempHeight do begin
+          FuncRec.Position.X := 0;
+          while FuncRec.Position.X < TempWidth do begin
+            // Get Data
+            UnMapFunc(pSource, FuncRec.Source);
+            // Func
+            Func(FuncRec);
+            // Set Data
+            MapFunc(FuncRec.Dest, pDest);
+            Inc(FuncRec.Position.X);
           end;
-          Inc(FuncRec.Position.Z);
+          Inc(FuncRec.Position.Y);
         end;
       end else begin
         // Compressed Images
-        FuncRec.Position.Z := 0;
-        while FuncRec.Position.Z < TempDepth do begin
-          FuncRec.Position.Y := 0;
-          while FuncRec.Position.Y < TempHeight do begin
-            FuncRec.Position.X := 0;
-            while FuncRec.Position.X < TempWidth do begin
-              // Get Data
-              FGetPixelFunc(FuncRec.Position, FuncRec.Source);
-              // Func
-              Func(FuncRec);
-              // Set Data
-              MapFunc(FuncRec.Dest, pDest);
-              Inc(FuncRec.Position.X);
-            end;
-            Inc(FuncRec.Position.Y);
+        FuncRec.Position.Y := 0;
+        while FuncRec.Position.Y < TempHeight do begin
+          FuncRec.Position.X := 0;
+          while FuncRec.Position.X < TempWidth do begin
+            // Get Data
+            fGetPixelFunc(FuncRec.Position, FuncRec.Source);
+            // Func
+            Func(FuncRec);
+            // Set Data
+            MapFunc(FuncRec.Dest, pDest);
+            Inc(FuncRec.Position.X);
           end;
-          Inc(FuncRec.Position.Z);
+          Inc(FuncRec.Position.Y);
         end;
       end;
 
       // Updating Image or InternalFormat
-      if CreateTemp
-        then SetDataPtr(NewImage, Format)
-        else
+      if CreateTemp then
+        SetDataPointer(NewImage, Format)
+      else
 
-      if Format <> FInternalFormat
-        then SetInternalFormat(Format);
+      if Format <> InternalFormat then
+        SetInternalFormat(Format);
 
       Result := True;
     except
       if CreateTemp
         then FreeMem(NewImage);
+      raise;
     end;
   end;
 end;
@@ -3820,7 +5522,7 @@ end;
 procedure glBitmapConvertShiftRGBAFunc(var FuncRec: TglBitmapFunctionRec);
 begin
   with FuncRec do
-    with TglBitmapPixelDesc(Data^) do begin
+    with TglBitmapPixelDesc(CustomData^) do begin
       if Source.PixelDesc.RedRange > 0 then
         Dest.Red   := Source.Red   shr RedShift;
 
@@ -3870,13 +5572,13 @@ var
   end;
 
 begin
-  if NewFormat <> FInternalFormat then begin
-    FormatPreparePixel(Source, FInternalFormat);
+  if NewFormat <> InternalFormat then begin
+    FormatPreparePixel(Source, InternalFormat);
     FormatPreparePixel(Dest, NewFormat);
 
-    if CopyDirect
-      then Result := AddFunc(Self, glBitmapConvertCopyFunc, False, NewFormat)
-      else
+    if CopyDirect then
+      Result := AddFunc(Self, glBitmapConvertCopyFunc, False, NewFormat)
+    else
     if CanShift then begin
       PixelDesc.RedShift   := GetShift(Source.PixelDesc.RedRange,   Dest.PixelDesc.RedRange);
       PixelDesc.GreenShift := GetShift(Source.PixelDesc.GreenRange, Dest.PixelDesc.GreenRange);
@@ -3895,42 +5597,28 @@ function TglBitmap.RemoveAlpha: Boolean;
 begin
   Result := False;
 
-  if (Assigned(GetData())) then begin
-    if not (FormatIsUncompressed(FInternalFormat) or FormatHasAlpha(FInternalFormat)) then
-      raise EglBitmapUnsupportedInternalFormat.Create('TglBitmap.RemoveAlpha - ' + UNSUPPORTED_INTERNAL_FORMAT);
+  if (Assigned(Data)) then begin
+    if not (FormatIsUncompressed(InternalFormat) or FormatHasAlpha(InternalFormat)) then
+      raise EglBitmapUnsupportedInternalFormat.Create('RemoveAlpha - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-    Result := ConvertTo(FormatGetWithoutAlpha(FInternalFormat));
+    Result := ConvertTo(FormatGetWithoutAlpha(InternalFormat));
   end;
 end;
 
 
-function TglBitmap.AddAlphaFromFunc(Func: TglBitmapFunction;
-  Data: Pointer): boolean;
+function TglBitmap.AddAlphaFromFunc(Func: TglBitmapFunction; CustomData: Pointer): boolean;
 begin
-  Result := False;
+  if not FormatIsUncompressed(InternalFormat) then
+    raise EglBitmapUnsupportedInternalFormat.Create('AddAlphaFromFunc - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-  if (Assigned(GetData())) then begin
-    if not FormatIsUncompressed(FInternalFormat) then
-      raise EglBitmapUnsupportedInternalFormat.Create('TglBitmap.AddAlphaFromFunc - ' + UNSUPPORTED_INTERNAL_FORMAT);
-
-    Result := AddFunc(Self, Func, False, FormatGetWithAlpha(FInternalFormat), Data);
-  end;
-end;
-
-
-function TglBitmap.GetDepth: Integer;
-begin
-  if ffZ in FDimension.Fields then
-    Result := FDimension.Z
-  else
-    Result := -1;
+  Result := AddFunc(Self, Func, False, FormatGetWithAlpha(InternalFormat), CustomData);
 end;
 
 
 function TglBitmap.GetHeight: Integer;
 begin
-  if ffY in FDimension.Fields then
-    Result := FDimension.Y
+  if ffY in fDimension.Fields then
+    Result := fDimension.Y
   else
     Result := -1;
 end;
@@ -3938,10 +5626,22 @@ end;
 
 function TglBitmap.GetWidth: Integer;
 begin
-  if ffX in FDimension.Fields then
-    Result := FDimension.X
+  if ffX in fDimension.Fields then
+    Result := fDimension.X
   else
     Result := -1;
+end;
+
+
+function TglBitmap.GetFileHeight: Integer;
+begin
+  Result := Max(1, Height);
+end;
+
+
+function TglBitmap.GetFileWidth: Integer;
+begin
+  Result := Max(1, Width);
 end;
 
 
@@ -3960,13 +5660,10 @@ begin
 end;
 
 
-function TglBitmap.AddAlphaFromglBitmap(glBitmap: TglBitmap;
-  Func: TglBitmapFunction; Data: Pointer): boolean;
+function TglBitmap.AddAlphaFromglBitmap(glBitmap: TglBitmap; Func: TglBitmapFunction; CustomData: Pointer): boolean;
 var
   pDest, pDest2, pSource: pByte;
-  TempDepth, TempHeight, TempWidth: Integer;
-//  Pos, Size: TglBitmapPixelPosition;
-//  SourcePix, DestPix: TglBitmapPixelData;
+  TempHeight, TempWidth: Integer;
   MapFunc: TglBitmapMapFunc;
   DestUnMapFunc, UnMapFunc: TglBitmapUnMapFunc;
 
@@ -3974,24 +5671,27 @@ var
 begin
   Result := False;
 
+  assert(Assigned(Data));
+  assert(Assigned(glBitmap));
+  assert(Assigned(glBitmap.Data));
+
   if ((glBitmap.Width = Width) and (glBitmap.Height = Height)) then begin
     // Convert to Data with Alpha
-    Result := ConvertTo(FormatGetWithAlpha(FormatGetUncompressed(FInternalFormat)));
+    Result := ConvertTo(FormatGetWithAlpha(FormatGetUncompressed(InternalFormat)));
 
-    if not Assigned(Func)
-      then Func := glBitmapAlphaFunc;
+    if not Assigned(Func) then
+      Func := glBitmapAlphaFunc;
 
     // Values
-    TempDepth := Max(1, glBitmap.Depth);
-    TempHeight := Max(1, glBitmap.Height);
-    TempWidth := Max(1, glBitmap.Width);
+    TempHeight := glBitmap.FileHeight;
+    TempWidth := glBitmap.FileWidth;
 
     FuncRec.Sender := Self;
-    FuncRec.Data := Data;
+    FuncRec.CustomData := CustomData;
 
-    pDest := GetData;
-    pDest2 := GetData;
-    pSource := glBitmap.GetData;
+    pDest := Data;
+    pDest2 := Data;
+    pSource := glBitmap.Data;
 
     // Mapping
     FormatPreparePixel(FuncRec.Dest, InternalFormat);
@@ -4003,24 +5703,20 @@ begin
     FuncRec.Size := Dimension;
     FuncRec.Position.Fields := FuncRec.Size.Fields;
 
-    FuncRec.Position.Z := 0;
-    while FuncRec.Position.Z < TempDepth do begin
-      FuncRec.Position.Y := 0;
-      while FuncRec.Position.Y < TempHeight do begin
-        FuncRec.Position.X := 0;
-        while FuncRec.Position.X < TempWidth do begin
-          // Get Data
-          UnMapFunc(pSource, FuncRec.Source);
-          DestUnMapFunc(pDest2, FuncRec.Dest);
-          // Func
-          Func(FuncRec);
-          // Set Data
-          MapFunc(FuncRec.Dest, pDest);
-          Inc(FuncRec.Position.X);
-        end;
-        Inc(FuncRec.Position.Y);
+    FuncRec.Position.Y := 0;
+    while FuncRec.Position.Y < TempHeight do begin
+      FuncRec.Position.X := 0;
+      while FuncRec.Position.X < TempWidth do begin
+        // Get Data
+        UnMapFunc(pSource, FuncRec.Source);
+        DestUnMapFunc(pDest2, FuncRec.Dest);
+        // Func
+        Func(FuncRec);
+        // Set Data
+        MapFunc(FuncRec.Dest, pDest);
+        Inc(FuncRec.Position.X);
       end;
-      Inc(FuncRec.Position.Z);
+      Inc(FuncRec.Position.Y);
     end;
   end;
 end;
@@ -4028,22 +5724,22 @@ end;
 
 procedure TglBitmap.SetBorderColor(Red, Green, Blue, Alpha: Single);
 begin
-  FBorderColor[0] := Red;
-  FBorderColor[1] := Green;
-  FBorderColor[2] := Blue;
-  FBorderColor[3] := Alpha;
+  fBorderColor[0] := Red;
+  fBorderColor[1] := Green;
+  fBorderColor[2] := Blue;
+  fBorderColor[3] := Alpha;
 
   if ID > 0 then begin
     Bind (False);
 
-    glTexParameterfv(FTarget, GL_TEXTURE_BORDER_COLOR, @fBorderColor[0]);
+    glTexParameterfv(Target, GL_TEXTURE_BORDER_COLOR, @fBorderColor[0]);
   end;
 end;
 
 
 { TglBitmap2D }
 
-procedure TglBitmap2D.SetDataPtr(Ptr: PByte; Format: TglBitmapInternalFormat; Width, Height, Depth: Integer);
+procedure TglBitmap2D.SetDataPointer(Data: pByte; Format: TglBitmapInternalFormat; Width, Height: Integer);
 var
   Idx, LineWidth: Integer;
 begin
@@ -4051,180 +5747,38 @@ begin
 
   // Format
   if FormatIsUncompressed(Format) then begin
-    FUnmapFunc := FormatGetUnMapFunc(Format);
-    FGetPixelFunc := GetPixel2DUnmap;
+    fUnmapFunc := FormatGetUnMapFunc(Format);
+    fGetPixelFunc := GetPixel2DUnmap;
 
-    FMapFunc := FormatGetMapFunc(Format);
-    FSetPixelFunc := SetPixel2DUnmap;
+    fMapFunc := FormatGetMapFunc(Format);
+    fSetPixelFunc := SetPixel2DUnmap;
 
     // Assigning Data
-    if Assigned(GetData()) then begin
-      SetLength(FLines, GetHeight);
+    if Assigned(Data) then begin
+      SetLength(fLines, GetHeight);
 
-      LineWidth := Trunc(GetWidth * FormatGetSize(FInternalFormat));
+      LineWidth := Trunc(GetWidth * FormatGetSize(InternalFormat));
 
-      for Idx := 0 to GetHeight -1
-        do FLines [Idx] := PByte(Integer(GetData) + (Idx * LineWidth));
+      for Idx := 0 to GetHeight -1 do begin
+        fLines[Idx] := Data;
+        Inc(fLines[Idx], Idx * LineWidth);
+      end;
     end
-      else SetLength(FLines, 0);
+      else SetLength(fLines, 0);
   end else begin
-    SetLength(FLines, 0);
+    SetLength(fLines, 0);
 
-    FSetPixelFunc := nil;
+    fSetPixelFunc := nil;
 
     case Format of
       ifDXT1:
-        FGetPixelFunc := GetPixel2DDXT1;
+        fGetPixelFunc := GetPixel2DDXT1;
       ifDXT3:
-        FGetPixelFunc := GetPixel2DDXT3;
+        fGetPixelFunc := GetPixel2DDXT3;
       ifDXT5:
-        FGetPixelFunc := GetPixel2DDXT5;
-    else
-      FGetPixelFunc := nil;
-    end;
-  end;
-end;
-
-
-function TglBitmap2D.AssignToBitmap(const Bitmap: TBitmap): boolean;
-var
-  Row, RowSize: Integer;
-  pSource, pData: PByte;
-begin
-  Result := False;
-
-  if Assigned(GetData()) then begin
-    if Assigned(Bitmap) then begin
-      Bitmap.Width := Width;
-      Bitmap.Height := Height;
-
-      // Copy Data
-      pSource := GetData();
-
-      case FInternalFormat of
-        ifAlpha, ifLuminance, ifDepth8:
-          begin
-            Bitmap.PixelFormat := pf8bit;
-            Bitmap.Palette := CreateGrayPalette;
-          end;
-        ifR5G6B5:
-          Bitmap.PixelFormat := pf16bit;
-        ifBGR8:
-          Bitmap.PixelFormat := pf24bit;
-        ifBGRA8:
-          Bitmap.PixelFormat := pf32bit;
-      end;
-
-      RowSize := Trunc(Width * FormatGetSize(FInternalFormat));
-
-      for Row := 0 to Height -1 do begin
-        pData := Bitmap.Scanline[Row];
-        if Assigned(pData) then begin
-          Move(pSource^, pData^, RowSize);
-          Inc(pSource, RowSize);
-        end;
-      end;
-
-      Result := True;
-    end;
-  end;
-end;
-
-
-function TglBitmap2D.AssignAlphaToBitmap(const Bitmap: TBitmap): boolean;
-var
-  Row, Col, AlphaInterleave: Integer;
-  pSource, pDest: PByte;
-begin
-  Result := False;
-
-  if Assigned(GetData()) then begin
-    if FInternalFormat in [ifAlpha, ifLuminanceAlpha, ifBGRA8] then begin
-      if Assigned(Bitmap) then begin
-        Bitmap.Width := Width;
-        Bitmap.Height := Height;
-        Bitmap.Palette := CreateGrayPalette;
-        Bitmap.PixelFormat := pf8bit;
-
-        case FInternalFormat of
-          ifLuminanceAlpha:
-            AlphaInterleave := 1;
-          ifBGRA8:
-            AlphaInterleave := 3;
-        else
-          AlphaInterleave := 0;
-        end;
-
-        // Copy Data
-        pSource := GetData();
-
-        for Row := 0 to Height -1 do begin
-          pDest := Bitmap.Scanline[Row];
-          if Assigned(pDest) then begin
-            for Col := 0 to Width -1 do begin
-              Inc(pSource, AlphaInterleave);
-              pDest^ := pSource^;
-              Inc(pDest);
-              Inc(pSource, 1);
-            end;
-          end;
-        end;
-
-        Result := True;
-      end;
-    end;
-  end;
-end;
-
-
-function TglBitmap2D.AssignFromBitmap(const Bitmap: TBitmap): boolean;
-var
-  pSource, pData, pTempData: PByte;
-  Row, RowSize, TempWidth, TempHeight: Integer;
-  IntFormat: TglBitmapInternalFormat;
-begin
-  Result := False;
-
-  if (Assigned(Bitmap)) then begin
-    // Copy Data
-    case Bitmap.PixelFormat of
-      pf8bit:
-        IntFormat := ifLuminance;
-      pf15bit:
-        IntFormat := ifRGB5A1;
-      pf16bit:
-        IntFormat := ifR5G6B5;
-      pf24bit:
-        IntFormat := ifBGR8;
-      pf32bit:
-        IntFormat := ifBGRA8;
+        fGetPixelFunc := GetPixel2DDXT5;
       else
-        raise EglBitmapException.Create('TglBitmap2D.AssignFromBitmap - Invalid Pixelformat.');
-    end;
-
-    TempWidth := Bitmap.Width;
-    TempHeight := Bitmap.Height;
-
-    RowSize := Trunc(TempWidth * FormatGetSize(IntFormat));
-
-    GetMem(pData, TempHeight * RowSize);
-    try
-      pTempData := pData;
-
-      for Row := 0 to TempHeight -1 do begin
-        pSource := Bitmap.Scanline[Row];
-
-        if (Assigned(pSource)) then begin
-          Move(pSource^, pTempData^, RowSize);
-          Inc(pTempData, RowSize);
-        end;
-      end;
-
-      SetDataPtr(pData, IntFormat, TempWidth, TempHeight);
-
-      Result := True;
-    except
-      FreeMem(pData);
+        fGetPixelFunc := nil;
     end;
   end;
 end;
@@ -4273,9 +5827,10 @@ begin
     Colors[3].rgbRed      := (Colors[0].rgbRed   * 33 + Colors[1].rgbRed   * 67) div 100;
     Colors[3].rgbGreen    := (Colors[0].rgbGreen * 33 + Colors[1].rgbGreen * 67) div 100;
     Colors[3].rgbBlue     := (Colors[0].rgbBlue  * 33 + Colors[1].rgbBlue  * 67) div 100;
-    if BasePtr^.Color1 > BasePtr^.Color2
-      then Colors[3].rgbReserved := 255
-      else Colors[3].rgbReserved := 0;
+    if BasePtr^.Color1 > BasePtr^.Color2 then
+      Colors[3].rgbReserved := 255
+    else
+      Colors[3].rgbReserved := 0;
   end;
 
   Pixel.Red   := Colors[PixPos].rgbRed;
@@ -4296,7 +5851,7 @@ begin
     PosX := Pos.X div 4;
     PosY := Pos.Y div 4;
 
-    BasePtr := GetData;
+    BasePtr := Data;
     Inc(BasePtr, (PosY * Width div 4 + PosX) * 8);
 
     GetDXTColorBlock(BasePtr, Pos.X - PosX * 4, Pos.Y - PosY * 4, Pixel);
@@ -4323,7 +5878,7 @@ begin
     relY := Pos.Y - PosY * 4;
 
     // get color value
-    AlphaPtr := PDXT3AlphaChunk(GetData);
+    AlphaPtr := PDXT3AlphaChunk(Data);
     Inc(AlphaPtr, (PosY * Width div 4 + PosX) * 2);
 
     ColorPtr := pByte(AlphaPtr);
@@ -4353,7 +5908,7 @@ begin
     relY := Pos.Y - PosY * 4;
 
     // get color value
-    AlphaPtr := PInt64(GetData);
+    AlphaPtr := PInt64(Data);
     Inc(AlphaPtr, (PosY * Width div 4 + PosX) * 2);
 
     ColorPtr := pByte(AlphaPtr);
@@ -4384,9 +5939,10 @@ begin
 
     // alpha is 100% transparent or not transparent
     if PixPos >= 6 then begin
-      if PixPos = 6
-        then Pixel.Alpha := 0
-        else Pixel.Alpha := 255;
+      if PixPos = 6 then
+        Pixel.Alpha := 0
+      else
+        Pixel.Alpha := 255;
     end else
 
     // alpha interpolate 5 Steps
@@ -4401,10 +5957,10 @@ procedure TglBitmap2D.GetPixel2DUnmap(const Pos: TglBitmapPixelPosition; var Pix
 var
   pTemp: pByte;
 begin
-  pTemp := FLines[Pos.Y];
+  pTemp := fLines[Pos.Y];
   Inc(pTemp, Pos.X * fPixelSize);
 
-  FUnmapFunc(pTemp, Pixel);
+  fUnmapFunc(pTemp, Pixel);
 end;
 
 
@@ -4412,10 +5968,10 @@ procedure TglBitmap2D.SetPixel2DUnmap(const Pos: TglBitmapPixelPosition; const P
 var
   pTemp: pByte;
 begin
-  pTemp := FLines[Pos.Y];
+  pTemp := fLines[Pos.Y];
   Inc(pTemp, Pos.X * fPixelSize);
 
-  FMapFunc(Pixel, pTemp);
+  fMapFunc(Pixel, pTemp);
 end;
 
 
@@ -4423,37 +5979,35 @@ function TglBitmap2D.FlipHorz: Boolean;
 var
   Col, Row: Integer;
   pTempDest, pDest, pSource: pByte;
-  Size, RowSize, ImgSize: Integer;
+  ImgSize: Integer;
 begin
   Result := Inherited FlipHorz;
 
-  if Assigned(GetData()) then begin
-    pSource := GetData();
-    Size := Trunc(FormatGetSize(FInternalFormat));
-
-    RowSize := Width * Size;
-    ImgSize := Height * RowSize;
+  if Assigned(Data) then begin
+    pSource := Data;
+    ImgSize := Height * fRowSize;
 
     GetMem(pDest, ImgSize);
     try
       pTempDest := pDest;
 
-      Dec(pTempDest, RowSize + Size);
+      Dec(pTempDest, fRowSize + fPixelSize);
       for Row := 0 to Height -1 do begin
-        Inc(pTempDest, RowSize * 2);
+        Inc(pTempDest, fRowSize * 2);
         for Col := 0 to Width -1 do begin
-          Move(pSource^, pTempDest^, Size);
+          Move(pSource^, pTempDest^, fPixelSize);
 
-          Inc(pSource, Size);
-          Dec(pTempDest, Size);
+          Inc(pSource, fPixelSize);
+          Dec(pTempDest, fPixelSize);
         end;
       end;
 
-      SetDataPtr(pDest, InternalFormat);
+      SetDataPointer(pDest, InternalFormat);
 
       Result := True;
     except
       FreeMem(pDest);
+      raise;
     end;
   end;
 end;
@@ -4463,34 +6017,30 @@ function TglBitmap2D.FlipVert: Boolean;
 var
   Row: Integer;
   pTempDest, pDest, pSource: pByte;
-  Size, RowSize: Integer;
 begin
   Result := Inherited FlipVert;
 
-  if Assigned(GetData()) then begin
-    pSource := GetData();
-    Size := Trunc(FormatGetSize(FInternalFormat));
-
-    RowSize := Width * Size;
-
-    GetMem(pDest, Height * RowSize);
+  if Assigned(Data) then begin
+    pSource := Data;
+    GetMem(pDest, Height * fRowSize);
     try
       pTempDest := pDest;
 
-      Inc(pTempDest, Width * (Height -1) * Size);
+      Inc(pTempDest, Width * (Height -1) * fPixelSize);
 
       for Row := 0 to Height -1 do begin
-        Move(pSource^, pTempDest^, RowSize);
+        Move(pSource^, pTempDest^, fRowSize);
 
-        Dec(pTempDest, RowSize);
-        Inc(pSource, RowSize);
+        Dec(pTempDest, fRowSize);
+        Inc(pSource, fRowSize);
       end;
 
-      SetDataPtr(pDest, InternalFormat);
+      SetDataPointer(pDest, InternalFormat);
 
       Result := True;
     except
       FreeMem(pDest);
+      raise;
     end;
   end;
 end;
@@ -4501,17 +6051,18 @@ begin
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   // Upload data
-  if FInternalFormat in [ifDXT1, ifDXT3, ifDXT5]
-    then glCompressedTexImage2D(Target, 0, InternalFormat, Width, Height, 0, Trunc(Width * Height * FormatGetSize(FInternalFormat)), GetData)
-    else
+  if Self.InternalFormat in [ifDXT1, ifDXT3, ifDXT5] then
+    glCompressedTexImage2D(Target, 0, InternalFormat, Width, Height, 0, Trunc(Width * Height * FormatGetSize(Self.InternalFormat)), Data)
+  else
 
-  if BuildWithGlu
-    then gluBuild2DMipmaps(Target, InternalFormat, Width, Height, Format, Typ, GetData)
-    else glTexImage2D(Target, 0, InternalFormat, Width, Height, 0, Format, Typ, GetData);
+  if BuildWithGlu then
+    gluBuild2DMipmaps(Target, InternalFormat, Width, Height, Format, Typ, Data)
+  else
+    glTexImage2D(Target, 0, InternalFormat, Width, Height, 0, Format, Typ, Data);
 
   // Freigeben
-  if (FreeDataAfterGenTexture)
-    then SetDataPtr(nil, ifEmpty);
+  if (FreeDataAfterGenTexture) then
+    FreeData;
 end;
 
 
@@ -4521,20 +6072,20 @@ var
   glFormat, glInternalFormat, glType: Cardinal;
   TexSize: Integer;
 begin
-  if Assigned(GetData()) then begin
+  if Assigned(Data) then begin
     // Check Texture Size
     if (TestTextureSize) then begin
       glGetIntegerv(GL_MAX_TEXTURE_SIZE, @TexSize);
 
-      if ((Height > TexSize) or (Width > TexSize))
-        then raise EglBitmapSizeToLargeException.Create('TglBitmap2D.GenTexture - The size for the texture is to large. It''s may be not conform with the Hardware.');
+      if ((Height > TexSize) or (Width > TexSize)) then
+        raise EglBitmapSizeToLargeException.Create('TglBitmap2D.GenTexture - The size for the texture is to large. It''s may be not conform with the Hardware.');
 
       PotTex := IsPowerOfTwo (Height) and IsPowerOfTwo (Width);
       TexRec := (GL_ARB_texture_rectangle or GL_EXT_texture_rectangle or GL_NV_texture_rectangle) and
                 (Target = GL_TEXTURE_RECTANGLE_ARB);
 
-      if not (PotTex or GL_ARB_texture_non_power_of_two or GL_VERSION_2_0 or TexRec)
-        then raise EglBitmapNonPowerOfTwoException.Create('TglBitmap2D.GenTexture - Rendercontex dosn''t support non power of two texture.');
+      if not (PotTex or GL_ARB_texture_non_power_of_two or GL_VERSION_2_0 or TexRec) then
+        raise EglBitmapNonPowerOfTwoException.Create('TglBitmap2D.GenTexture - Rendercontex dosn''t support non power of two texture.');
     end;
 
     CreateId;
@@ -4545,7 +6096,7 @@ begin
     UploadData(Target, glFormat, glInternalFormat, glType, BuildWithGlu);
 
     // Infos sammeln
-    glAreTexturesResident(1, @ID, @FIsResident);
+    glAreTexturesResident(1, @ID, @fIsResident);
   end;
 end;
 
@@ -4555,12 +6106,11 @@ begin
   inherited;
 
   Target := GL_TEXTURE_2D;
-  FGetPixelFunc := nil;
 end;
 
 
 type
-  TMaxtrixItem = record
+  TMatrixItem = record
     X, Y: Integer;
     W: Single;
   end;
@@ -4569,8 +6119,8 @@ type
   TglBitmapToNormalMapRec = Record
     Scale: Single;
     Heights: array of Single;
-    MatrixU : array of TMaxtrixItem;
-    MatrixV : array of TMaxtrixItem;
+    MatrixU : array of TMatrixItem;
+    MatrixV : array of TMatrixItem;
   end;
 
 const
@@ -4582,7 +6132,7 @@ var
 begin
   with FuncRec do begin
     Val := Source.Red * 0.3 + Source.Green * 0.59 + Source.Blue *  0.11;
-    PglBitmapToNormalMapRec (Data)^.Heights[Position.Y * Size.X + Position.X] := Val * oneover255;
+    PglBitmapToNormalMapRec (CustomData)^.Heights[Position.Y * Size.X + Position.X] := Val * oneover255;
   end;
 end;
 
@@ -4590,7 +6140,7 @@ end;
 procedure glBitmapToNormalMapPrepareAlphaFunc (var FuncRec: TglBitmapFunctionRec);
 begin
   with FuncRec do
-    PglBitmapToNormalMapRec (Data)^.Heights[Position.Y * Size.X + Position.X] := Source.Alpha * oneover255;
+    PglBitmapToNormalMapRec (CustomData)^.Heights[Position.Y * Size.X + Position.X] := Source.Alpha * oneover255;
 end;
 
 
@@ -4609,13 +6159,13 @@ var
       X := Max(0, Min(Size.X -1, X));
       Y := Max(0, Min(Size.Y -1, Y));
 
-      Result := PglBitmapToNormalMapRec (Data)^.Heights[Y * Size.X + X];
+      Result := PglBitmapToNormalMapRec (CustomData)^.Heights[Y * Size.X + X];
     end;
   end;
 
 begin
   with FuncRec do begin
-    with PglBitmapToNormalMapRec (Data)^ do begin
+    with PglBitmapToNormalMapRec (CustomData)^ do begin
       du := 0;
       for Idx := Low(MatrixU) to High(MatrixU) do
         du := du + GetHeight(Position.X + MatrixU[Idx].X, Position.Y + MatrixU[Idx].Y) * MatrixU[Idx].W;
@@ -4649,7 +6199,7 @@ procedure TglBitmap2D.ToNormalMap(Func: TglBitmapNormalMapFunc; Scale: Single; U
 var
   Rec: TglBitmapToNormalMapRec;
 
-  procedure SetEntry (var Matrix: array of TMaxtrixItem; Index, X, Y: Integer; W: Single);
+  procedure SetEntry (var Matrix: array of TMatrixItem; Index, X, Y: Integer; W: Single);
   begin
     if (Index >= Low(Matrix)) and (Index <= High(Matrix)) then begin
       Matrix[Index].X := X;
@@ -4659,15 +6209,16 @@ var
   end;
 
 begin
-  if not FormatIsUncompressed(FInternalFormat) then
+  if not FormatIsUncompressed(InternalFormat) then
     raise EglBitmapUnsupportedInternalFormat.Create('TglBitmap2D.ToNormalMap - ' + UNSUPPORTED_INTERNAL_FORMAT);
 
-  if Scale > 100
-    then Rec.Scale := 100
-    else
-  if Scale < -100
-    then Rec.Scale := -100
-    else Rec.Scale := Scale;
+  if Scale > 100 then
+    Rec.Scale := 100
+  else
+  if Scale < -100 then
+    Rec.Scale := -100
+  else
+    Rec.Scale := Scale;
 
   SetLength(Rec.Heights, Width * Height);
   try
@@ -4767,9 +6318,10 @@ begin
     end;
 
     // Daten Sammeln
-    if UseAlpha and FormatHasAlpha(FInternalFormat)
-      then AddFunc(glBitmapToNormalMapPrepareAlphaFunc, False, @Rec)
-      else AddFunc(glBitmapToNormalMapPrepareFunc, False, @Rec);
+    if UseAlpha and FormatHasAlpha(InternalFormat) then
+      AddFunc(glBitmapToNormalMapPrepareAlphaFunc, False, @Rec)
+    else
+      AddFunc(glBitmapToNormalMapPrepareFunc, False, @Rec);
 
     // Neues Bild berechnen
     AddFunc(glBitmapToNormalMapFunc, False, @Rec);
@@ -4777,7 +6329,6 @@ begin
     SetLength(Rec.Heights, 0);
   end;
 end;
-
 
 
 procedure TglBitmap2D.GrabScreen(Top, Left, Right, Bottom: Integer; Format: TglBitmapInternalFormat);
@@ -4799,12 +6350,13 @@ begin
     glReadPixels(Left, Top, Right - Left, Bottom - Top, glFormat, glType, Temp);
 
     // Set Data
-    SetDataPtr(Temp, Format, Right - Left, Bottom - Top);
+    SetDataPointer(Temp, Format, Right - Left, Bottom - Top);
 
     // Flip
     FlipVert;
   except
     FreeMem(Temp);
+    raise;
   end;
 end;
 
@@ -4873,8 +6425,8 @@ begin
       IntFormat := ifDXT3;
     GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
       IntFormat := ifDXT5;
-  else
-    IntFormat := ifEmpty;
+    else
+      IntFormat := ifEmpty;
   end;
 
   // Getting data from OpenGL
@@ -4885,31 +6437,47 @@ begin
     else
       glGetTexImage(Target, 0, TempIntFormat, TempType, Temp);
 
-    SetDataPtr(Temp, IntFormat, TempWidth, TempHeight);
+    SetDataPointer(Temp, IntFormat, TempWidth, TempHeight);
   except
     FreeMem(Temp);
+    raise;
   end;
 end;
 
 
 function TglBitmap2D.GetScanline(Index: Integer): Pointer;
 begin
-  if (Index >= Low(FLines)) and (Index <= High(FLines))
-    then Result := FLines[Index]
-    else Result := nil;
+  if (Index >= Low(fLines)) and (Index <= High(fLines)) then
+    Result := fLines[Index]
+  else
+    Result := nil;
 end;
 
 
 { TglBitmap1D }
 
-
-procedure TglBitmap1D.SetDataPtr(Ptr: PByte; Format: TglBitmapInternalFormat; Width: Integer = -1; Height: Integer = -1; Depth: Integer = -1);
+procedure TglBitmap1D.SetDataPointer(Data: pByte; Format: TglBitmapInternalFormat; Width, Height: Integer);
+var
+  pTemp: pByte;
+  Size: Integer;
 begin
-  inherited;
+  if Height > 1 then begin
+    // extract first line of the data
+    Size := FormatGetImageSize(glBitmapPosition(Width), Format);
+    GetMem(pTemp, Size);
+
+    Move(Data^, pTemp^, Size);
+
+    FreeMem(Data);
+  end else
+    pTemp := Data;
+
+  // set data pointer
+  inherited SetDataPointer(pTemp, Format, Width);
 
   if FormatIsUncompressed(Format) then begin
-    FUnmapFunc := FormatGetUnMapFunc(Format);
-    FGetPixelFunc := GetPixel1DUnmap;
+    fUnmapFunc := FormatGetUnMapFunc(Format);
+    fGetPixelFunc := GetPixel1DUnmap;
   end;
 end;
 
@@ -4918,138 +6486,10 @@ procedure TglBitmap1D.GetPixel1DUnmap(const Pos: TglBitmapPixelPosition; var Pix
 var
   pTemp: pByte;
 begin
-  pTemp := GetData;
+  pTemp := Data;
   Inc(pTemp, Pos.X * fPixelSize);
 
-  FUnmapFunc(pTemp, Pixel);
-end;
-
-
-function TglBitmap1D.AssignToBitmap(const Bitmap: TBitmap): boolean;
-var
-  RowSize: Integer;
-  pSource, pData: PByte;
-begin
-  Result := False;
-
-  if Assigned(GetData()) then begin
-    if Assigned(Bitmap) then begin
-      Bitmap.Width := Width;
-      Bitmap.Height := 1;
-
-      // Copy Data
-      pSource := GetData();
-
-      case FInternalFormat of
-        ifAlpha, ifLuminance, ifDepth8:
-          begin
-            Bitmap.PixelFormat := pf8bit;
-            Bitmap.Palette := CreateGrayPalette;
-          end;
-        ifLuminanceAlpha:
-          Bitmap.PixelFormat := pf16bit;
-        ifBGR8:
-          Bitmap.PixelFormat := pf24bit;
-        ifBGRA8:
-          Bitmap.PixelFormat := pf32bit;
-      end;
-
-      RowSize := Trunc(Width * FormatGetSize(FInternalFormat));
-
-      pData := Bitmap.Scanline[0];
-      if Assigned(pData) then
-        Move(pSource^, pData^, RowSize);
-
-      Result := True;
-    end;
-  end;
-end;
-
-
-function TglBitmap1D.AssignAlphaToBitmap(const Bitmap: TBitmap): boolean;
-var
-  Col, AlphaInterleave: Integer;
-  pSource, pDest: PByte;
-begin
-  Result := False;
-
-  if Assigned(GetData()) then begin
-    if FInternalFormat in [ifAlpha, ifLuminanceAlpha, ifBGRA8] then begin
-      if Assigned(Bitmap) then begin
-        Bitmap.Width := Width;
-        Bitmap.Height := 1;
-        Bitmap.Palette := CreateGrayPalette;
-        Bitmap.PixelFormat := pf8bit;
-
-        case FInternalFormat of
-          ifLuminanceAlpha:
-            AlphaInterleave := 1;
-          ifBGRA8:
-            AlphaInterleave := 3;
-        else
-          AlphaInterleave := 0;
-        end;
-
-        // Copy Data
-        pSource := GetData();
-        pDest := Bitmap.Scanline[0];
-
-        if Assigned(pDest) then begin
-          for Col := 0 to Width -1 do begin
-            Inc(pSource, AlphaInterleave);
-            pDest^ := pSource^;
-            Inc(pDest);
-            Inc(pSource, 1);
-          end;
-        end;
-
-        Result := True;
-      end;
-    end;
-  end;
-end;
-
-
-function TglBitmap1D.AssignFromBitmap(const Bitmap: TBitmap): boolean;
-var
-  pSource, pData: PByte;
-  TempWidth, RowSize: Integer;
-  IntFormat: TglBitmapInternalFormat;
-begin
-  Result := False;
-
-  if (Assigned(Bitmap)) then begin
-    // Copy Data
-    case Bitmap.PixelFormat of
-      pf8bit:
-        IntFormat := ifLuminance;
-      pf16bit:
-        IntFormat := ifLuminanceAlpha;
-      pf24bit:
-        IntFormat := ifBGR8;
-      pf32bit:
-        IntFormat := ifBGRA8;
-      else
-        raise EglBitmapException.Create('TglBitmap1D.AssignFromBitmap - Invalid Pixelformat.');
-    end;
-
-    TempWidth := Bitmap.Width;
-    RowSize := Trunc(TempWidth * FormatGetSize(IntFormat));
-
-    GetMem(pData, RowSize);
-    try
-      pSource := Bitmap.Scanline[0];
-
-      if (Assigned(pSource)) then
-        Move(pSource^, pData^, RowSize);
-
-      SetDataPtr(pData, IntFormat, TempWidth);
-
-      Result := True;
-    except
-      FreeMem(pData);
-    end;
-  end;
+  fUnmapFunc(pTemp, Pixel);
 end;
 
 
@@ -5060,22 +6500,22 @@ var
 begin
   Result := Inherited FlipHorz;
 
-  if Assigned(GetData()) and FormatIsUncompressed(FInternalFormat) then begin
-    pSource := GetData();
+  if Assigned(Data) and FormatIsUncompressed(InternalFormat) then begin
+    pSource := Data;
 
-    GetMem(pDest, FLineSize);
+    GetMem(pDest, fRowSize);
     try
       pTempDest := pDest;
 
-      Inc(pTempDest, FLineSize);
+      Inc(pTempDest, fRowSize);
       for Col := 0 to Width -1 do begin
-        Move(pSource^, pTempDest^, FPixelSize);
+        Move(pSource^, pTempDest^, fPixelSize);
 
-        Inc(pSource, FPixelSize);
-        Dec(pTempDest, FPixelSize);
+        Inc(pSource, fPixelSize);
+        Dec(pTempDest, fPixelSize);
       end;
 
-      SetDataPtr(pDest, FInternalFormat);
+      SetDataPointer(pDest, InternalFormat);
 
       Result := True;
     finally
@@ -5088,18 +6528,19 @@ end;
 procedure TglBitmap1D.UploadData (Target, Format, InternalFormat, Typ: Cardinal; BuildWithGlu: Boolean);
 begin
   // Upload data
-  if FInternalFormat in [ifDXT1, ifDXT3, ifDXT5]
-    then glCompressedTexImage1D(Target, 0, InternalFormat, Width, 0, Trunc(Width * FormatGetSize(FInternalFormat)), GetData)
-    else
+  if Self.InternalFormat in [ifDXT1, ifDXT3, ifDXT5] then
+    glCompressedTexImage1D(Target, 0, InternalFormat, Width, 0, Trunc(Width * FormatGetSize(Self.InternalFormat)), Data)
+  else
 
   // Upload data
-  if BuildWithGlu
-    then gluBuild1DMipmaps(Target, InternalFormat, Width, Format, Typ, PByte(GetData()))
-    else glTexImage1D(Target, 0, InternalFormat, Width, 0, Format, Typ, PByte(GetData()));
+  if BuildWithGlu then
+    gluBuild1DMipmaps(Target, InternalFormat, Width, Format, Typ, Data)
+  else
+    glTexImage1D(Target, 0, InternalFormat, Width, 0, Format, Typ, Data);
 
   // Freigeben
-  if (FreeDataAfterGenTexture)
-    then SetDataPtr(nil, ifEmpty);
+  if (FreeDataAfterGenTexture) then
+    FreeData;
 end;
 
 
@@ -5109,19 +6550,19 @@ var
   glFormat, glInternalFormat, glType: Cardinal;
   TexSize: Integer;
 begin
-  if Assigned(GetData()) then begin
+  if Assigned(Data) then begin
     // Check Texture Size
     if (TestTextureSize) then begin
       glGetIntegerv(GL_MAX_TEXTURE_SIZE, @TexSize);
 
-      if (Width > TexSize)
-        then raise EglBitmapSizeToLargeException.Create('TglBitmap1D.GenTexture - The size for the texture is to large. It''s may be not conform with the Hardware.');
+      if (Width > TexSize) then
+        raise EglBitmapSizeToLargeException.Create('TglBitmap1D.GenTexture - The size for the texture is to large. It''s may be not conform with the Hardware.');
 
       TexRec := (GL_ARB_texture_rectangle or GL_EXT_texture_rectangle or GL_NV_texture_rectangle) and
                 (Target = GL_TEXTURE_RECTANGLE_ARB);
 
-      if not (IsPowerOfTwo (Width) or GL_ARB_texture_non_power_of_two or GL_VERSION_2_0 or TexRec)
-        then raise EglBitmapNonPowerOfTwoException.Create('TglBitmap1D.GenTexture - Rendercontex dosn''t support non power of two texture.');
+      if not (IsPowerOfTwo (Width) or GL_ARB_texture_non_power_of_two or GL_VERSION_2_0 or TexRec) then
+        raise EglBitmapNonPowerOfTwoException.Create('TglBitmap1D.GenTexture - Rendercontex dosn''t support non power of two texture.');
     end;
 
     CreateId;
@@ -5132,7 +6573,7 @@ begin
     UploadData(Target, glFormat, glInternalFormat, glType, BuildWithGlu);
 
     // Infos sammeln
-    glAreTexturesResident(1, @ID, @FIsResident);
+    glAreTexturesResident(1, @ID, @fIsResident);
   end;
 end;
 
@@ -5185,11 +6626,11 @@ begin
   if (TestTextureSize) then begin
     glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, @TexSize);
 
-    if ((Height > TexSize) or (Width > TexSize))
-      then raise EglBitmapSizeToLargeException.Create('TglBitmapCubeMap.GenTexture - The size for the Cubemap is to large. It''s may be not conform with the Hardware.');
+    if ((Height > TexSize) or (Width > TexSize)) then
+      raise EglBitmapSizeToLargeException.Create('TglBitmapCubeMap.GenTexture - The size for the Cubemap is to large. It''s may be not conform with the Hardware.');
 
-    if not ((IsPowerOfTwo (Height) and IsPowerOfTwo (Width)) or GL_VERSION_2_0 or GL_ARB_texture_non_power_of_two)
-      then raise EglBitmapNonPowerOfTwoException.Create('TglBitmapCubeMap.GenTexture - Cubemaps dosn''t support non power of two texture.');
+    if not ((IsPowerOfTwo (Height) and IsPowerOfTwo (Width)) or GL_VERSION_2_0 or GL_ARB_texture_non_power_of_two) then
+      raise EglBitmapNonPowerOfTwoException.Create('TglBitmapCubeMap.GenTexture - Cubemaps dosn''t support non power of two texture.');
   end;
 
   // create Texture
@@ -5290,7 +6731,7 @@ var
   Len: Single;
 begin
   with FuncRec do begin
-    with PglBitmapNormalMapRec (Data)^ do begin
+    with PglBitmapNormalMapRec (CustomData)^ do begin
       Func(Vec, Position, HalfSize);
 
       // Normalize
@@ -5367,6 +6808,7 @@ begin
   LoadFromFunc (SizeRec, glBitmapNormalMapFunc, ifBGR8, @Rec);
   GenerateCubeMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, TestTextureSize);
 end;
+
 
 
 initialization

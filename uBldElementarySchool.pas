@@ -10,7 +10,7 @@ type
   protected
     function ClickHeight: Single; override;
   public
-    procedure Render; override;
+    procedure Render(const aHeight: Single); override;
   end;
 
 implementation
@@ -22,7 +22,7 @@ begin
   Result:= 1;
 end;
 
-procedure TBElementarySchool.Render;
+procedure TBElementarySchool.Render(const aHeight: Single);
 begin
   inherited;
   RenderSimple(c_Red, 2);
