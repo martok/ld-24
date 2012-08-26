@@ -34,7 +34,6 @@ type
   private
     FCity: TCity;
     FBlock: TCityBlock;
-    FClickedBld: integer;
     FSelectedID: Integer;
     procedure BuildDestructClick(Sender: TObject);
     procedure BuildCreateClick(Sender: TObject);
@@ -129,25 +128,22 @@ begin
   AddClickable(Rect(
     10, 10, GUI_WIDTH - 10, 55),
     CloseClick, '<<< Back <<<');
-  //AddClickable(Rect(
-  //  10, 10, GUI_WIDTH - 10, 55),
-  //  CloseClick, 'tear down');
+  AddClickable(Rect(
+    20, 370, GUI_WIDTH-20, 390),
+    TearDownClick, 'tear down');
 end;
 
 procedure TGUIBlock.TearDownClick(Sender: TObject);
 begin
-  if FSelectedID >= 0 then begin
-
+  if (FSelectedID >= 0) and Assigned(FBlock.Building[FSelectedID]) then begin
+    ViewFrame.PushLayer(TGUIMessage.Create(format('Tear down this %s?',[FBlock.Building[FSelectedID].DisplayName]), [btOK, btCancel], BuildDestructClick));        
   end;
 end;
 
 procedure TGUIBlock.BuildClick(Sender: TObject);
 begin
-  FClickedBld:= TGUIClickable(Sender).Tag;
-  if Assigned(FBlock.Building[FClickedBld]) then begin
-    //ViewFrame.PushLayer(TGUIMessage.Create(format('Tear down this %s?',[FBlock.Building[FClickedBld].DisplayName]), [btOK, btCancel],BuildDestructClick));
-    FSelectedID := FClickedBld;
-  end else begin
+  FSelectedID := TGUIClickable(Sender).Tag;
+  if not Assigned(FBlock.Building[FSelectedID]) then begin
     ViewFrame.PushLayer(TGUIChooseBuilding.Create(BuildCreateClick));
   end;
 end;
@@ -155,7 +151,7 @@ end;
 procedure TGUIBlock.BuildDestructClick(Sender: TObject);
 begin
   if TGUIMessage(Sender).Answer=btOK then
-    FCity.DestroyBuilding(FBlock,FClickedBld);
+    FCity.DestroyBuilding(FBlock, FSelectedID);
 end;
 
 procedure TGUIBlock.BuildCreateClick(Sender: TObject);
@@ -200,13 +196,14 @@ begin
       tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
       tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
       Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
+      glDisable(GL_TEXTURE_2D);
     end;
   end;                       
 
 //selektiertes Gebäude
   glDisable(GL_TEXTURE_2D);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  r := Rect(10, 200, ClientRect.Right-ClientRect.Left-10, 370);
+  r := Rect(10, 200, ClientRect.Right-ClientRect.Left-10, 400);
   fieldAtRect(RectOffset(r, ClientRect.TopLeft));
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   b := nil;
@@ -238,14 +235,14 @@ begin
 //Blockwerte
   glDisable(GL_TEXTURE_2D);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  r := Rect(10, 400, ClientRect.Right-ClientRect.Left-10, 520);
+  r := Rect(10, 410, ClientRect.Right-ClientRect.Left-10, 530);
   fieldAtRect(RectOffset(r, ClientRect.TopLeft));
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   
   tsTextColor3f(1, 1, 1);
   tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
-  Fonts.GUIText.BlockOut(ClientRect.Left + 15, ClientRect.Top + 403, ClientRect.Right-ClientRect.Left-30, 100,
+  Fonts.GUIText.BlockOut(ClientRect.Left + 15, ClientRect.Top + 413, ClientRect.Right-ClientRect.Left-30, 100,
     Format(
       'IND: %f'+sLineBreak+
       'POL: %f'+sLineBreak+
