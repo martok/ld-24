@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, uCity, FastGL;
+  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, uCity, FastGL,
+  uSound;
 
 type
   TGUILayer = class;
@@ -37,6 +38,8 @@ type
     end;
     City: TCity;
     GUIStack: TObjectList;
+    Sound: TSoundSystem;
+    SoundEmitter: TsndEmitter;
     procedure PopLayer;
     procedure PushLayer(const aLayer: TGUILayer);
     procedure Timestep(DT: Single);
@@ -112,6 +115,19 @@ begin
   end;
 end;
 
+function LoadSound(Kind: TSoundKind; Name: string): TsndSound;
+var
+  fs: TFileStream;
+begin
+  fs:= TFileStream.Create(ExtractFilePath(ParamStr(0))+'sounds\'+name+'.ogg',fmOpenRead or fmShareDenyWrite);
+  try
+    Result:= TsndSound.Create(Kind);
+    Result.LoadFromStream(fs, ftOggVorbis);
+  finally
+    fs.Free;
+  end;
+end;
+
 procedure TViewFrame.FormCreate(Sender: TObject);
 var
   guiMain: TGUIMain;
@@ -165,6 +181,14 @@ begin
   Textures.BTheater:= LoadTexture('BTheater');
   Textures.BCasino:= LoadTexture('BCasino');
 
+  Sound:= TSoundSystem.Create;
+  if not Sound.Available then begin
+    //TODO
+    raise Exception.Create('No OpenAL found. Pleas see included Readme to find out what to do about that.'); 
+  end;
+  SoundEmitter:= TsndEmitter.Create;
+  Sounds.BackgroundMusic:= LoadSound(skStream,'maximum_chill');
+
   FFrameCount:= 0;
 
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
@@ -183,6 +207,7 @@ begin
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
 
   Application.OnIdle := ApplicationIdle;
+  TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter).Loop(-1, 10).Gain:= 0.3;
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);

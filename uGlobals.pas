@@ -2,7 +2,7 @@ unit uGlobals;
 
 interface
 
-uses uFonts, GLBitmap;
+uses uFonts, GLBitmap, uSound;
 
 const
   GUI_WIDTH = 165;
@@ -35,6 +35,12 @@ var
     BCasino,
 
     BUnknown: TglBitmap2D;
+  end;
+
+  Sounds: record
+    BackgroundMusic
+
+    : TsndSound;
   end;
 
 implementation
