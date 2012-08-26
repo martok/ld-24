@@ -56,7 +56,7 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes, Contnrs, Types;
+uses SysUtils, uConfigFile, Classes, Types;
 
 { TCity }
 
