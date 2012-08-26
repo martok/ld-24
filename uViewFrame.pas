@@ -57,6 +57,7 @@ type
     destructor Destroy; override;
     function MouseClick(X, Y: Integer): Boolean; virtual;
     procedure MouseMove(X, Y: Integer);
+    procedure ViewportResize(const aWidth, aHeight: Integer); virtual;
     procedure Close;
     procedure Render; virtual;
   end;
@@ -490,27 +491,16 @@ begin
     glEnd;
   end;
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  (*
-  for i:= 0 to fClickables.Count - 1 do begin
-    with TGUIClickable(fClickables[i]) do begin
-      glBegin(GL_QUADS);
-      SetGLColor(ColorToRGBA(clGray));
-      glVertex2f(ActiveRect.Left, ActiveRect.Top);
-      glVertex2f(ActiveRect.Right, ActiveRect.Top);
-      glVertex2f(ActiveRect.Right, ActiveRect.Bottom);
-      glVertex2f(ActiveRect.Left, ActiveRect.Bottom);
-      glEnd;
-      tsTextColor3f(0, 0, 0);
-      Fonts.GUIText.TextOut((ActiveRect.Right + ActiveRect.Left) div 2,
-       (ActiveRect.Top + ActiveRect.Bottom) div 2 + 6, FText, TS_ALIGN_CENTER);
-    end;
-  end;
-  *)
 end;
 
 procedure TGUILayer.SetClientRect(const aRect: TRect);
 begin
   fClientRect := aRect;
+end;
+
+procedure TGUILayer.ViewportResize(const aWidth, aHeight: Integer);
+begin
+ //DUMMY
 end;
 
 { TGUIClickable }

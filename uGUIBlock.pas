@@ -10,6 +10,7 @@ type
   TGUIMain = class(TGUILayer)
   private
   public
+    procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
   TGUIButton = (btOK, btYes, btNo, btCancel, btAbort);
@@ -22,10 +23,11 @@ type
     procedure OnBtnClick(Sender: TObject);
   public
     property Answer: TGUIButton read fAnswer;
+    property OnClick: TNotifyEvent read FOnClick write FOnClick;    
 
     constructor Create(const aMessage: String; aButtons: TGUIButtons; aOnClick: TNotifyEvent = nil);
     procedure Render; override;
-    property OnClick: TNotifyEvent read FOnClick write FOnClick;
+    procedure ViewportResize(const aWidth, aHeight: Integer); override;    
   end;
 
   TGUIBlock = class(TGUILayer)
@@ -33,15 +35,18 @@ type
     FCity: TCity;
     FBlock: TCityBlock;
     FClickedBld: integer;
+    FSelectedID: Integer;
     procedure BuildDestructClick(Sender: TObject);
     procedure BuildCreateClick(Sender: TObject);
   protected
     procedure SetClientRect(const aRect: TRect); override;
+    procedure TearDownClick(Sender: TObject);
     procedure BuildClick(Sender: TObject);
     procedure CloseClick(Sender: TObject);
   public
     constructor Create(ACity: TCity; X, Y: integer);
     procedure Render; override;
+    procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
   TGUIChooseBuilding = class(TGUILayer)
@@ -51,10 +56,11 @@ type
     procedure OnBtnClick(Sender: TObject);
   public
     property Result: TBuildingClass read fResult;
+    property OnClick: TNotifyEvent read FOnClick write FOnClick;    
 
     constructor Create(aOnClick: TNotifyEvent = nil);
     procedure Render; override;
-    property OnClick: TNotifyEvent read FOnClick write FOnClick;
+    procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
 implementation
@@ -95,10 +101,19 @@ constructor TGUIBlock.Create(ACity: TCity; X, Y: integer);
 var
   a, b, i: Integer;
   c: TGUIClickable;
+
+  procedure AddClickable(const aRect: TRect; aEvent: TNotifyEvent; aCaption: String);
+  begin
+    c := TGUIClickable.Create(aRect, aEvent);
+    c.Text := aCaption;
+    fClickables.Add(c);
+  end;
+
 begin
   inherited Create;
   FCity:= ACity;
   FBlock:= FCity.Block[X, Y];
+  FSelectedID := -1;
 
   for i := 0 to 8 do begin
     a := i mod 3;
@@ -111,25 +126,30 @@ begin
     c.Tag:= i;
     fClickables.Add(c);
   end;
-  c := TGUIClickable.Create(Rect(
-    10,
-    10,
-    GUI_WIDTH - 10,
-    55),
-    CloseClick);
-  c.Text := '<<< Back <<<';
-  fClickables.Add(c);
+  AddClickable(Rect(
+    10, 10, GUI_WIDTH - 10, 55),
+    CloseClick, '<<< Back <<<');
+  //AddClickable(Rect(
+  //  10, 10, GUI_WIDTH - 10, 55),
+  //  CloseClick, 'tear down');
+end;
+
+procedure TGUIBlock.TearDownClick(Sender: TObject);
+begin
+  if FSelectedID >= 0 then begin
+
+  end;
 end;
 
 procedure TGUIBlock.BuildClick(Sender: TObject);
 begin
   FClickedBld:= TGUIClickable(Sender).Tag;
   if Assigned(FBlock.Building[FClickedBld]) then begin
-    ViewFrame.PushLayer(TGUIMessage.Create(format('Tear down this %s?',[FBlock.Building[FClickedBld].DisplayName]), [btOK, btCancel],BuildDestructClick));
+    //ViewFrame.PushLayer(TGUIMessage.Create(format('Tear down this %s?',[FBlock.Building[FClickedBld].DisplayName]), [btOK, btCancel],BuildDestructClick));
+    FSelectedID := FClickedBld;
   end else begin
     ViewFrame.PushLayer(TGUIChooseBuilding.Create(BuildCreateClick));
   end;
-//  Close;
 end;
 
 procedure TGUIBlock.BuildDestructClick(Sender: TObject);
@@ -149,9 +169,10 @@ var
   i: integer;
   t: TglBitmap2D;
   b: TBuilding;
-  r: TRect;  
+  r: TRect;
 begin
   inherited;
+//Gebäude  
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   for i := 0 to fClickables.Count-1 do begin
     r := TGUIClickable(fClickables[i]).Rect;
@@ -180,12 +201,51 @@ begin
       tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
       Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
     end;
+  end;                       
+
+//selektiertes Gebäude
+  glDisable(GL_TEXTURE_2D);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  r := Rect(10, 200, ClientRect.Right-ClientRect.Left-10, 370);
+  fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  b := nil;
+  if (FSelectedID >= 0) then
+    b := FBlock.Building[FSelectedID];
+  if Assigned(b) then begin
+    tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
+    tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
+    with b do
+      Fonts.GUIText.BlockOut(ClientRect.Left+15, ClientRect.Top+203, ClientRect.Right-ClientRect.Left-30, 150,
+        format(
+          '%s'#10#13#10#13+
+
+          'IND: %d'#10#13+
+          'SPA: %d'#10#13#10#13+
+
+          'POL: %d'#10#13+
+          'EDU: %d'#10#13+
+          'LUX: %d'#10#13#10#13+
+
+          'RNG: %d block(s)'#10#13+
+          'LPB: %f%%',
+          [DisplayName,
+          SIndustryValue, SLivingSpace,
+          SPollution, SEducation, SLuxury,
+          SRange, SEffectLoss*100]));
   end;
 
+//Blockwerte
+  glDisable(GL_TEXTURE_2D);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  r := Rect(10, 400, ClientRect.Right-ClientRect.Left-10, 520);
+  fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  
+  tsTextColor3f(1, 1, 1);
   tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
-  tsTextColor3f(1, 1, 1);
-  Fonts.GUIText.BlockOut(ClientRect.Left + 20, ClientRect.Top + 200, 100, 100,
+  Fonts.GUIText.BlockOut(ClientRect.Left + 15, ClientRect.Top + 403, ClientRect.Right-ClientRect.Left-30, 100,
     Format(
       'IND: %f'+sLineBreak+
       'POL: %f'+sLineBreak+
@@ -210,6 +270,12 @@ end;
 procedure TGUIBlock.CloseClick(Sender: TObject);
 begin
   Close;
+end;
+
+procedure TGUIBlock.ViewportResize(const aWidth, aHeight: Integer);
+begin
+  inherited;
+  ClientRect := Rect(aWidth - GUI_WIDTH, 0, aWidth, aHeight);
 end;
 
 { TGUIMessage }
@@ -305,6 +371,12 @@ begin
   end;  
 end;
 
+procedure TGUIMessage.ViewportResize(const aWidth, aHeight: Integer);
+begin
+  inherited;
+  ClientRect := Rect(aWidth div 2-200, aHeight div 2-50, aWidth div 2+200, aHeight div 2+50);
+end;
+
 { TGUIChooseBuilding }
 
 constructor TGUIChooseBuilding.Create(aOnClick: TNotifyEvent);
@@ -397,6 +469,25 @@ begin
       Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
     end;
   end;  
+end;
+
+procedure TGUIChooseBuilding.ViewportResize(const aWidth, aHeight: Integer);
+var
+  x, y, c: Integer;
+begin
+  inherited;
+  x := ViewFrame.ClientWidth div 2;
+  y := ViewFrame.ClientHeight div 2;
+  c := 20 + (Length(AllBuildings)+1) * 40;
+  ClientRect := Rect(x-160, y-c div 2, x+160, y+c div 2);
+end;
+
+{ TGUIMain }
+
+procedure TGUIMain.ViewportResize(const aWidth, aHeight: Integer);
+begin
+  inherited;
+  ClientRect := Rect(aWidth - GUI_WIDTH, 0, aWidth, aHeight);  
 end;
 
 end.
