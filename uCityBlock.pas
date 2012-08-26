@@ -126,9 +126,9 @@ begin
     //glScalef(1.5, 1, 1.5);    
     if Assigned(FFields[b]) then begin
       if Selection then
-        FFields[b].RenderSelect(FPosX, FPosY, b+1, 1 + FPeople/25)
+        FFields[b].RenderSelect(FPosX, FPosY, b+1, 1 + FPeople/10)
       else
-        FFields[b].Render(1 + FPeople/25);
+        FFields[b].Render(1 + FPeople/10);
     end else begin
       glDisable(GL_LIGHTING);
       glColor4f(1, 1, 1, 1);
@@ -213,7 +213,7 @@ var
 begin
   w := 1.5;
   if (self is TBSpecial) then
-    w := 4.5;
+    w := 5.5;
   glBegin(GL_QUADS);
     // Front Face
   glNormal3f( 0.0, 0.0, 1.0);                  // Normal Pointing Towards Viewer

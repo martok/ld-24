@@ -34,6 +34,7 @@ var
     BTheater,
     BCasino,
 
+    BSpecial,
     BResearchCenter,
     BWellnessCenter,
     BBusinessApartmentComplex,

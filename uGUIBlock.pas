@@ -48,7 +48,7 @@ type
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
-  TBuildingCategory = (bcEdu=1, bcLux, bcLive, bcInd);
+  TBuildingCategory = (bcEdu=1, bcLux, bcLive, bcInd, bcSpec);
   TGUIChooseBuilding = class(TGUILayer)
   private
     FOnClick: TNotifyEvent;
@@ -75,10 +75,11 @@ uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury, uBldSpecial;
 var
   AllBuildings: array[TBuildingCategory, 0..5] of TBuildingClass =
   (
-    (TBElementarySchool, TBLibrary, TBHighschool, TBCollege, nil,nil),
+    (TBElementarySchool, TBLibrary, TBHighschool, TBCollege, nil, nil),
     (TBPark, TBCinema, TBPool, TBShopping, TBTheater, TBCasino),
-    (TBHouse, TBAppartement, TBAppartement1stClass,nil,nil,nil),
-    (TBSmallIndustry, TBFactory,TBFactories,nil,nil,nil)
+    (TBHouse, TBAppartement, TBAppartement1stClass, nil, nil, nil),
+    (TBSmallIndustry, TBFactory, TBFactories, nil ,nil, nil),
+    (TBResearchCenter, TBWellnessCenter, TBBusinessApartmentComplex, TBWaterFront, nil, nil)
   );
 
 { TGUIBlock }
@@ -412,6 +413,7 @@ begin
   AddCategoryBtn(bcInd);
   AddCategoryBtn(bcEdu);
   AddCategoryBtn(bcLux);
+  AddCategoryBtn(bcSpec);
 
   x:= 10+6*40;
   y:= 10;
@@ -539,6 +541,7 @@ begin
           bcLux: t:= Textures.BPark;
           bcLive: t:= Textures.BHouse;
           bcInd: t:= Textures.BFactory;
+          bcSpec: t := Textures.BSpecial;
         end;
         t.Bind();
         glColor4f(1, 1, 1, 1);

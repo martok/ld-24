@@ -170,11 +170,6 @@ begin
   LoadTextures;
   LoadSounds;
 
-  Textures.BResearchCenter := LoadTexture('BResearchCenter');
-  Textures.BWellnessCenter := LoadTexture('BWellnessCenter');
-  Textures.BBusinessApartmentComplex := LoadTexture('BBusinessApartmentComplex');
-  Textures.BWaterFront := LoadTexture('BWaterFront');
-
   FFrameCount:= 0;
 
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
@@ -233,6 +228,12 @@ begin
   Textures.BShopping:= LoadTexture('BShopping');
   Textures.BTheater:= LoadTexture('BTheater');
   Textures.BCasino:= LoadTexture('BCasino');
+
+  Textures.BSpecial := LoadTexture('BSpecial');
+  Textures.BResearchCenter := LoadTexture('BResearchCenter');
+  Textures.BWellnessCenter := LoadTexture('BWellnessCenter');
+  Textures.BBusinessApartmentComplex := LoadTexture('BBusinessApartmentComplex');
+  Textures.BWaterFront := LoadTexture('BWaterFront');  
 end;
 
 procedure TViewFrame.LoadSounds;
