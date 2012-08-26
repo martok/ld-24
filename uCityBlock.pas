@@ -47,13 +47,15 @@ type
   private
   protected
     FRndHeight: Single;
-    function ClickHeight: single; virtual;
-    procedure RenderSimple(Color: TRGBA; Height: Single);
+    FColor: TRGBA;
+    FSelectMode: boolean;
+    // !!! DOES NOT SET ANY COLORS, IF FSelectMode = TRUE !!!
+    procedure RenderShape(Height: Single); virtual;
   public
     constructor Create; virtual;
     class function Texture: TglBitmap2D; virtual;
-    procedure RenderSelect(r, g, b: byte);
-    procedure Render(const aHeight: Single); virtual;
+    procedure RenderSelect(r, g, b: byte; Height: Single);
+    procedure Render(aHeight: Single);
     function SLivingSpace: integer; virtual;
     function SIndustryValue: integer; virtual;
     function SPollution: integer; virtual;
@@ -115,7 +117,7 @@ begin
       glTranslatef(4*x, 0, 4*y);
       glScalef(1.5, 1, 1.5);
       if Selection then
-        FFields[b].RenderSelect(FPosX, FPosY, b+1)
+        FFields[b].RenderSelect(FPosX, FPosY, b+1, 1 + FPeople/25)
       else
         FFields[b].Render(1 + FPeople/25);
       glPopMatrix;
@@ -170,92 +172,107 @@ end;
 
 { TBuilding }
 
-function TBuilding.ClickHeight: single;
-begin
-  Result:= 5;
-end;
-
 constructor TBuilding.Create;
 begin
   inherited;
   FRndHeight := (random - 0.5) / 4;
 end;
 
-procedure TBuilding.Render(const aHeight: Single);
+procedure TBuilding.Render(aHeight: Single);
 begin
+  FSelectMode:= false;
+
+  if aHeight < 0.5 then
+    aHeight := 0.5;
+  glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
+  glEnable(GL_LIGHTING);
+  SetGLMaterial(FColor);
+  RenderShape(aHeight);
+
+  glDisable(GL_LIGHTING);
+  SetGLColor(FColor);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glLineWidth(2);
+  RenderShape(aHeight);
+  glPopAttrib;
 end;
 
-procedure TBuilding.RenderSelect(r, g, b: byte);
+procedure TBuilding.RenderSelect(r, g, b: byte; Height: Single);
+begin
+  FSelectMode:= true;
+  try
+    if Height < 0.5 then
+      Height := 0.5;
+    glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
+    glDisable(GL_LIGHTING);
+    glColor3ub(r,g,b);
+    RenderShape(Height);
+    glPopAttrib;
+  finally
+    FSelectMode:= false;
+  end;
+end;
+
+procedure TBuilding.RenderShape(Height: Single);
 begin
   glBegin(GL_QUADS);
-  glColor3ub(r, g, b);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 0, 1);
-  glVertex3f(0, ClickHeight, 1);
-  glVertex3f(0, ClickHeight, 0);
+    // Front Face
+  glNormal3f( 0.0, 0.0, 1.0);                  // Normal Pointing Towards Viewer
+  glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, 0.0,  1.0);  // Point 1 (Front)
+  glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 2 (Front)
+  glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Front)
+  glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 4 (Front)
+  // Back Face
+  glNormal3f( 0.0, 0.0, -1.0);                  // Normal Pointing Away From Viewer
+  glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, 0.0, -1.0);  // Point 1 (Back)
+  glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 2 (Back)
+  glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 3 (Back)
+  glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 4 (Back)
 
-  glVertex3f(0, 0, 1);
-  glVertex3f(1, 0, 1);
-  glVertex3f(1, ClickHeight, 1);
-  glVertex3f(0, ClickHeight, 1);
+  // Top Face
+  glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
+  glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
+  glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
+  glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
+  glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
+  if not FSelectMode then begin
+    glEnd;
 
-  glVertex3f(0, ClickHeight, 0);
-  glVertex3f(0, ClickHeight, 1);
-  glVertex3f(1, ClickHeight, 1);
-  glVertex3f(1, ClickHeight, 0);
-  glEnd;
-end;
+    Texture.Bind(true);
+    glPushAttrib(GL_LIGHTING_BIT or GL_ENABLE_BIT or GL_DEPTH_FUNC);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glDepthFunc(GL_LEQUAL);
+    glColor3f(1,1,1);
 
-procedure TBuilding.RenderSimple(Color: TRGBA; Height: Single);
-  procedure Cube;
-  begin
     glBegin(GL_QUADS);
-      // Front Face
-    glNormal3f( 0.0, 0.0, 1.0);                  // Normal Pointing Towards Viewer
-    glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, 0.0,  1.0);  // Point 1 (Front)
-    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 2 (Front)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Front)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 4 (Front)
-    // Back Face
-    glNormal3f( 0.0, 0.0, -1.0);                  // Normal Pointing Away From Viewer
-    glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, 0.0, -1.0);  // Point 1 (Back)
-    glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 2 (Back)
-    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 3 (Back)
-    glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 4 (Back)
-    // Top Face
     glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
     glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
     glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
     glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
     glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
-    // Right face
-    glNormal3f( 1.0, 0.0, 0.0);                  // Normal Pointing Right
-    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 1 (Right)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 2 (Right)
-    glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Right)
-    glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 4 (Right)
-    // Left Face
-    glNormal3f(-1.0, 0.0, 0.0);                  // Normal Pointing Left
-    glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, 0.0, -1.0);  // Point 1 (Left)
-    glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, 0.0,  1.0);  // Point 2 (Left)
-    glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 3 (Left)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 4 (Left)
     glEnd;
-  end;
-begin
-  if Height < 0.5 then
-    Height := 0.5;
-  glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
-  glEnable(GL_LIGHTING);
-  SetGLMaterial(Color);
-  Cube;
 
-  glDisable(GL_LIGHTING);
-  SetGLColor(Color);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glLineWidth(2);
-  Cube;
-  glPopAttrib;
+    Texture.Unbind(true);
+    glPopAttrib;
+
+    glBegin(GL_QUADS);
+  end;
+
+
+  // Right face
+  glNormal3f( 1.0, 0.0, 0.0);                  // Normal Pointing Right
+  glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 1 (Right)
+  glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 2 (Right)
+  glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Right)
+  glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 4 (Right)
+  // Left Face
+  glNormal3f(-1.0, 0.0, 0.0);                  // Normal Pointing Left
+  glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, 0.0, -1.0);  // Point 1 (Left)
+  glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, 0.0,  1.0);  // Point 2 (Left)
+  glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 3 (Left)
+  glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 4 (Left)
+  glEnd;
 end;
 
 function TBuilding.SHappiness: integer;

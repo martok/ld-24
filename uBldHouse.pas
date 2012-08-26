@@ -8,39 +8,38 @@ uses
 type
   TBHouse = class(TBuilding)
   protected
-    function ClickHeight: Single; override;
+    procedure RenderShape(Height: Single); override;
   public
-    procedure Render(const aHeight: Single); override;
     function SLivingSpace: Integer; override;
     function SHappiness: Integer; override;
     class function Texture: TglBitmap2D; override;
+    constructor Create; override;
   end;
 
   TBAppartement = class(TBuilding)
   protected
-    function ClickHeight: Single; override;
+    procedure RenderShape(Height: Single); override;
   public
-    procedure Render(const aHeight: Single); override;
     function SLivingSpace: Integer; override;
     function SHappiness: Integer; override;
     class function Texture: TglBitmap2D; override;
+    constructor Create; override;
   end;
 
 implementation
 
 { TBHouse }
 
-function TBHouse.ClickHeight: Single;
-begin
-  Result:= 0.5;
-end;
-
-procedure TBHouse.Render(const aHeight: Single);
+constructor TBHouse.Create;
 begin
   inherited;
-  RenderSimple(ColorToRGBA(0.5, 0.5, 1), (0.9 + FRndHeight) * aHeight);
+  FColor:= ColorToRGBA(0.5, 0.5, 1);
 end;
 
+procedure TBHouse.RenderShape(Height: Single);
+begin
+  inherited RenderShape((0.9 + FRndHeight) * Height);
+end;
 
 function TBHouse.SHappiness: Integer;
 begin
@@ -59,15 +58,15 @@ end;
 
 { TBAppartement }
 
-function TBAppartement.ClickHeight: Single;
-begin
-  Result:= 1;
-end;
-
-procedure TBAppartement.Render(const aHeight: Single);
+constructor TBAppartement.Create;
 begin
   inherited;
-  RenderSimple(ColorToRGBA(0.5,0.5,1), (1.0 + FRndHeight) * aHeight);
+  FColor:= ColorToRGBA(0.5,0.5,1);
+end;
+
+procedure TBAppartement.RenderShape(Height: Single);
+begin
+  inherited RenderShape((1.0 + FRndHeight) * Height);
 end;
 
 function TBAppartement.SHappiness: Integer;

@@ -8,24 +8,25 @@ uses
 type
   TBElementarySchool = class(TBuilding)
   protected
-    function ClickHeight: Single; override;
+    procedure RenderShape(Height: Single); override;
   public
-    procedure Render(const aHeight: Single); override;
+    constructor Create; override;
   end;
 
 implementation
 
 { TBElementarySchool }
 
-function TBElementarySchool.ClickHeight: Single;
-begin
-  Result:= 1;
-end;
-
-procedure TBElementarySchool.Render(const aHeight: Single);
+constructor TBElementarySchool.Create;
 begin
   inherited;
-  RenderSimple(c_Red, 2);
+  FColor:= c_Red;
+end;
+
+
+procedure TBElementarySchool.RenderShape(Height: Single);
+begin
+  inherited RenderShape(2.0);
 end;
 
 end.

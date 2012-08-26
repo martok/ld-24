@@ -99,6 +99,7 @@ begin
   try
     Result.LoadFromFile(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
     Result.SetWrap(GL_CLAMP, GL_CLAMP, GL_CLAMP);
+    Result.SetFilter(GL_LINEAR, GL_LINEAR);
     //Result.DeleteTextureOnFree := False;
     //Result.FreeDataAfterGenTexture := False;
     Result.GenTexture();
@@ -125,13 +126,13 @@ begin
   TtsFont.InitTS;
   Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
   Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
-  {
+
   Textures.BFactories:= LoadTexture('BFactories');
   Textures.BFactory:= LoadTexture('BFactory');
-  Textures.BHouse:= LoadTexture('BHouse');   
+  Textures.BHouse:= LoadTexture('BHouse');
   Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
   Textures.BUnknown:= LoadTexture('BUnknown');
-  }
+
   FFrameCount:= 0;
 
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);

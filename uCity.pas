@@ -158,10 +158,10 @@ begin
         if Selection then begin
           glBegin(GL_QUADS);
           glColor3ub(x, y, 255);
-          glVertex3f(0, 0, 0);
-          glVertex3f(3, 0, 0);
-          glVertex3f(3, 0, 3);
-          glVertex3f(0, 0, 3);
+          glVertex3f( 6, 0,-6);
+          glVertex3f(-6, 0,-6);
+          glVertex3f(-6, 0, 6);
+          glVertex3f( 6, 0, 6);
           glEnd;
         end;
 
