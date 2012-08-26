@@ -12,14 +12,15 @@ object ViewFrame: TViewFrame
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
+  OnClick = FormClick
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnMouseDown = FormMouseDown
-  OnMouseUp = FormMouseUp
+  OnMouseMove = FormMouseMove
+  OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
   object Timer1: TTimer
-    Interval = 100
     OnTimer = Timer1Timer
     Left = 668
     Top = 64

@@ -12,6 +12,8 @@ type
   public
     constructor Create(Name: string; Size: integer; AA: boolean; Style: TFontStyles = []);
     procedure TextOut(X, Y: Single; Str: string; HAlign: Cardinal=TS_ALIGN_LEFT);
+    procedure BlockOut(X, Y, Width, Height: Integer; str: String); overload;
+    procedure BlockOut(Rect: TRect; str: String); overload;
 
     class procedure InitTS;
     class procedure DoneTS;
@@ -116,6 +118,19 @@ begin
     tsTextOutA(PAnsiChar(Str));
     glDisable(GL_TEXTURE_2D);
   glPopMatrix;
+end;
+
+procedure TtsFont.BlockOut(X, Y, Width, Height: Integer; str: String);
+begin
+  tsFontBind(FFont);
+  tsTextBeginBlock(X, Y, Width, Height, TS_BLOCKFLAG_NONE);
+    tsTextOutA(PAnsiChar(str));
+  tsTextEndBlock;
+end;
+
+procedure TtsFont.BlockOut(Rect: TRect; str: String);
+begin
+  BlockOut(Rect.Left, Rect.Top, Rect.Right-Rect.Left, Rect.Bottom-Rect.Top, str);
 end;
 
 end.

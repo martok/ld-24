@@ -104,43 +104,50 @@ end;
 
 procedure TCity.Render(Selection: boolean);
 var
-  x, y, i: integer;
+  x, y, i, o: integer;
 begin
   glPushMatrix;
-
-//Streets
-  glPushMatrix;
-  glTranslatef(-7.5, 0, -7.5);
-  //glColor4f(0.7, 0.7, 0.7, 1);
-  SetGLMaterial(ColorToRGBA(0.7, 0.7, 0.7));
-  glBegin(GL_QUADS);
-    glNormal3f(0, 1, 0);
-    for i := 0 to High(FStreets) do with FStreets[i] do begin
-      if (Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) > 1 then begin
-        glVertex3f(startPos.x*FBlockDist-1, 0, startPos.y*FBlockDist+width);
-        glVertex3f(startPos.x*FBlockDist-1, 0, startPos.y*FBlockDist-width);
-        glVertex3f(endPos.x*FBlockDist+1, 0, endPos.y*FBlockDist-width);
-        glVertex3f(endPos.x*FBlockDist+1, 0, endPos.y*FBlockDist+width);
-      end else begin
-        glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-1);
-        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-1);
-        glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+1);
-        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+1);
-      end;
-    end;
-  glEnd;
-  glPopMatrix;
-
-//Cars
-  glDepthFunc(GL_ALWAYS);
-  glColor4f(1, 1, 1, 1);
-  SetGLMaterial(ColorToRGBA(1, 1, 1));
-  glDisable(GL_LIGHTING);
-  for i := 0 to FCars.Count-1 do
-    TCar(FCars[i]).Render;
-  glDepthFunc(GL_LESS);
-
   if not Selection then begin
+    //Streets
+    glPushMatrix;
+    glTranslatef(-7.5, 0, -7.5);
+    //glColor4f(0.7, 0.7, 0.7, 1);
+    SetGLMaterial(ColorToRGBA(0.7, 0.7, 0.7));
+    glBegin(GL_QUADS);
+      glNormal3f(0, 1, 0);
+      for i := 0 to High(FStreets) do with FStreets[i] do begin
+        if (startPos.y-endPos.y = 0) or ((Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) > 1) then begin
+          if (startPos.x < endPos.x) then
+            o := 1
+          else
+            o := -1;
+          glVertex3f(startPos.x*FBlockDist-o, 0, startPos.y*FBlockDist+width);
+          glVertex3f(startPos.x*FBlockDist-o, 0, startPos.y*FBlockDist-width);
+          glVertex3f(endPos.x*FBlockDist+o, 0, endPos.y*FBlockDist-width);
+          glVertex3f(endPos.x*FBlockDist+o, 0, endPos.y*FBlockDist+width);
+        end else begin
+          if (startPos.y < endPos.y) then
+            o := 1
+          else
+            o := -1;
+          glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-o);
+          glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-o);
+          glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+o);
+          glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+o);
+        end;
+      end;
+    glEnd;
+    glPopMatrix;
+
+    //Cars
+    glDepthFunc(GL_ALWAYS);
+    glColor4f(1, 1, 1, 1);
+    SetGLMaterial(ColorToRGBA(1, 1, 1));
+    glDisable(GL_LIGHTING);
+    for i := 0 to FCars.Count-1 do
+      TCar(FCars[i]).Render;
+    glDepthFunc(GL_LESS);
+
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
     SetGLMaterial(c_Yellow);
@@ -196,12 +203,12 @@ var
 begin
   r := random(Length(fStreets));
   with fStreets[r] do begin
-    s := 10 + random*3;
+    s := 3 + random*3;
     if random(2) = 1 then
       o := 0.5 + random(width)
     else
       o := -0.5 - random(width);
-    if (Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) < 1 then begin
+    if (startPos.y-endPos.y <> 0) and ((Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) < 1) then begin
       if (startPos.y-endPos.y) > 0 then
         o := -o;
       if (o < 0) then begin
