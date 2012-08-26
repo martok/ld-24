@@ -76,11 +76,13 @@ begin
   for i := 0 to 8 do begin
     a := i mod 3;
     b := i div 3;
-    fClickables.Add(TGUIClickable.Create(Rect(
+    c:= TGUIClickable.Create(Rect(
       a*50 + 10,
       b*50 + 10,
       a*50 + 55,
-      b*50 + 55), BuildClick));
+      b*50 + 55), BuildClick);
+    c.Tag:= i;
+    fClickables.Add(c);
   end;
   c := TGUIClickable.Create(Rect(
     10,
@@ -198,6 +200,8 @@ begin
   y := ViewFrame.ClientHeight div 2;
   fClientRect := Rect(x-200, y-50, x+200, y+50);
 
+  fMessage:= aMessage;
+
   c := 0;
   if btOK in aButtons then
     inc(c);
@@ -232,11 +236,12 @@ begin
 
   tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
-  Fonts.GUIText.BlockOut(RectOffset(Rect(-190, -40, 190, 40), fClientRect.TopLeft), fMessage);
+  Fonts.GUIText.BlockOut(Rect(fClientRect.Left,fClientRect.Top, fClientRect.Right, fClientRect.Bottom-60), fMessage);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   for i := 0 to fClickables.Count-1 do begin
     r := TGUIClickable(fClickables[i]).Rect;
+    glDisable(GL_TEXTURE_2D);
     if (PtInRect(r, fMousePos)) then
       glColor4f(1, 1, 1, 0.2)
     else

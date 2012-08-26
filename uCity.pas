@@ -369,17 +369,17 @@ procedure TCity.Evolve;
 var
   x, y: integer;
   cb: TCityBlock;
+  a,b,c: Single;
 begin
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];
       if Assigned(cb) then begin
+        a:= cb.People/cb.Space;
+        b:= a + 0.06;
+        c:= 0.315693 + 1.1698*b + 0.377239*b*b - 1.74776*b*b*b;
+        cb.GrowthRate:= c*2;
 
-        //TODO
-        if cb.People > cb.Space * 0.9 then
-          cb.GrowthRate:= cb.GrowthRate - (cb.People - cb.Space * 0.95)
-        else
-          cb.GrowthRate:= cb.GrowthRate + cb.People / cb.Space;
         cb.GrowthRate:= cb.GrowthRate + 0.5 * (1 + cb.Luxury);
         cb.GrowthRate:= cb.GrowthRate + 0.5 * cb.Education;
         cb.GrowthRate:= cb.GrowthRate + 0.2 * cb.Industry;
