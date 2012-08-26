@@ -38,8 +38,8 @@ var
   end;
 
   Sounds: record
-    BackgroundMusic
-
+    BackgroundMusic,
+    EffectClick
     : TsndSound;
   end;
 
