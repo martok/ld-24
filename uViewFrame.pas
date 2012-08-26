@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, uCity, FastGL;
+  Contnrs, Dialogs, dglOpenGL, TextSuite, AppEvnts, ExtCtrls, uCity, FastGL,
+  uSound;
 
 type
   TGUILayer = class;
@@ -27,6 +28,9 @@ type
     LastFrameTime: Double;
     LastEvolve: Single;
     HasMoved: Boolean;
+    procedure LoadFonts;
+    procedure LoadTextures;
+    procedure LoadSounds;
     function RenderForMouseClick(x, y: integer): TPoint;
     procedure PrepareMatrix;
   public
@@ -37,6 +41,8 @@ type
     end;
     City: TCity;
     GUIStack: TObjectList;
+    Sound: TSoundSystem;
+    SoundEmitter: TsndEmitter;
     procedure PopLayer(const aLayer: TGUILayer = nil);
     procedure PushLayer(const aLayer: TGUILayer);
     procedure Timestep(DT: Single);
@@ -112,6 +118,19 @@ begin
   end;
 end;
 
+function LoadSound(Kind: TSoundKind; Name: string): TsndSound;
+var
+  fs: TFileStream;
+begin
+  fs:= TFileStream.Create(ExtractFilePath(ParamStr(0))+'sounds\'+name+'.ogg',fmOpenRead or fmShareDenyWrite);
+  try
+    Result:= TsndSound.Create(Kind);
+    Result.LoadFromStream(fs, ftOggVorbis);
+  finally
+    fs.Free;
+  end;
+end;
+
 procedure TViewFrame.FormCreate(Sender: TObject);
 var
   guiMain: TGUIMain;
@@ -125,7 +144,7 @@ begin
   ClientHeight:= 600;
   InitOpenGL();
   maxSample := 0;
-  PF := 0;  
+  PF := 0;
   {gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
   for i := 0 to c-1 do begin
     if SampleList[i] > maxSample then begin
@@ -141,29 +160,15 @@ begin
   LastFrameTime:= GetPrecisionTime;
 
   TtsFont.InitTS;
-  Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
-  Fonts.LargeText:= TtsFont.Create('Arial', 18, false, []);
+  Sound:= TSoundSystem.Create;
+  if not Sound.Available then begin
+    //TODO
+    raise Exception.Create('No OpenAL found. Pleas see included Readme to find out what to do about that.');
+  end;
 
-  Textures.BUnknown:= LoadTexture('BUnknown');
-  Textures.BElementarySchool:= LoadTexture('BElementarySchool');
-  Textures.BHighschool:= LoadTexture('BHighschool');
-  Textures.BLibrary:= LoadTexture('BLibrary');
-  Textures.BCollege:= LoadTexture('BCollege');
-
-  Textures.BHouse:= LoadTexture('BHouse');
-  Textures.BAppartement:= LoadTexture('BAppartement');
-  Textures.BAppartement1stClass:= LoadTexture('BAppartement1stClass');
-
-  Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
-  Textures.BFactory:= LoadTexture('BFactory');
-  Textures.BFactories:= LoadTexture('BFactories');
-
-  Textures.BPark:= LoadTexture('BPark');
-  Textures.BCinema:= LoadTexture('BCinema');
-  Textures.BPool:= LoadTexture('BPool');
-  Textures.BShopping:= LoadTexture('BShopping');
-  Textures.BTheater:= LoadTexture('BTheater');
-  Textures.BCasino:= LoadTexture('BCasino');
+  LoadFonts;
+  LoadTextures;
+  LoadSounds;
 
   Textures.BResearchCenter := LoadTexture('BResearchCenter');
   Textures.BWellnessCenter := LoadTexture('BWellnessCenter');
@@ -188,6 +193,7 @@ begin
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
 
   Application.OnIdle := ApplicationIdle;
+  TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter).Loop(-1, 10).Gain:= 0.3;
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);
@@ -197,6 +203,43 @@ begin
   TtsFont.DoneTS;
   gluDestroyRenderContext(RC);
   inherited;
+end;
+
+procedure TViewFrame.LoadFonts;
+begin
+  Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
+  Fonts.LargeText:= TtsFont.Create('Arial', 18, false, []);
+end;
+
+procedure TViewFrame.LoadTextures;
+begin
+  Textures.BUnknown:= LoadTexture('BUnknown');
+  Textures.BElementarySchool:= LoadTexture('BElementarySchool');
+  Textures.BHighschool:= LoadTexture('BHighschool');
+  Textures.BLibrary:= LoadTexture('BLibrary');
+  Textures.BCollege:= LoadTexture('BCollege');
+
+  Textures.BHouse:= LoadTexture('BHouse');
+  Textures.BAppartement:= LoadTexture('BAppartement');
+  Textures.BAppartement1stClass:= LoadTexture('BAppartement1stClass');
+
+  Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
+  Textures.BFactory:= LoadTexture('BFactory');
+  Textures.BFactories:= LoadTexture('BFactories');
+
+  Textures.BPark:= LoadTexture('BPark');
+  Textures.BCinema:= LoadTexture('BCinema');
+  Textures.BPool:= LoadTexture('BPool');
+  Textures.BShopping:= LoadTexture('BShopping');
+  Textures.BTheater:= LoadTexture('BTheater');
+  Textures.BCasino:= LoadTexture('BCasino');
+end;
+
+procedure TViewFrame.LoadSounds;
+begin
+  SoundEmitter:= TsndEmitter.Create;
+  Sounds.BackgroundMusic:= LoadSound(skStream,'maximum_chill');
+  Sounds.EffectClick:= LoadSound(skBlock,'click');
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -427,6 +470,7 @@ begin
         PushLayer(block);
       end;
     end;
+    TsndInstance.Create(Sounds.EffectClick, SoundEmitter).Play().Gain:= 1;
   end;
 end;
 

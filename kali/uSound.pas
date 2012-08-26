@@ -102,7 +102,7 @@ type
 
 implementation
 
-uses uLogger, oval, Math;
+uses oval, Math;
 
 const
   LOG_CTX = 'Sound';
@@ -119,20 +119,20 @@ begin
   inherited Create;
   FAvailable:= false;
   if not SoundAL.Available then begin
-    GetLogger.Log(LOG_CTX, 'No OpenAL found!');
+    //GetLogger.Log(LOG_CTX, 'No OpenAL found!');
     exit;
   end;
   dev:= SoundAL.Device['OpenAL Soft'];
   if not Assigned(dev) then begin
-    GetLogger.Log(LOG_CTX, 'Initializing "OpenAL Soft" failed. Is soft_oal.dll present?');
-    GetLogger.Log(LOG_CTX, 'Falling back to generic default. Positional Audio may not work.');
+    //GetLogger.Log(LOG_CTX, 'Initializing "OpenAL Soft" failed. Is soft_oal.dll present?');
+    //GetLogger.Log(LOG_CTX, 'Falling back to generic default. Positional Audio may not work.');
     dev:= SoundAL.Device[''];
   end;
   FCtx:= TALContext.Create(dev);
   FCtx.MakeCurrent;
-  GetLogger.Log(LOG_CTX, 'Initialized Audio: ' +
-    'OpenAL ' + SoundAL.VersionInfo.Version +
-    ' ALC: ' + FCtx.Version);
+  //GetLogger.Log(LOG_CTX, 'Initialized Audio: ' +
+  //  'OpenAL ' + SoundAL.VersionInfo.Version +
+  //  ' ALC: ' + FCtx.Version);
   GLOB_WorldScale:= 1;
   FAvailable:= true;
 end;

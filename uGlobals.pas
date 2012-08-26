@@ -2,7 +2,7 @@ unit uGlobals;
 
 interface
 
-uses uFonts, GLBitmap;
+uses uFonts, GLBitmap, uSound;
 
 const
   GUI_WIDTH = 165;
@@ -40,6 +40,12 @@ var
     BWaterFront,
 
     BUnknown: TglBitmap2D;
+  end;
+
+  Sounds: record
+    BackgroundMusic,
+    EffectClick
+    : TsndSound;
   end;
 
 implementation
