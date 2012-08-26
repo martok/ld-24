@@ -65,7 +65,7 @@ begin
   inherited Create;
   FCars := TObjectList.Create(true);
   SetLength(FCityBlocks, 10, 10);
-
+  SetLength(FStreets, 0);
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       FCityBlocks[x, y]:= TCityBlock.Create(x, y, btNormal);
@@ -115,15 +115,15 @@ begin
     glNormal3f(0, 1, 0);
     for i := 0 to High(FStreets) do with FStreets[i] do begin
       if (Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) > 1 then begin
-        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist+width);
-        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-width);
-        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist-width);
-        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+width);
+        glVertex3f(startPos.x*FBlockDist-1, 0, startPos.y*FBlockDist+width);
+        glVertex3f(startPos.x*FBlockDist-1, 0, startPos.y*FBlockDist-width);
+        glVertex3f(endPos.x*FBlockDist+1, 0, endPos.y*FBlockDist-width);
+        glVertex3f(endPos.x*FBlockDist+1, 0, endPos.y*FBlockDist+width);
       end else begin
-        glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-width);
-        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-width);
-        glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+width);
-        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+width);
+        glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-1);
+        glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-1);
+        glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+1);
+        glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+1);
       end;
     end;
   glEnd;
@@ -196,9 +196,9 @@ begin
   with fStreets[r] do begin
     s := 10 + random*3;
     if random(2) = 1 then
-      o := 0.5
+      o := 0.5 + random(width)
     else
-      o := -0.5;
+      o := -0.5 - random(width);
     if (Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) < 1 then begin
       if (startPos.y-endPos.y) > 0 then
         o := -o;

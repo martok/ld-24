@@ -1,8 +1,8 @@
 object ViewFrame: TViewFrame
-  Left = 192
-  Top = 135
-  Width = 727
-  Height = 333
+  Left = 370
+  Top = 318
+  Width = 836
+  Height = 624
   Caption = 'ViewFrame'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET

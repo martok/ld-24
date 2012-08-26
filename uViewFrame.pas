@@ -8,6 +8,7 @@ uses
 
 type
   TGUILayer = class;
+
   TViewFrame = class(TForm)
     Timer1: TTimer;
     procedure ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -28,11 +29,9 @@ type
     pressed: set of TMouseButton;
     FFrameCount: integer;
     LastFrameTime: Double;
-    LastEvolve: single;
-    PausedForInput: boolean;
-    seltext: string;
+    LastEvolve: Single;
     procedure HandleInputs;
-    procedure RenderForMouseClick(x, y: integer);
+    function RenderForMouseClick(x, y: integer): TPoint;
     procedure PrepareMatrix;
   public
     { Public-Deklarationen }
@@ -41,7 +40,9 @@ type
       turn, tilt, zoom: Single;
     end;
     City: TCity;
-    GUILayer: TGUILayer;
+    GUIStack: TObjectList;
+    procedure PopLayer;
+    procedure PushLayer(const aLayer: TGUILayer);
     procedure Timestep(DT: Single);
     procedure Render;
   end;
@@ -54,7 +55,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    procedure MouseClick(X, Y: integer); virtual;
+    function MouseClick(X, Y: Integer): Boolean; virtual;
     procedure Close;
     procedure Render; virtual;
   end;
@@ -100,8 +101,6 @@ begin
     Result.LoadFromFile(ExtractFilePath(ParamStr(0))+'textures\'+name+'.tga');
     Result.SetWrap(GL_CLAMP, GL_CLAMP, GL_CLAMP);
     Result.SetFilter(GL_LINEAR, GL_LINEAR);
-    //Result.DeleteTextureOnFree := False;
-    //Result.FreeDataAfterGenTexture := False;
     Result.GenTexture();
   except
     FreeAndNil(result);
@@ -133,16 +132,17 @@ begin
   Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
   Textures.BUnknown:= LoadTexture('BUnknown');
 
-  FFrameCount:= 0;
+  FFrameCount:= 0;                                    
 
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
   Camera.turn := 15;
   Camera.tilt := 35;
   Camera.zoom := -100;
 
-  PausedForInput:= false;
   LastEvolve:= 0;
 
+  GUIStack := TObjectList.Create(true);
+  PushLayer(TGUIMain.Create);
   City:= TCity.Create;
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
 
@@ -152,6 +152,7 @@ end;
 procedure TViewFrame.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(City);
+  GUIStack.Free;
 
   TtsFont.DoneTS;
   if RC <> 0 then begin
@@ -196,6 +197,7 @@ procedure TViewFrame.HandleInputs;
 var
   ax, ay: integer;
   dx, dy: integer;
+  p: TPoint;
 begin
   ax:= ScreenToClient(Mouse.CursorPos).x;
   ay:= ScreenToClient(Mouse.CursorPos).y;
@@ -234,17 +236,15 @@ begin
 
     MP.X:= ax;
     MP.y:= ay;
-
-    if PausedForInput then begin
-      if pressed = [mbLeft] then begin
-        pressed:= [];
-
-        if not Assigned(GUILayer) then
-          RenderForMouseClick(MP.X, mp.Y)
-        else
-          GUILayer.MouseClick(MP.X, mp.Y);
-      end;
+    {
+    if (GUIStack.Count > 0) and TGUILayer(GUIStack[GUIStack.Count-1]).MouseClick(MP.X, MP.Y) then begin
+      
+    end else begin
+      p := RenderForMouseClick(MP.X, MP.Y);
+      if (p.X >= 0) and (p.Y >= 0) then
+        PushLayer(TGUIBlock.Create(City, p.X, p.Y));
     end;
+    }
   end;
 
   dx := 0;
@@ -257,8 +257,6 @@ begin
     dy := dy + 50;
   if KeyPressed(VK_UP) then
     dy := dy - 50;
-  if KeyPressed(VK_SPACE) then
-    PausedForInput:= true;
 
   Camera.pos[0] := Camera.pos[0] + cos(Camera.turn/180*Pi)*dx * Camera.zoom / 1000;
   Camera.pos[2] := Camera.pos[2] + sin(Camera.turn/180*Pi)*dx * Camera.zoom / 1000;
@@ -267,33 +265,28 @@ begin
 end;
 
 procedure TViewFrame.Timestep(DT: Single);
+var
+  i: Integer;
 begin
   City.Progress(DT);
-  if not PausedForInput then begin
-    LastEvolve:= LastEvolve + DT;
-    if LastEvolve >= 1 then begin
+  LastEvolve:= LastEvolve + DT;
+  if LastEvolve >= 1 then begin
+    for i := 0 to 250 do
       City.CreateRandomCar;
-      City.CreateRandomCar;
-      City.CreateRandomCar;
-      City.CreateRandomCar;
-      City.CreateRandomCar;
-            
-      City.Evolve;
-      LastEvolve:= 0;
-    end;
+    City.Evolve;
+    LastEvolve:= 0;
   end;
 end;
 
 procedure TViewFrame.PrepareMatrix;
 const
-  FOV = 40;
+  FOV = 45;
   CLIP_NEAR = 0.1;
   CLIP_FAR = 1000;
 begin
   glMatrixMode(GL_PROJECTION);
   glViewport(0, 0, ClientWidth, ClientHeight);
   glLoadIdentity();
-  //TODO: Orto!!!!
   gluPerspective(FOV, ClientWidth / ClientHeight, CLIP_NEAR, CLIP_FAR);
 
   glMatrixMode(GL_MODELVIEW);
@@ -314,31 +307,20 @@ begin
   glRotatef(Camera.turn, 0, 1, 0);  
   glTranslatef(Camera.pos[0], Camera.pos[1], Camera.pos[2]);
   City.Render(false);
-  if PausedForInput then
-    ;
   glPopMatrix;
 
-  Enter2dMode(800, 600);
+  Enter2dMode(ClientWidth, ClientHeight);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
-
-  if PausedForInput then begin
-    tsTextColor3f(1, 0, 0);
-    Fonts.LargeText.TextOut(400, 550, 'Pause', TS_ALIGN_CENTER);
-  end;
-
-  tsTextColor3f(1, 1, 1);
-  Fonts.LargeText.TextOut(400, 50, seltext, TS_ALIGN_CENTER);
-
   glDisable(GL_TEXTURE_2D);
-  if Assigned(GUILayer) then
-    GUILayer.Render;
+  if GUIStack.Count > 0 then
+    TGUILayer(GUIStack[GUIStack.Count-1]).Render;
   Exit2dMode;
 
   SwapBuffers(DC);
 end;
 
-procedure TViewFrame.RenderForMouseClick(x, y: integer);
+function TViewFrame.RenderForMouseClick(x, y: integer): TPoint;
 var
   clr: array[0..2] of byte;
 begin
@@ -355,15 +337,10 @@ begin
   glPopMatrix;
 
   glReadPixels(x, ClientHeight - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, @clr);
-  case clr[2] of
-    0: seltext:= 'nothing';
-    1..9: seltext:= Format('bld %d @ %d %d', [clr[2] - 1, clr[0], clr[1]]); // building
-    255: seltext:= Format('block %d %d', [clr[0], clr[1]]); // block
-  end;
-  if clr[2] > 0 then begin
-    GUILayer:= TGUIBlock.Create(City, clr[0], clr[1]);
-  end else
-    PausedForInput:= false;
+  if (clr[2] > 0) then
+    result := Point(clr[0], clr[1])
+  else
+    result := Point(-1, -1);
 end;
 
 procedure TViewFrame.FormMouseDown(Sender: TObject; Button: TMouseButton;
@@ -385,11 +362,7 @@ end;
 
 procedure TGUILayer.Close;
 begin
-  if Assigned(Owner) then begin
-    ViewFrame.GUILayer:= Owner;
-  end else begin
-    ViewFrame.GUILayer:= nil;
-  end;
+  ViewFrame.PopLayer;
   Free;
 end;
 
@@ -405,18 +378,17 @@ begin
   inherited;
 end;
 
-procedure TGUILayer.MouseClick(X, Y: integer);
+function TGUILayer.MouseClick(X, Y: integer): Boolean;
 var
   i: integer;
 begin
-  if not PtInRect(ClientRect, Point(X, Y)) then begin
-    Close;
-    exit;
-  end;
-  for i:= 0 to Clickables.Count - 1 do begin
-    if PtInRect(TGUIClickable(Clickables[i]).ActiveRect, Point(X, Y)) then begin
-      TGUIClickable(Clickables[i]).Click;
-      break;
+  result := PtInRect(ClientRect, Point(X, Y));
+  if result then begin
+    for i:= 0 to Clickables.Count - 1 do begin
+      if PtInRect(TGUIClickable(Clickables[i]).ActiveRect, Point(X, Y)) then begin
+        TGUIClickable(Clickables[i]).Click;
+        break;
+      end;
     end;
   end;
 end;
@@ -429,7 +401,7 @@ begin
     Owner.Render;
 
   glBegin(GL_QUADS);
-  SetGLColor(ColorToRGBA(clSilver));
+  SetGLColor(ColorToRGBA(1, 1, 1, 0.5));
   glVertex2f(ClientRect.Left, ClientRect.Top);
   glVertex2f(ClientRect.Right, ClientRect.Top);
   glVertex2f(ClientRect.Right, ClientRect.Bottom);
@@ -465,6 +437,17 @@ begin
   inherited Create;
   FText:= '';
   ActiveRect:= Rect;
+end;
+
+procedure TViewFrame.PopLayer;
+begin
+  if (GUIStack.Count > 0) then
+    GUIStack.Delete(GUIStack.Count-1);
+end;
+
+procedure TViewFrame.PushLayer(const aLayer: TGUILayer);
+begin
+  GUIStack.Add(aLayer);
 end;
 
 end.

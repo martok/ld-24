@@ -7,6 +7,11 @@ uses
   glBitmap;
 
 type
+  TGUIMain = class(TGUILayer)
+  private
+  public
+  end;
+
   TGUIBlock = class(TGUILayer)
   private
     FCity: TCity;

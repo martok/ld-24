@@ -176,7 +176,7 @@ Map:
 			EndY = 1
 			StartX = 1
 			StartY = 3
-			Width = 1
+			Width = 3
 		end
 		1:
 			EndX = 0
