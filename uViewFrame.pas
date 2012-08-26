@@ -90,9 +90,6 @@ uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock, glBitmap;
 var
   pfc: Int64;
   
-const
-  GUI_WIDTH = 165;
-
 function GetPrecisionTime: Double;
 var
   pc: Int64;

@@ -4,6 +4,9 @@ interface
 
 uses uFonts, GLBitmap;
 
+const
+  GUI_WIDTH = 165;
+
 var
   Fonts: record
     GUIText,

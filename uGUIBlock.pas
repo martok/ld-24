@@ -3,7 +3,7 @@ unit uGUIBlock;
 interface
 
 uses
-  SysUtils, dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite,
+  SysUtils, Classes, dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite,
   glBitmap, Windows;
 
 type
@@ -17,19 +17,23 @@ type
   TGUIMessage = class(TGUILayer)
   private
     fMessage: String;
-    fAnswer: String;
-    procedure OnClick(Sender: TObject);
+    fAnswer: TGUIButton;
+    FOnClick: TNotifyEvent;
+    procedure OnBtnClick(Sender: TObject);
   public
-    property Answer: String read fAnswer;
+    property Answer: TGUIButton read fAnswer;
 
-    constructor Create(const aMessage: String; aButtons: TGUIButtons);
+    constructor Create(const aMessage: String; aButtons: TGUIButtons; aOnClick: TNotifyEvent = nil);
     procedure Render; override;
+    property OnClick: TNotifyEvent read FOnClick write FOnClick;
   end;
 
   TGUIBlock = class(TGUILayer)
   private
     FCity: TCity;
     FBlock: TCityBlock;
+    FClickedBld: integer;
+    procedure BuildDestructClick(Sender: TObject);
   protected
     procedure SetClientRect(const aRect: TRect); override;
     procedure BuildClick(Sender: TObject);
@@ -41,7 +45,7 @@ type
 
 implementation
 
-uses Classes, uGlobals, uBldHouse, uBldIndustry;
+uses uGlobals, uBldHouse, uBldIndustry;
 
 { TGUIBlock }
 
@@ -78,17 +82,17 @@ begin
     b := i div 3;
     c:= TGUIClickable.Create(Rect(
       a*50 + 10,
-      b*50 + 10,
+      b*50 + 40,
       a*50 + 55,
-      b*50 + 55), BuildClick);
+      b*50 + 85), BuildClick);
     c.Tag:= i;
     fClickables.Add(c);
   end;
   c := TGUIClickable.Create(Rect(
     10,
-    ClientRect.Bottom - ClientRect.Top - 35,
-    ClientRect.Right - ClientRect.Left - 10,
-    ClientRect.Bottom - ClientRect.Top - 10),
+    10,
+    GUI_WIDTH - 10,
+    55),
     CloseClick);
   c.Text := '<<< Back <<<';
   fClickables.Add(c);
@@ -96,8 +100,19 @@ end;
 
 procedure TGUIBlock.BuildClick(Sender: TObject);
 begin
-  ViewFrame.PushLayer(TGUIMessage.Create('Test String lalal a blubb bäng', [btOK, btCancel, btAbort]));
+  FClickedBld:= TGUIClickable(Sender).Tag;
+  if Assigned(FBlock.Building[FClickedBld]) then begin
+    ViewFrame.PushLayer(TGUIMessage.Create(format('Tear down this %s?',[FBlock.Building[FClickedBld].DisplayName]), [btOK, btCancel],BuildDestructClick));
+  end else begin
+
+  end;
 //  Close;
+end;
+
+procedure TGUIBlock.BuildDestructClick(Sender: TObject);
+begin
+  if TGUIMessage(Sender).Answer=btOK then
+    FCity.DestroyBuilding(FBlock,FClickedBld);
 end;
 
 procedure TGUIBlock.Render;
@@ -158,9 +173,9 @@ begin
   inherited;
   TGUIClickable(fClickables[9]).Rect := Rect(
     10,
-    ClientRect.Bottom - ClientRect.Top - 35,
+    10,
     ClientRect.Right - ClientRect.Left - 10,
-    ClientRect.Bottom - ClientRect.Top - 10);
+    35);
 end;
 
 procedure TGUIBlock.CloseClick(Sender: TObject);
@@ -170,26 +185,29 @@ end;
 
 { TGUIMessage }
 
-procedure TGUIMessage.OnClick(Sender: TObject);
+procedure TGUIMessage.OnBtnClick(Sender: TObject);
 begin
-  fAnswer := TGUIClickable(Sender).Text;
+  fAnswer := TGUIButton(TGUIClickable(Sender).Tag);
+  if Assigned(FOnClick) then
+    FOnClick(Self);
   Close;
 end;
 
-constructor TGUIMessage.Create(const aMessage: String; aButtons: TGUIButtons);
+constructor TGUIMessage.Create(const aMessage: String; aButtons: TGUIButtons; aOnClick: TNotifyEvent);
 var
   c, x, y, i: Integer;
   click: TGUIClickable;
 
-  procedure AddButton(Caption: String);
+  procedure AddButton(b: TGUIButton; Caption: String);
   var
     x, y: Integer;
   begin
     x := Round(200 + (i - (c-1)/2) * 60);
     y := 80;
     click := TGUIClickable.Create(Rect(
-      -25+x, -10+y, 25+x, 10+y), OnClick);
+      -25+x, -10+y, 25+x, 10+y), OnBtnClick);
     click.Text := Caption;
+    click.Tag:= ord(b);
     fClickables.Add(click);
     inc(i);
   end;
@@ -201,6 +219,7 @@ begin
   fClientRect := Rect(x-200, y-50, x+200, y+50);
 
   fMessage:= aMessage;
+  FOnClick:= aOnClick;
 
   c := 0;
   if btOK in aButtons then
@@ -216,15 +235,15 @@ begin
 
   i := 0;
   if btOK in aButtons then
-    AddButton('OK');
+    AddButton(btOK, 'OK');
   if btYes in aButtons then
-    AddButton('Yes');
+    AddButton(btYes, 'Yes');
   if btNo in aButtons then
-    AddButton('No');
+    AddButton(btNo, 'No');
   if btCancel in aButtons then
-    AddButton('Cancel');
+    AddButton(btCancel, 'Cancel');
   if btAbort in aButtons then
-    AddButton('Abort');
+    AddButton(btAbort, 'Abort');
 end;
 
 procedure TGUIMessage.Render;

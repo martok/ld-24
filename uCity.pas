@@ -52,6 +52,7 @@ type
     procedure LoadFromFile(const aFilename: String);
 
     procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
+    procedure DestroyBuilding(Where: TCityBlock; index: integer);
   end;
 
 implementation
@@ -362,6 +363,15 @@ begin
       Where.Building[i]:= Building.Create;
       break;
     end;
+  UpdateStats;
+end;
+
+procedure TCity.DestroyBuilding(Where: TCityBlock; index: integer);
+begin
+  if Where.Building[index] <> nil then begin
+    Where.Building[index].Free;
+    Where.Building[index]:= nil;
+  end;
   UpdateStats;
 end;
 

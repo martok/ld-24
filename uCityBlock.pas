@@ -66,6 +66,8 @@ type
 
     function SRange: integer; virtual;
     function SEffectLoss: single; virtual;
+
+    function DisplayName: string; virtual;
   end;
 
 implementation
@@ -294,6 +296,11 @@ end;
 class function TBuilding.Texture: TglBitmap2D;
 begin
   Result:= textures.BUnknown;
+end;
+
+function TBuilding.DisplayName: string;
+begin
+  Result:= ClassName;
 end;
 
 end.
