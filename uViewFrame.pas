@@ -37,7 +37,7 @@ type
     end;
     City: TCity;
     GUIStack: TObjectList;
-    procedure PopLayer;
+    procedure PopLayer(const aLayer: TGUILayer = nil);
     procedure PushLayer(const aLayer: TGUILayer);
     procedure Timestep(DT: Single);
     procedure Render;
@@ -164,6 +164,11 @@ begin
   Textures.BShopping:= LoadTexture('BShopping');
   Textures.BTheater:= LoadTexture('BTheater');
   Textures.BCasino:= LoadTexture('BCasino');
+
+  Textures.BResearchCenter := LoadTexture('BResearchCenter');
+  Textures.BWellnessCenter := LoadTexture('BWellnessCenter');
+  Textures.BBusinessApartmentComplex := LoadTexture('BBusinessApartmentComplex');
+  Textures.BWaterFront := LoadTexture('BWaterFront');
 
   FFrameCount:= 0;
 
@@ -429,7 +434,7 @@ end;
 
 procedure TGUILayer.Close;
 begin
-  ViewFrame.PopLayer;
+  ViewFrame.PopLayer(self);
 end;
 
 constructor TGUILayer.Create;
@@ -517,10 +522,20 @@ begin
   FOnClick := aOnClick;
 end;
 
-procedure TViewFrame.PopLayer;
+procedure TViewFrame.PopLayer(const aLayer: TGUILayer = nil);
+var
+  i: Integer;
 begin
-  if (GUIStack.Count > 0) then
-    GUIStack.Delete(GUIStack.Count-1);
+  if not Assigned(aLayer) then begin
+    if (GUIStack.Count > 0) then
+      GUIStack.Delete(GUIStack.Count-1);
+  end else begin
+    for i := 0 to GUIStack.Count-1 do
+      if GUIStack[i] = aLayer then begin
+        GUIStack.Delete(i);
+        break;
+      end;
+  end;
 end;
 
 procedure TViewFrame.PushLayer(const aLayer: TGUILayer);

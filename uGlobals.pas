@@ -34,6 +34,11 @@ var
     BTheater,
     BCasino,
 
+    BResearchCenter,
+    BWellnessCenter,
+    BBusinessApartmentComplex,
+    BWaterFront,
+
     BUnknown: TglBitmap2D;
   end;
 

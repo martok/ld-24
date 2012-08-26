@@ -54,7 +54,8 @@ type
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
 
-    procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
+    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): Boolean; overload;
+    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): Boolean; overload;
     procedure DestroyBuilding(Where: TCityBlock; index: integer);
 
     property TotalPeople: Single read FTotalPeople;
@@ -64,7 +65,7 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes, Types;
+uses SysUtils, uConfigFile, Classes, Types, uBldSpecial;
 
 { TCity }
 
@@ -300,7 +301,8 @@ var
         cb.Pollution:= cb.Pollution + Bdg.SPollution * f;
         cb.Education:= cb.Education + Bdg.SEducation * f;
         cb.Luxury:= cb.Luxury + Bdg.SLuxury * f;
-        cb.Space:= cb.Space + Bdg.SLivingSpace * f;
+        if dist = 0 then
+          cb.Space:= cb.Space + Bdg.SLivingSpace * f;
       end;
     end;
   begin
@@ -364,15 +366,45 @@ begin
     end;
 end;
 
-procedure TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
+function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock): Boolean;
 var
   i: integer;
 begin
+  result := false;
   for i:= 0 to 8 do
     if Where.Building[i] = nil then begin
-      Where.Building[i]:= Building.Create;
+      result := CreateBuilding(Building, Where, i);
       break;
     end;
+end;
+
+function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): Boolean;
+
+  function IsEmpty: Boolean;
+  var
+    i: Integer;
+  begin
+    result := false;
+    for i := 0 to 8 do
+      if Assigned(Where.Building[i]) then
+        exit;
+    result := true;
+  end;
+
+begin
+  result := false;
+  if Assigned(Where.Building[Slot]) then
+    raise Exception.Create('slot is not empty');
+  if (Building.ClassParent = TBSpecial) then begin
+    if not IsEmpty then
+      exit;
+    slot := 4;
+  end else begin
+    if (Where.Building[4] is TBSpecial) then
+      exit;
+  end;
+  Where.Building[Slot]:= Building.Create;
+  result := true;
   UpdateStats;
 end;
 
@@ -396,11 +428,13 @@ begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];
       if Assigned(cb) then begin
-        a:= cb.People/cb.Space;
-        b:= a + 0.06;
-        c:= 0.315693 + 1.1698*b + 0.377239*b*b - 1.74776*b*b*b;
-        cb.GrowthRate:= c*2;
-
+        cb.GrowthRate := -1;
+        if cb.Space > 0 then begin
+          a:= cb.People/cb.Space;
+          b:= a + 0.06;
+          c:= 0.315693 + 1.1698*b + 0.377239*b*b - 1.74776*b*b*b;
+          cb.GrowthRate:= c*2;
+        end;
         cb.GrowthRate:= cb.GrowthRate + 0.5 * (1 + cb.Luxury);
         cb.GrowthRate:= cb.GrowthRate + 0.5 * cb.Education;
         cb.GrowthRate:= cb.GrowthRate + 0.2 * cb.Industry;

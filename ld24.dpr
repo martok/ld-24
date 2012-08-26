@@ -17,7 +17,8 @@ uses
   uCity in 'uCity.pas',
   uCityBlock in 'uCityBlock.pas',
   glBitmap in 'glBitmap.pas',
-  uBldLuxury in 'uBldLuxury.pas';
+  uBldLuxury in 'uBldLuxury.pas',
+  uBldSpecial in 'uBldSpecial.pas';
 
 {$R *.res}
 

@@ -1,6 +1,6 @@
 object ViewFrame: TViewFrame
-  Left = 370
-  Top = 318
+  Left = 384
+  Top = 383
   Width = 836
   Height = 624
   Caption = 'ViewFrame'

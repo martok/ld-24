@@ -10,7 +10,7 @@ type
 
   { TCityBlock }
 
-  TBlockType = (btNormal = 0, btWater = 1);
+  TBlockType = (btNormal = 0, btIndustry = 1, btResearch = 2, btHouse = 3, btLuxury = 4);
   TCityBlock = class
   private
     FFields: array[0..8] of TBuilding;
@@ -74,7 +74,7 @@ type
 implementation
 
 uses
-  uBldHouse;
+  uBldHouse, uBldSpecial;
 
 { TCityBlock }
 
@@ -119,18 +119,28 @@ begin
     glEnable(GL_LIGHTING);    
   end;
   for b:= 0 to high(FFields) do begin
+    x:= b mod 3 - 1;
+    y:= b div 3 - 1;
+    glPushMatrix;
+    glTranslatef(4*x, 0, 4*y);
+    //glScalef(1.5, 1, 1.5);    
     if Assigned(FFields[b]) then begin
-      x:= b mod 3 - 1;
-      y:= b div 3 - 1;
-      glPushMatrix;
-      glTranslatef(4*x, 0, 4*y);
-      glScalef(1.5, 1, 1.5);
       if Selection then
         FFields[b].RenderSelect(FPosX, FPosY, b+1, 1 + FPeople/25)
       else
         FFields[b].Render(1 + FPeople/25);
-      glPopMatrix;
+    end else begin
+      glDisable(GL_LIGHTING);
+      glColor4f(1, 1, 1, 1);
+      glBegin(GL_LINE_LOOP);
+        glVertex3f(-1.5, 0,-1.5);
+        glVertex3f(-1.5, 0, 1.5);
+        glVertex3f( 1.5, 0, 1.5);
+        glVertex3f( 1.5, 0,-1.5);
+      glEnd;
+      glEnable(GL_LIGHTING);
     end;
+    glPopMatrix;    
   end;
 end;
 
@@ -198,27 +208,32 @@ begin
 end;
 
 procedure TBuilding.RenderShape(Height: Single);
+var
+  w: Single;
 begin
+  w := 1.5;
+  if (self is TBSpecial) then
+    w := 4.5;
   glBegin(GL_QUADS);
     // Front Face
   glNormal3f( 0.0, 0.0, 1.0);                  // Normal Pointing Towards Viewer
-  glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, 0.0,  1.0);  // Point 1 (Front)
-  glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 2 (Front)
-  glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Front)
-  glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 4 (Front)
+  glTexCoord2f(0.0, 0.0); glVertex3f(-w, 0.0,  w);  // Point 1 (Front)
+  glTexCoord2f(1.0, 0.0); glVertex3f( w, 0.0,  w);  // Point 2 (Front)
+  glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Front)
+  glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 4 (Front)
   // Back Face
   glNormal3f( 0.0, 0.0, -1.0);                  // Normal Pointing Away From Viewer
-  glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, 0.0, -1.0);  // Point 1 (Back)
-  glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 2 (Back)
-  glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 3 (Back)
-  glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 4 (Back)
+  glTexCoord2f(1.0, 0.0); glVertex3f(-w, 0.0, -w);  // Point 1 (Back)
+  glTexCoord2f(1.0, 1.0); glVertex3f(-w,  Height, -w);  // Point 2 (Back)
+  glTexCoord2f(0.0, 1.0); glVertex3f( w,  Height, -w);  // Point 3 (Back)
+  glTexCoord2f(0.0, 0.0); glVertex3f( w, 0.0, -w);  // Point 4 (Back)
 
   // Top Face
   glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
-  glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
-  glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
-  glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
-  glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
+  glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height, -w);  // Point 1 (Top)
+  glTexCoord2f(0.0, 0.0); glVertex3f(-w,  Height,  w);  // Point 2 (Top)
+  glTexCoord2f(1.0, 0.0); glVertex3f( w,  Height,  w);  // Point 3 (Top)
+  glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height, -w);  // Point 4 (Top)
   if not FSelectMode then begin
     glEnd;
 
@@ -231,10 +246,10 @@ begin
 
     glBegin(GL_QUADS);
     glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
-    glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
-    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
+    glTexCoord2f(0.0, 0.0); glVertex3f(-w,  Height, -w);  // Point 1 (Top)
+    glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 2 (Top)
+    glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Top)
+    glTexCoord2f(1.0, 0.0); glVertex3f( w,  Height, -w);  // Point 4 (Top)
     glEnd;
 
     Texture.Unbind(true);
@@ -246,16 +261,16 @@ begin
 
   // Right face
   glNormal3f( 1.0, 0.0, 0.0);                  // Normal Pointing Right
-  glTexCoord2f(1.0, 0.0); glVertex3f( 1.0, 0.0, -1.0);  // Point 1 (Right)
-  glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 2 (Right)
-  glTexCoord2f(0.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Right)
-  glTexCoord2f(0.0, 0.0); glVertex3f( 1.0, 0.0,  1.0);  // Point 4 (Right)
+  glTexCoord2f(1.0, 0.0); glVertex3f( w, 0.0, -w);  // Point 1 (Right)
+  glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height, -w);  // Point 2 (Right)
+  glTexCoord2f(0.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Right)
+  glTexCoord2f(0.0, 0.0); glVertex3f( w, 0.0,  w);  // Point 4 (Right)
   // Left Face
   glNormal3f(-1.0, 0.0, 0.0);                  // Normal Pointing Left
-  glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, 0.0, -1.0);  // Point 1 (Left)
-  glTexCoord2f(1.0, 0.0); glVertex3f(-1.0, 0.0,  1.0);  // Point 2 (Left)
-  glTexCoord2f(1.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 3 (Left)
-  glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 4 (Left)
+  glTexCoord2f(0.0, 0.0); glVertex3f(-w, 0.0, -w);  // Point 1 (Left)
+  glTexCoord2f(1.0, 0.0); glVertex3f(-w, 0.0,  w);  // Point 2 (Left)
+  glTexCoord2f(1.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 3 (Left)
+  glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height, -w);  // Point 4 (Left)
   glEnd;
 end;
 

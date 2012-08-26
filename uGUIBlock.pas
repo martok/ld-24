@@ -64,15 +64,16 @@ type
 
 implementation
 
-uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury;
+uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury, uBldSpecial;
 
 var
-  AllBuildings: array[0..15] of TBuildingClass =
+  AllBuildings: array[0..19] of TBuildingClass =
   (
     TBElementarySchool, TBLibrary, TBHighschool, TBCollege,
     TBPark, TBCinema, TBPool, TBShopping, TBTheater, TBCasino,
     TBHouse, TBAppartement, TBAppartement1stClass,
-    TBSmallIndustry, TBFactory,TBFactories
+    TBSmallIndustry, TBFactory, TBFactories,
+    TBResearchCenter, TBWellnessCenter, TBBusinessApartmentComplex, TBWaterFront
   );
 
 { TGUIBlock }
@@ -156,8 +157,9 @@ end;
 
 procedure TGUIBlock.BuildCreateClick(Sender: TObject);
 begin
-  if TGUIChooseBuilding(Sender).Result<>nil then
-    FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock);
+  if TGUIChooseBuilding(Sender).Result <> nil then
+    if not FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock, FSelectedID) then
+      ViewFrame.PushLayer(TGUIMessage.Create('You can not build here!', [btOK], nil));
 end;
 
 procedure TGUIBlock.Render;
@@ -185,7 +187,7 @@ begin
 
     if (i <= 8) then begin
       b := FBlock.Building[i];
-      if Assigned(b) then begin
+      if Assigned(b) and (not (b is TBSpecial) or (i = 4)) then begin
         t := b.Texture;
         t.Bind();
         glColor4f(1, 1, 1, 1);
