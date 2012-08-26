@@ -220,6 +220,8 @@ begin
 
     if pressed = [mbRight, mbLeft] then begin
       Camera.zoom := Camera.zoom + dy;
+      if Camera.zoom > -10 then
+        Camera.zoom := -10;
     end;
 
     if pressed = [mbLeft] then begin
@@ -266,9 +268,16 @@ end;
 
 procedure TViewFrame.Timestep(DT: Single);
 begin
+  City.Progress(DT);
   if not PausedForInput then begin
     LastEvolve:= LastEvolve + DT;
     if LastEvolve >= 0.1 then begin
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+            
       City.Evolve;
       LastEvolve:= 0;
     end;
