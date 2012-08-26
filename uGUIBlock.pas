@@ -4,7 +4,7 @@ interface
 
 uses
   SysUtils, Classes, dglOpenGL, Graphics, GLHelper, uCity, uCityBlock, uViewFrame, TextSuite,
-  glBitmap, Windows;
+  glBitmap, Windows, Contnrs;
 
 type
   TGUIMain = class(TGUILayer)
@@ -49,16 +49,22 @@ type
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
+  TBuildingCategory = (bcEdu=1, bcLux, bcLive, bcInd);
   TGUIChooseBuilding = class(TGUILayer)
   private
     FOnClick: TNotifyEvent;
     fResult: TBuildingClass;
+    fCatList: TObjectList;
     procedure OnBtnClick(Sender: TObject);
+    procedure OnCatClick(Sender: TObject);
+  protected
+    procedure ShowCat(aCat: TBuildingCategory);
   public
     property Result: TBuildingClass read fResult;
     property OnClick: TNotifyEvent read FOnClick write FOnClick;    
 
     constructor Create(aOnClick: TNotifyEvent = nil);
+    destructor Destroy; override;
     procedure Render; override;
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
@@ -68,12 +74,12 @@ implementation
 uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury;
 
 var
-  AllBuildings: array[0..15] of TBuildingClass =
+  AllBuildings: array[TBuildingCategory, 0..5] of TBuildingClass =
   (
-    TBElementarySchool, TBLibrary, TBHighschool, TBCollege,
-    TBPark, TBCinema, TBPool, TBShopping, TBTheater, TBCasino,
-    TBHouse, TBAppartement, TBAppartement1stClass,
-    TBSmallIndustry, TBFactory,TBFactories
+    (TBElementarySchool, TBLibrary, TBHighschool, TBCollege, nil,nil),
+    (TBPark, TBCinema, TBPool, TBShopping, TBTheater, TBCasino),
+    (TBHouse, TBAppartement, TBAppartement1stClass,nil,nil,nil),
+    (TBSmallIndustry, TBFactory,TBFactories,nil,nil,nil)
   );
 
 { TGUIBlock }
@@ -161,7 +167,7 @@ end;
 procedure TGUIBlock.BuildCreateClick(Sender: TObject);
 begin
   if TGUIChooseBuilding(Sender).Result<>nil then
-    FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock);
+    FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock, FClickedBld);
 end;
 
 procedure TGUIBlock.Render;
@@ -381,23 +387,17 @@ end;
 
 constructor TGUIChooseBuilding.Create(aOnClick: TNotifyEvent);
 var
-  x, y, i, c: Integer;
+  x, y: Integer;
   click: TGUIClickable;
 
-  procedure AddButton(Cls: TBuildingClass);
+  procedure AddCategoryBtn(cat: TBuildingCategory);
   var
     x, y: Integer;
   begin
-    x := 10 + (i div 10) * 320;
-    y := 10 + ((i mod 10) * 40);
-
-    click := TGUIClickable.Create(Rect(x,y,x+35,y+35), OnBtnClick);
-    click.Tag:= Integer(Cls);
-    fClickables.Add(click);
-
-    click := TGUIClickable.Create(Rect(x+45,y,x+300,y+35), OnBtnClick);
-    click.Tag:= Integer(Cls);
-    click.Text:= Cls.DisplayName + '    - $'+IntToStr(Cls.Price);
+    x:= 10 + (ord(cat)-1)*40;
+    y:= 10;
+    click:= TGUIClickable.Create(rect(x,y,x+35,y+35),OnCatClick);
+    click.Tag:= ord(cat);
     fClickables.Add(click);
   end;
 
@@ -405,20 +405,92 @@ begin
   inherited Create;
   x := ViewFrame.ClientWidth div 2;
   y := ViewFrame.ClientHeight div 2;
-  c := 20 + (10+1) * 40;
-  fClientRect := Rect(x-320, y-c div 2, x+320, y+c div 2);
+  fClientRect := Rect(x-320, y-200, x+320, y+200);
 
   FOnClick:= aOnClick;
+  fCatList:= TObjectList.Create(false);
 
-  for i:= 0 to high(AllBuildings) do begin
-    AddButton(AllBuildings[i]);
-  end;
+  AddCategoryBtn(bcLive);
+  AddCategoryBtn(bcInd);
+  AddCategoryBtn(bcEdu);
+  AddCategoryBtn(bcLux);
 
-  y := 10 + (10 * 40);
-  click := TGUIClickable.Create(Rect(x,y+10,x+150,y+35), OnBtnClick);
+  x:= 10+6*40;
+  y:= 10;
+  click := TGUIClickable.Create(Rect(x,y,x+100,y+35), OnBtnClick);
   click.Tag:= 0;
   click.Text:= '<<< Back <<<';
   fClickables.Add(click);
+end;
+
+destructor TGUIChooseBuilding.Destroy;
+begin
+  FreeAndNil(fCatList);
+  inherited;
+end;
+
+procedure TGUIChooseBuilding.ShowCat(aCat: TBuildingCategory);
+var
+  i: integer;
+  click: TGUIClickable;
+  procedure AddButton(Cls: TBuildingClass);
+  var
+    x, y: Integer;
+    effects: string;
+    inst: TBuilding;
+  begin
+    x := 20;
+    y := 60 + (i * 40);
+
+    click := TGUIClickable.Create(Rect(x,y,x+35,y+35), OnBtnClick);
+    click.Tag:= Integer(Cls);
+    fCatList.Add(click);
+
+    effects:= '';
+    inst:= Cls.Create;
+    try
+      with inst do begin
+        if SIndustryValue<>0 then
+          effects:= effects + format('IND: %d  ',[SIndustryValue]);
+        if SLivingSpace<>0 then
+          effects:= effects + format('SPA: %d  ',[SLivingSpace]);
+
+        if SPollution<>0 then
+          effects:= effects + format('POL: %d  ',[SPollution]);
+        if SEducation<>0 then
+          effects:= effects + format('EDU: %d  ',[SEducation]);
+        if SLuxury<>0 then
+          effects:= effects + format('LUX: %d  ',[SLuxury]);
+
+        effects:= effects + sLineBreak+format('RNG: %d block(s) LPB: %f%%', [SRange, SEffectLoss*100]);
+      end;
+      inst.SLivingSpace
+    finally
+      inst.Free;
+    end;
+
+    click := TGUIClickable.Create(Rect(x+50,y,x+610,y+35), OnBtnClick);
+    click.Tag:= Integer(Cls);
+    click.Text:= Cls.DisplayName + sLineBreak+'$'+IntToStr(Cls.Price)+#9+effects;
+    fCatList.Add(click);
+  end;
+begin
+  for i:= 0 to fCatList.Count-1 do
+    fClickables.Remove(fCatList[i]);
+  fCatList.Clear;
+
+  for i:= 0 to high(AllBuildings[aCat]) do
+    if nil<>AllBuildings[aCat][i] then begin
+      AddButton(AllBuildings[aCat][i]);
+    end;
+
+  for i:= 0 to fCatList.Count-1 do
+    fClickables.Add(fCatList[i]);
+end;
+
+procedure TGUIChooseBuilding.OnCatClick(Sender: TObject);
+begin
+  ShowCat(TBuildingCategory(TGUIClickable(Sender).Tag));
 end;
 
 procedure TGUIChooseBuilding.OnBtnClick(Sender: TObject);
@@ -438,6 +510,7 @@ var
   r: TRect;
   b: TBuildingClass;
   t: TglBitmap2D;
+  s,q: string;
 begin
   inherited;
 
@@ -456,19 +529,51 @@ begin
     fieldAtRect(RectOffset(r, ClientRect.TopLeft));
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    if TGUIClickable(fClickables[i]).Text='' then begin
-      b := TBuildingClass(TGUIClickable(fClickables[i]).Tag);
-      t := b.Texture;
-      t.Bind();
-      glColor4f(1, 1, 1, 1);
-      fieldAtRect(RectOffset(r, ClientRect.TopLeft));
-      t.Unbind();
-    end else begin
-      tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
-      tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
-      Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
+    case TGUIClickable(fClickables[i]).Tag of
+      0: begin
+        tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
+        tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
+        Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
+      end;
+      ord(low(TBuildingCategory))..ord(high(TBuildingCategory)): begin
+        case TBuildingCategory(TGUIClickable(fClickables[i]).Tag) of
+          bcEdu: t:= Textures.BLibrary;
+          bcLux: t:= Textures.BPark;
+          bcLive: t:= Textures.BHouse;
+          bcInd: t:= Textures.BFactory;
+        end;
+        t.Bind();
+        glColor4f(1, 1, 1, 1);
+        fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+        t.Unbind();
+      end;
+      else begin
+        if TGUIClickable(fClickables[i]).Text>'' then begin
+          tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
+          s:= TGUIClickable(fClickables[i]).Text;
+          q:= Copy(s,1, pos(#9,s)-1);
+          Delete(s,1,length(q)+1);
+          InflateRect(r, -6, 0);
+          tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
+          Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), q);
+          tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
+          Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), s);
+        end else begin
+          b := TBuildingClass(TGUIClickable(fClickables[i]).Tag);
+          t := b.Texture;
+          t.Bind();
+          glColor4f(1, 1, 1, 1);
+          fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+          t.Unbind();
+        end;
+      end;
     end;
-  end;  
+  end;
+  if fCatList.Count=0 then begin
+    tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
+    tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
+    Fonts.GUIText.BlockOut(ClientRect, 'Select a builing category');
+  end;
 end;
 
 procedure TGUIChooseBuilding.ViewportResize(const aWidth, aHeight: Integer);

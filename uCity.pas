@@ -54,7 +54,7 @@ type
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
 
-    procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
+    procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Place: integer);
     procedure DestroyBuilding(Where: TCityBlock; index: integer);
 
     property TotalPeople: Single read FTotalPeople;
@@ -364,15 +364,11 @@ begin
     end;
 end;
 
-procedure TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
-var
-  i: integer;
+procedure TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Place: integer);
 begin
-  for i:= 0 to 8 do
-    if Where.Building[i] = nil then begin
-      Where.Building[i]:= Building.Create;
-      break;
-    end;
+  if Where.Building[Place] = nil then begin
+    Where.Building[Place]:= Building.Create;
+  end;
   UpdateStats;
 end;
 
