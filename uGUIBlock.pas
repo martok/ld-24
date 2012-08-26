@@ -478,8 +478,8 @@ begin
   inherited;
   x := ViewFrame.ClientWidth div 2;
   y := ViewFrame.ClientHeight div 2;
-  c := 20 + (Length(AllBuildings)+1) * 40;
-  ClientRect := Rect(x-160, y-c div 2, x+160, y+c div 2);
+  c := 20 + (10+1) * 40;
+  fClientRect := Rect(x-320, y-c div 2, x+320, y+c div 2);
 end;
 
 { TGUIMain }
