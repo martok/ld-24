@@ -37,6 +37,9 @@ type
     FStreets: TStreets;
     FBlockDist: Single;
     FCars: TObjectList;
+    FTotalEducation: Single;
+    FTotalMoney: Single;
+    FTotalPeople: Single;
     function GetBlock(X, Y: integer): TCityBlock;
     procedure ClearBlocks;
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
@@ -53,6 +56,10 @@ type
 
     procedure CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
     procedure DestroyBuilding(Where: TCityBlock; index: integer);
+
+    property TotalPeople: Single read FTotalPeople;
+    property TotalMoney: Single read FTotalMoney;
+    property TotalEducation: Single read FTotalEducation;
   end;
 
 implementation
@@ -74,6 +81,9 @@ begin
       FCityBlocks[x, y]:= TCityBlock.Create(x, y, btNormal);
     end;
   end;
+  FTotalPeople:= 0;
+  FTotalMoney:= 0;
+  FTotalEducation:= 0;
 end;
 
 destructor TCity.Destroy;
@@ -381,6 +391,7 @@ var
   cb: TCityBlock;
   a,b,c: Single;
 begin
+  FTotalPeople:= 0;
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];
@@ -398,6 +409,10 @@ begin
         cb.People:= cb.People + cb.GrowthRate;
         if cb.People<0 then
           cb.People:= 0;
+
+        FTotalPeople:= FTotalPeople + cb.People;
+        FTotalMoney:= FTotalMoney + cb.Industry; 
+        FTotalEducation:= FTotalEducation + cb.Education;
       end;
     end;
   end;

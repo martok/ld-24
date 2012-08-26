@@ -65,13 +65,15 @@ type
 
 implementation
 
-uses uGlobals, uBldHouse, uBldIndustry;
+uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury;
 
 var
-  AllBuildings: array[0..3] of TBuildingClass =
+  AllBuildings: array[0..15] of TBuildingClass =
   (
-    TBHouse, TBAppartement,
-    TBSmallIndustry, TBFactory
+    TBElementarySchool, TBLibrary, TBHighschool, TBCollege,
+    TBPark, TBCinema, TBPool, TBShopping, TBTheater, TBCasino,
+    TBHouse, TBAppartement, TBAppartement1stClass,
+    TBSmallIndustry, TBFactory,TBFactories
   );
 
 { TGUIBlock }
@@ -386,8 +388,8 @@ var
   var
     x, y: Integer;
   begin
-    x := 10;
-    y := 10 + (i * 40);
+    x := 10 + (i div 10) * 320;
+    y := 10 + ((i mod 10) * 40);
 
     click := TGUIClickable.Create(Rect(x,y,x+35,y+35), OnBtnClick);
     click.Tag:= Integer(Cls);
@@ -395,7 +397,7 @@ var
 
     click := TGUIClickable.Create(Rect(x+45,y,x+300,y+35), OnBtnClick);
     click.Tag:= Integer(Cls);
-    click.Text:= Cls.DisplayName;
+    click.Text:= Cls.DisplayName + '    - $'+IntToStr(Cls.Price);
     fClickables.Add(click);
   end;
 
@@ -403,8 +405,8 @@ begin
   inherited Create;
   x := ViewFrame.ClientWidth div 2;
   y := ViewFrame.ClientHeight div 2;
-  c := 20 + (Length(AllBuildings)+1) * 40;
-  fClientRect := Rect(x-160, y-c div 2, x+160, y+c div 2);
+  c := 20 + (10+1) * 40;
+  fClientRect := Rect(x-320, y-c div 2, x+320, y+c div 2);
 
   FOnClick:= aOnClick;
 
@@ -412,8 +414,7 @@ begin
     AddButton(AllBuildings[i]);
   end;
 
-  x := 10;
-  y := 10 + (Length(AllBuildings) * 40);
+  y := 10 + (10 * 40);
   click := TGUIClickable.Create(Rect(x,y+10,x+150,y+35), OnBtnClick);
   click.Tag:= 0;
   click.Text:= '<<< Back <<<';

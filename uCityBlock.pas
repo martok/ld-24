@@ -54,7 +54,6 @@ type
     procedure RenderShape(Height: Single); virtual;
   public
     constructor Create; virtual;
-    class function Texture: TglBitmap2D; virtual;
     procedure RenderSelect(r, g, b: byte; Height: Single);
     procedure Render(aHeight: Single);
 
@@ -67,7 +66,9 @@ type
     function SRange: integer; virtual;
     function SEffectLoss: single; virtual;
 
+    class function Texture: TglBitmap2D; virtual;
     class function DisplayName: string; virtual;
+    class function Price: Integer; virtual;
   end;
 
 implementation
@@ -301,6 +302,11 @@ end;
 class function TBuilding.DisplayName: string;
 begin
   Result:= ClassName;
+end;
+
+class function TBuilding.Price: Integer;
+begin
+  Result:= 1000;
 end;
 
 end.
