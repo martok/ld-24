@@ -141,15 +141,29 @@ begin
 
   TtsFont.InitTS;
   Fonts.GUIText:= TtsFont.Create('Tahoma', 12, false, []);
-  Fonts.LargeText:= TtsFont.Create('Arial', 25, false, [fsUnderline]);
+  Fonts.LargeText:= TtsFont.Create('Arial', 18, false, []);
 
-  Textures.BFactories:= LoadTexture('BFactories');
-  Textures.BFactory:= LoadTexture('BFactory');
-  Textures.BHouse:= LoadTexture('BHouse');
-  Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
   Textures.BUnknown:= LoadTexture('BUnknown');
+  Textures.BElementarySchool:= LoadTexture('BElementarySchool');
+  Textures.BHighschool:= LoadTexture('BHighschool');
+  Textures.BLibrary:= LoadTexture('BLibrary');
+  Textures.BCollege:= LoadTexture('BCollege');
 
-  FFrameCount:= 0;                                    
+  Textures.BHouse:= LoadTexture('BHouse');
+  Textures.BAppartement:= LoadTexture('BAppartement');
+  Textures.BAppartement1stClass:= LoadTexture('BAppartement1stClass');
+
+  Textures.BSmallIndustry:= LoadTexture('BSmallIndustry');
+  Textures.BFactory:= LoadTexture('BFactory');
+  Textures.BFactories:= LoadTexture('BFactories');
+
+  Textures.BPark:= LoadTexture('BPark');
+  Textures.BCinema:= LoadTexture('BCinema');
+  Textures.BShopping:= LoadTexture('BShopping');
+  Textures.BTheater:= LoadTexture('BTheater');
+  Textures.BCasino:= LoadTexture('BCasino');
+
+  FFrameCount:= 0;
 
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
   Camera.turn := 15;
@@ -258,6 +272,9 @@ begin
 end;
 
 procedure TViewFrame.Render;
+var
+  r: TRect;
+  i: integer;
 begin
   PrepareMatrix;
   glEnable(GL_LIGHTING);
@@ -274,7 +291,39 @@ begin
   Enter2dMode(ClientWidth, ClientHeight);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
+
+  r:= rect(-1,0,ClientWidth-GUI_WIDTH, 40);
+  for i := 0 to 1 do begin
+    case i of
+      0: begin
+        SetGLColor(ColorToRGBA(0, 0, 0, 0.75));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      end;
+      1: begin
+        SetGLColor(ColorToRGBA(1, 1, 1, 1));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      end;
+    end;
+    glBegin(GL_QUADS);
+
+    //SetGLColor(ColorToRGBA(1, 1, 1, 0.5));
+      glVertex2f(r.Left, r.Top);
+      glVertex2f(r.Right+1, r.Top);
+      glVertex2f(r.Right+1, r.Bottom+1);
+      glVertex2f(r.Left, r.Bottom+1);
+    glEnd;
+  end;   
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  InflateRect(r,-10,-10);
+  tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
+  tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
+  Fonts.LargeText.BlockOut(r, format('PPL: %f',[City.TotalPeople]));
+  tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
+  Fonts.LargeText.BlockOut(r, format('MON: $%f',[City.TotalMoney]));
+  tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
+  Fonts.LargeText.BlockOut(r, format('EDU: %f',[City.TotalEducation]));
   glDisable(GL_TEXTURE_2D);
+
   if GUIStack.Count > 0 then
     TGUILayer(GUIStack[GUIStack.Count-1]).Render;
   Exit2dMode;

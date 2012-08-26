@@ -14,10 +14,26 @@ var
   end;
 
   Textures: record
-    BFactories,
-    BFactory,
+    BElementarySchool,
+    BLibrary,
+    BHighschool,
+    BCollege,
+
     BHouse,
+    BAppartement,
+    BAppartement1stClass,
+
     BSmallIndustry,
+    BFactory,
+    BFactories,
+
+    BPark,
+    BCinema,
+    BPool,
+    BShopping,
+    BTheater,
+    BCasino,
+
     BUnknown: TglBitmap2D;
   end;
 

@@ -59,13 +59,14 @@ type
 
 implementation
 
-uses uGlobals, uBldHouse, uBldIndustry;
+uses uGlobals, uBldHouse, uBldIndustry, uBldEducation;
 
 var
-  AllBuildings: array[0..3] of TBuildingClass =
+  AllBuildings: array[0..4] of TBuildingClass =
   (
     TBHouse, TBAppartement,
-    TBSmallIndustry, TBFactory
+    TBSmallIndustry, TBFactory,
+    TBElementarySchool
   );
 
 { TGUIBlock }
@@ -323,7 +324,7 @@ var
 
     click := TGUIClickable.Create(Rect(x+45,y,x+300,y+35), OnBtnClick);
     click.Tag:= Integer(Cls);
-    click.Text:= Cls.DisplayName;
+    click.Text:= Cls.DisplayName + '    - $'+IntToStr(Cls.Price);
     fClickables.Add(click);
   end;
 

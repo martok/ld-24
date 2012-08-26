@@ -12,11 +12,12 @@ uses
   FastGL in 'FastGL.pas',
   Geometry in 'Geometry.pas',
   GLHelper in 'GLHelper.pas',
-  uBldElementarySchool in 'uBldElementarySchool.pas',
+  uBldEducation in 'uBldEducation.pas',
   uBldHouse in 'uBldHouse.pas',
   uCity in 'uCity.pas',
   uCityBlock in 'uCityBlock.pas',
-  glBitmap in 'glBitmap.pas';
+  glBitmap in 'glBitmap.pas',
+  uBldLuxury in 'uBldLuxury.pas';
 
 {$R *.res}
 
