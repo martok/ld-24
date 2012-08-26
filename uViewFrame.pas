@@ -159,6 +159,7 @@ begin
 
   Textures.BPark:= LoadTexture('BPark');
   Textures.BCinema:= LoadTexture('BCinema');
+  Textures.BPool:= LoadTexture('BPool');
   Textures.BShopping:= LoadTexture('BShopping');
   Textures.BTheater:= LoadTexture('BTheater');
   Textures.BCasino:= LoadTexture('BCasino');
