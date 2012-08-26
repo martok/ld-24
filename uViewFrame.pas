@@ -240,7 +240,8 @@ procedure TViewFrame.LoadSounds;
 begin
   SoundEmitter:= TsndEmitter.Create;
   Sounds.BackgroundMusic:= LoadSound(skStream,'maximum_chill');
-  Sounds.EffectClick:= LoadSound(skBlock,'click');
+  Sounds.EffectClick:= LoadSound(skBlock,'click');  
+  Sounds.EffectMenu:= LoadSound(skBlock,'menu_open');
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -586,6 +587,9 @@ end;
 procedure TViewFrame.PushLayer(const aLayer: TGUILayer);
 begin
   GUIStack.Add(aLayer);
+  if GUIStack.Count>1 then begin
+    TsndInstance.Create(Sounds.EffectMenu, SoundEmitter).Play.Gain:= 0.6;
+  end;
 end;
 
 procedure TViewFrame.FormResize(Sender: TObject);
