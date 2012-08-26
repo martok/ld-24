@@ -482,8 +482,6 @@ begin
       end;
     end;
     glBegin(GL_QUADS);
-
-    //SetGLColor(ColorToRGBA(1, 1, 1, 0.5));
       glVertex2f(ClientRect.Left, ClientRect.Top);
       glVertex2f(ClientRect.Right+1, ClientRect.Top);
       glVertex2f(ClientRect.Right+1, ClientRect.Bottom+1);
