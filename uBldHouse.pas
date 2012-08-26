@@ -11,7 +11,6 @@ type
     procedure RenderShape(Height: Single); override;
   public
     function SLivingSpace: Integer; override;
-    function SHappiness: Integer; override;
     class function Texture: TglBitmap2D; override;
     constructor Create; override;
   end;
@@ -21,7 +20,6 @@ type
     procedure RenderShape(Height: Single); override;
   public
     function SLivingSpace: Integer; override;
-    function SHappiness: Integer; override;
     class function Texture: TglBitmap2D; override;
     constructor Create; override;
   end;
@@ -39,11 +37,6 @@ end;
 procedure TBHouse.RenderShape(Height: Single);
 begin
   inherited RenderShape((0.9 + FRndHeight) * Height);
-end;
-
-function TBHouse.SHappiness: Integer;
-begin
-  Result:= 2;
 end;
 
 function TBHouse.SLivingSpace: Integer;
@@ -67,11 +60,6 @@ end;
 procedure TBAppartement.RenderShape(Height: Single);
 begin
   inherited RenderShape((1.0 + FRndHeight) * Height);
-end;
-
-function TBAppartement.SHappiness: Integer;
-begin
-  Result:= 0;
 end;
 
 function TBAppartement.SLivingSpace: Integer;

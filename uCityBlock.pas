@@ -15,14 +15,14 @@ type
   private
     FFields: array[0..8] of TBuilding;
     FPosX, FPosY: integer;
-    FPeople: integer;
-    FLuxury: integer;
-    FHappiness: integer;
-    FPollution: integer;
-    FIndustry: integer;
-    FEducation: integer;
-    FSpace: integer;
+    FPeople: single;
+    FLuxury: single;
+    FPollution: single;
+    FIndustry: single;
+    FEducation: single;
+    FSpace: single;
     FBlockType: TBlockType;
+    FGrowthRate: single;
     function GetBuilding(Index: integer): TBuilding;
     procedure SetBuilding(Index: integer; const Value: TBuilding);
   protected
@@ -30,16 +30,17 @@ type
   public
     constructor Create(X, Y: Integer; BlockType: TBlockType);
     destructor Destroy; override;
-    property Industry: integer read FIndustry;
-    property Pollution: integer read FPollution;
-    property Education: integer read FEducation;
-    property Luxury: integer read FLuxury;
-    property People: integer read FPeople write FPeople;
-    property Space: integer read FSpace;
-    property Happiness: integer read FHappiness write FHappiness;
+
+    property Industry: single read FIndustry write FIndustry;
+    property Pollution: single read FPollution write FPollution;
+    property Education: single read FEducation write FEducation;
+    property Luxury: single read FLuxury write FLuxury;
+    property Space: single read FSpace write FSpace;
+
+    property GrowthRate: single read FGrowthRate write FGrowthRate;
+    property People: single read FPeople write FPeople;
     property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
     procedure Render(Selection: boolean);
-    procedure Update;
   end;
 
   TBuildingClass = class of TBuilding;
@@ -56,10 +57,15 @@ type
     class function Texture: TglBitmap2D; virtual;
     procedure RenderSelect(r, g, b: byte; Height: Single);
     procedure Render(aHeight: Single);
+
     function SLivingSpace: integer; virtual;
     function SIndustryValue: integer; virtual;
     function SPollution: integer; virtual;
-    function SHappiness: integer; virtual;
+    function SEducation: integer; virtual;
+    function SLuxury: integer; virtual;
+
+    function SRange: integer; virtual;
+    function SEffectLoss: single; virtual;
   end;
 
 implementation
@@ -143,31 +149,6 @@ end;
 procedure TCityBlock.SetBuilding(Index: integer; const Value: TBuilding);
 begin
   FFields[Index]:= Value;
-end;
-
-procedure TCityBlock.Update;
-var
-  i: integer;
-  b: TBuilding;
-  ind, living, happi, pollu: integer;
-begin
-  ind:= 0;
-  living:= 0;
-  happi:= 0;
-  pollu:= 0;
-  for i:= 0 to 8 do
-    if Assigned(FFields[i]) then begin
-      b:= TBuilding(FFields[i]);
-      inc(ind, b.SIndustryValue);
-      inc(living, b.SLivingSpace);
-      inc(pollu, b.SPollution);
-      inc(happi, b.SHappiness);
-    end;
-
-  FHappiness:= happi;
-  FPollution:= pollu;
-  FIndustry:= ind;
-  FSpace := living;
 end;
 
 { TBuilding }
@@ -275,7 +256,7 @@ begin
   glEnd;
 end;
 
-function TBuilding.SHappiness: integer;
+function TBuilding.SLuxury: integer;
 begin
   Result:= 0;
 end;
@@ -293,6 +274,21 @@ end;
 function TBuilding.SPollution: integer;
 begin
   Result:= 0;
+end;
+
+function TBuilding.SEducation: integer;
+begin
+  Result:= 0;
+end;
+
+function TBuilding.SRange: integer;
+begin
+  Result:= 1;
+end;
+
+function TBuilding.SEffectLoss: single;
+begin
+  Result:= 0.5;
 end;
 
 class function TBuilding.Texture: TglBitmap2D;
