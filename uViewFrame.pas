@@ -534,7 +534,7 @@ var
 begin
   if Assigned(GUIStack) then
     for i := 0 to GUIStack.Count-1 do
-      TGUILayer(GUIStack[i]).ClientRect := Rect(ClientWidth - GUI_WIDTH, 0, ClientWidth, ClientHeight);
+        TGUILayer(GUIStack[i]).ViewportResize(ClientWidth, ClientHeight);
 end;
 
 end.
