@@ -67,7 +67,7 @@ type
     function SRange: integer; virtual;
     function SEffectLoss: single; virtual;
 
-    function DisplayName: string; virtual;
+    class function DisplayName: string; virtual;
   end;
 
 implementation
@@ -230,10 +230,10 @@ begin
 
     glBegin(GL_QUADS);
     glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
-    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
-    glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
-    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
-    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
+    glTexCoord2f(0.0, 0.0); glVertex3f(-1.0,  Height, -1.0);  // Point 1 (Top)
+    glTexCoord2f(0.0, 1.0); glVertex3f(-1.0,  Height,  1.0);  // Point 2 (Top)
+    glTexCoord2f(1.0, 1.0); glVertex3f( 1.0,  Height,  1.0);  // Point 3 (Top)
+    glTexCoord2f(1.0, 0.0); glVertex3f( 1.0,  Height, -1.0);  // Point 4 (Top)
     glEnd;
 
     Texture.Unbind(true);
@@ -298,7 +298,7 @@ begin
   Result:= textures.BUnknown;
 end;
 
-function TBuilding.DisplayName: string;
+class function TBuilding.DisplayName: string;
 begin
   Result:= ClassName;
 end;

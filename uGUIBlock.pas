@@ -34,6 +34,7 @@ type
     FBlock: TCityBlock;
     FClickedBld: integer;
     procedure BuildDestructClick(Sender: TObject);
+    procedure BuildCreateClick(Sender: TObject);
   protected
     procedure SetClientRect(const aRect: TRect); override;
     procedure BuildClick(Sender: TObject);
@@ -43,9 +44,29 @@ type
     procedure Render; override;
   end;
 
+  TGUIChooseBuilding = class(TGUILayer)
+  private
+    FOnClick: TNotifyEvent;
+    fResult: TBuildingClass;
+    procedure OnBtnClick(Sender: TObject);
+  public
+    property Result: TBuildingClass read fResult;
+
+    constructor Create(aOnClick: TNotifyEvent = nil);
+    procedure Render; override;
+    property OnClick: TNotifyEvent read FOnClick write FOnClick;
+  end;
+
 implementation
 
 uses uGlobals, uBldHouse, uBldIndustry;
+
+var
+  AllBuildings: array[0..3] of TBuildingClass =
+  (
+    TBHouse, TBAppartement,
+    TBSmallIndustry, TBFactory
+  );
 
 { TGUIBlock }
 
@@ -104,7 +125,7 @@ begin
   if Assigned(FBlock.Building[FClickedBld]) then begin
     ViewFrame.PushLayer(TGUIMessage.Create(format('Tear down this %s?',[FBlock.Building[FClickedBld].DisplayName]), [btOK, btCancel],BuildDestructClick));
   end else begin
-
+    ViewFrame.PushLayer(TGUIChooseBuilding.Create(BuildCreateClick));
   end;
 //  Close;
 end;
@@ -113,6 +134,12 @@ procedure TGUIBlock.BuildDestructClick(Sender: TObject);
 begin
   if TGUIMessage(Sender).Answer=btOK then
     FCity.DestroyBuilding(FBlock,FClickedBld);
+end;
+
+procedure TGUIBlock.BuildCreateClick(Sender: TObject);
+begin
+  if TGUIChooseBuilding(Sender).Result<>nil then
+    FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock);
 end;
 
 procedure TGUIBlock.Render;
@@ -273,6 +300,101 @@ begin
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
+  end;  
+end;
+
+{ TGUIChooseBuilding }
+
+constructor TGUIChooseBuilding.Create(aOnClick: TNotifyEvent);
+var
+  x, y, i, c: Integer;
+  click: TGUIClickable;
+
+  procedure AddButton(Cls: TBuildingClass);
+  var
+    x, y: Integer;
+  begin
+    x := 10;
+    y := 10 + (i * 40);
+
+    click := TGUIClickable.Create(Rect(x,y,x+35,y+35), OnBtnClick);
+    click.Tag:= Integer(Cls);
+    fClickables.Add(click);
+
+    click := TGUIClickable.Create(Rect(x+45,y,x+300,y+35), OnBtnClick);
+    click.Tag:= Integer(Cls);
+    click.Text:= Cls.DisplayName;
+    fClickables.Add(click);
+  end;
+
+begin
+  inherited Create;
+  x := ViewFrame.ClientWidth div 2;
+  y := ViewFrame.ClientHeight div 2;
+  c := 20 + (Length(AllBuildings)+1) * 40;
+  fClientRect := Rect(x-160, y-c div 2, x+160, y+c div 2);
+
+  FOnClick:= aOnClick;
+
+  for i:= 0 to high(AllBuildings) do begin
+    AddButton(AllBuildings[i]);
+  end;
+
+  x := 10;
+  y := 10 + (Length(AllBuildings) * 40);
+  click := TGUIClickable.Create(Rect(x,y+10,x+150,y+35), OnBtnClick);
+  click.Tag:= 0;
+  click.Text:= '<<< Back <<<';
+  fClickables.Add(click);
+end;
+
+procedure TGUIChooseBuilding.OnBtnClick(Sender: TObject);
+var
+  cls: TBuildingClass;
+begin
+  cls:= TBuildingClass(TGUIClickable(Sender).Tag);
+  fResult:= cls;
+  if Assigned(FOnClick) then
+    FOnClick(Self);
+  Close;
+end;
+
+procedure TGUIChooseBuilding.Render;
+var
+  i: Integer;
+  r: TRect;
+  b: TBuildingClass;
+  t: TglBitmap2D;
+begin
+  inherited;
+
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  for i := 0 to fClickables.Count-1 do begin
+    r := TGUIClickable(fClickables[i]).Rect;
+    glDisable(GL_TEXTURE_2D);
+    if (PtInRect(r, fMousePos)) then
+      glColor4f(1, 1, 1, 0.2)
+    else
+      glColor4f(0, 0, 0, 0.5);
+    fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glColor4f(1, 1, 1, 1);
+    fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    if TGUIClickable(fClickables[i]).Text='' then begin
+      b := TBuildingClass(TGUIClickable(fClickables[i]).Tag);
+      t := b.Texture;
+      t.Bind();
+      glColor4f(1, 1, 1, 1);
+      fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+      t.Unbind();
+    end else begin
+      tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
+      tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
+      Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
+    end;
   end;  
 end;
 
