@@ -164,8 +164,11 @@ end;
 procedure TGUIBlock.BuildCreateClick(Sender: TObject);
 begin
   if TGUIChooseBuilding(Sender).Result <> nil then
-    if not FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock, FSelectedID) then
-      ViewFrame.PushLayer(TGUIMessage.Create('You can not build here!', [btOK], nil));
+    case FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock, FSelectedID) of
+      brErrorUnknown: ViewFrame.PushLayer(TGUIMessage.Create('You can not build here!', [btOK], nil));
+      brErrorMoney: ViewFrame.PushLayer(TGUIMessage.Create('You don''t have the money to build this!', [btOK], nil));
+      brErrorEdu: ViewFrame.PushLayer(TGUIMessage.Create('You don''t have the education level to build this!', [btOK], nil));
+    end;
 end;
 
 procedure TGUIBlock.Render;

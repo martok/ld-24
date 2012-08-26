@@ -3,7 +3,7 @@ unit uCity;
 interface
 
 uses
-  dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, contnrs;
+  dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, Contnrs;
 
 type
   TCityBlocks = array of array of TCityBlock;
@@ -31,6 +31,7 @@ type
 
   { TCity }
 
+  TBuildResult = (brBuilt, brErrorUnknown, brErrorMoney, brErrorEdu);
   TCity = class
   private
     FCityBlocks: TCityBlocks;
@@ -54,8 +55,8 @@ type
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
 
-    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): Boolean; overload;
-    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): Boolean; overload;
+    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): TBuildResult; overload;
+    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): TBuildResult; overload;
     procedure DestroyBuilding(Where: TCityBlock; index: integer);
 
     property TotalPeople: Single read FTotalPeople;
@@ -83,7 +84,7 @@ begin
     end;
   end;
   FTotalPeople:= 0;
-  FTotalMoney:= 0;
+  FTotalMoney:= 10000000;        //TODO
   FTotalEducation:= 0;
 end;
 
@@ -366,11 +367,11 @@ begin
     end;
 end;
 
-function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock): Boolean;
+function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock): TBuildResult;
 var
   i: integer;
 begin
-  result := false;
+  result := brErrorUnknown;
   for i:= 0 to 8 do
     if Where.Building[i] = nil then begin
       result := CreateBuilding(Building, Where, i);
@@ -378,7 +379,7 @@ begin
     end;
 end;
 
-function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): Boolean;
+function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): TBuildResult;
 
   function IsEmpty: Boolean;
   var
@@ -392,7 +393,7 @@ function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot:
   end;
 
 begin
-  result := false;
+  result := brErrorUnknown;
   if Assigned(Where.Building[Slot]) then
     raise Exception.Create('slot is not empty');
   if (Building.ClassParent = TBSpecial) then begin
@@ -403,14 +404,20 @@ begin
     if (Where.Building[4] is TBSpecial) then
       exit;
   end;
+  if Building.Price > FTotalMoney then begin
+    Result:= brErrorMoney;
+    exit;
+  end;
+  FTotalMoney:= FTotalMoney - Building.Price;
   Where.Building[Slot]:= Building.Create;
-  result := true;
+  result := brBuilt;
   UpdateStats;
 end;
 
 procedure TCity.DestroyBuilding(Where: TCityBlock; index: integer);
 begin
   if Where.Building[index] <> nil then begin
+    FTotalMoney:= FTotalMoney + 0.6 * Where.Building[index].Price;
     Where.Building[index].Free;
     Where.Building[index]:= nil;
   end;

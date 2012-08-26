@@ -369,11 +369,11 @@ begin
   InflateRect(r,-10,-10);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
   tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
-  Fonts.LargeText.BlockOut(r, format('PPL: %f',[City.TotalPeople]));
+  Fonts.LargeText.BlockOut(r, format('PPL: %.0n',[City.TotalPeople]));
   tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
-  Fonts.LargeText.BlockOut(r, format('MON: $%f',[City.TotalMoney]));
+  Fonts.LargeText.BlockOut(r, format('MON: $%.0n',[City.TotalMoney]));
   tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
-  Fonts.LargeText.BlockOut(r, format('EDU: %f',[City.TotalEducation]));
+  Fonts.LargeText.BlockOut(r, format('EDU: %n',[City.TotalEducation]));
   glDisable(GL_TEXTURE_2D);
 
   if GUIStack.Count > 0 then
