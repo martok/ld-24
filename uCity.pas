@@ -38,7 +38,9 @@ type
     FBlockDist: Single;
     FCars: TObjectList;
     function GetBlock(X, Y: integer): TCityBlock;
-    procedure ClearBlocks; 
+    procedure ClearBlocks;
+    procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
+    procedure UpdateStats;
   public
     constructor Create;
     destructor Destroy; override;
@@ -54,7 +56,7 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes;
+uses SysUtils, uConfigFile, Classes, Types;
 
 { TCity }
 
@@ -239,6 +241,111 @@ begin
   end;
 end;
 
+procedure TCity.FillBuildingEffect(Bdg: TBuilding; StartX,StartY: integer);
+var
+  visited: array of array of boolean;
+  visit: TQueue;
+
+  procedure PushPt(x,y: integer);
+  var p: PPoint;
+  begin
+    if (x<0) or (y<0) or (x>high(visited)) or (y>high(visited[x])) or
+      visited[x,y] then exit;
+    visited[x, y]:= true;
+    New(P);
+    p^:= Point(x,y);
+    visit.Push(p);
+  end;
+
+  function PopPt: TPoint;
+  var p: PPoint;
+  begin
+    p:= visit.Pop;
+    Result:= p^;
+    Dispose(p);
+  end;
+
+  procedure FloodFill;
+  var
+    cb: TCityBlock;
+    dist: integer;
+    f: single;
+    p: TPoint;
+    procedure Affect;
+    begin
+      cb:= FCityBlocks[p.x,p.y];
+      if Assigned(cb) then begin
+        f:= 1 - Dist * Bdg.SEffectLoss;
+        if f < 0 then f:= 0;           
+        if f > 1 then f:= 1;
+        cb.Industry:= cb.Industry + Bdg.SIndustryValue * f;
+        cb.Pollution:= cb.Pollution + Bdg.SPollution * f;
+        cb.Education:= cb.Education + Bdg.SEducation * f;
+        cb.Luxury:= cb.Luxury + Bdg.SLuxury * f;
+        cb.Space:= cb.Space + Bdg.SLivingSpace * f;
+      end;
+    end;
+  begin
+    PushPt(StartX, StartY);
+
+    while visit.AtLeast(1) do begin
+      p:= PopPt;
+      dist:= abs(p.X-StartX) + abs(p.Y-StartY);
+      if dist <= Bdg.SRange then begin
+        Affect;
+        if dist < Bdg.SRange then begin
+          PushPt(p.X-1,p.Y);
+          PushPt(p.X+1,p.Y);
+          PushPt(p.X,p.Y+1);
+          PushPt(p.X,p.Y-1);
+        end;
+      end;
+    end;
+  end;
+
+var
+  x: integer;
+begin
+  SetLength(visited, length(FCityBlocks), length(FCityBlocks[0]));
+  for x:= 0 to High(visited) do
+    FillChar(visited[x,0],sizeof(visited[x])*sizeof(boolean), 0);
+  visit:=TQueue.Create;
+  try
+    FloodFill;
+  finally
+    visit.Free;
+  end;
+end;
+
+procedure TCity.UpdateStats;
+var
+  x, y, b: integer;
+  cb: TCityBlock;  
+begin
+  for x:= 0 to high(FCityBlocks) do
+    for y:= 0 to high(FCityBlocks[x]) do begin
+      cb:= FCityBlocks[x,y];
+      if Assigned(cb) then begin
+        cb.Industry:= 0;
+        cb.Pollution:= 0;
+        cb.Education:= 0;
+        cb.Luxury:= 0;
+        cb.Space:= 0;
+      end;
+    end;
+
+  for x:= 0 to high(FCityBlocks) do
+    for y:= 0 to high(FCityBlocks[x]) do begin
+      cb:= FCityBlocks[x,y];
+      if Assigned(cb) then begin
+        for b:= 0 to 8 do
+          if Assigned(cb.Building[b]) then begin
+            FillBuildingEffect(cb.Building[b], x,y);
+          end;
+      end;
+    end;
+end;
+
 procedure TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock);
 var
   i: integer;
@@ -248,64 +355,32 @@ begin
       Where.Building[i]:= Building.Create;
       break;
     end;
+  UpdateStats;
 end;
 
 procedure TCity.Evolve;
 var
   x, y: integer;
-  ind, living, happi, pollu, people: single;
-  procedure AddUp(A, B: integer);
-  var
-    cb: TCityBlock;
-    f: Single;
-  begin
-    if (A < 0) or (B < 0) or (A > high(FCityBlocks)) or (B > high(FCityBlocks[A])) then
-      exit;
-    cb:= FCityBlocks[a, b];
-    if Assigned(cb) then begin
-      f:= 1 / (sqrt(sqr(a - x) + sqr(b - y))+1);
-      ind:= ind + f * cb.Industry;
-      living:= living + f * cb.Space;
-      happi:= happi + f * cb.Happiness;
-      pollu:= pollu + f * cb.Pollution;
-      people:= people + f * cb.People;
-    end;
-  end;
-var
   cb: TCityBlock;
 begin
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
-      if Assigned(FCityBlocks[x, y]) then
-        FCityBlocks[x, y].Update;
-    end;
-  end;
-
-  for x:= 0 to high(FCityBlocks) do begin
-    for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];
       if Assigned(cb) then begin
-        ind:= 0;
-        living:= 0;
-        happi:= 0;
-        pollu:= 0;
-        people:= 0;
-        AddUp(x, y);
-        AddUp(x - 1, y);
-        AddUp(x + 1, y);
-        AddUp(x, y - 1);
-        AddUp(x, y + 1);
 
-        if people > living * 0.9 then
-          cb.Happiness:= cb.Happiness - 1
-        else if people < living * 0.3 then
-          cb.Happiness:= cb.Happiness - 1
+        //TODO
+        if cb.People > cb.Space * 0.9 then
+          cb.GrowthRate:= cb.GrowthRate - (cb.People - cb.Space * 0.95)
         else
-          cb.Happiness:= cb.Happiness + 1;
+          cb.GrowthRate:= cb.GrowthRate + cb.People / cb.Space;
+        cb.GrowthRate:= cb.GrowthRate + 0.5 * (1 + cb.Luxury);
+        cb.GrowthRate:= cb.GrowthRate + 0.5 * cb.Education;
+        cb.GrowthRate:= cb.GrowthRate + 0.2 * cb.Industry;
+        cb.GrowthRate:= cb.GrowthRate - 0.1 * cb.Pollution;
 
-        cb.Happiness:= cb.Happiness - trunc(pollu / 10);
-
-        cb.People:= cb.People + cb.Happiness;
+        cb.People:= cb.People + cb.GrowthRate;
+        if cb.People<0 then
+          cb.People:= 0;
       end;
     end;
   end;
@@ -369,6 +444,7 @@ begin
   finally
     stream.Free;
   end;
+  UpdateStats;
 end;
 
 { TCar }

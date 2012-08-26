@@ -24,6 +24,8 @@ type
     function SPollution: Integer; override;
     class function Texture: TglBitmap2D; override;
     constructor Create; override;
+    function SRange: Integer; override;
+    function SEffectLoss: Single; override;
   end;
 
 implementation
@@ -77,6 +79,16 @@ end;
 function TBFactory.SPollution: Integer;
 begin
   Result:= 3;
+end;
+
+function TBFactory.SEffectLoss: Single;
+begin
+  Result:= 0.3;
+end;
+
+function TBFactory.SRange: Integer;
+begin          
+  Result:= 2;
 end;
 
 class function TBFactory.Texture: TglBitmap2D;

@@ -114,8 +114,12 @@ begin
   end;
   tsTextColor3f(0,0,0);
   Fonts.GUIText.TextOut(ClientRect.Left + 20, ClientRect.Bottom - 100,
-    Format('Ppl: %d Happi: %d Ind: %d',
-    [FBlock.People, FBlock.Happiness, FBlock.Industry]));
+    Format('Ppl: %f Grow: %f',
+    [FBlock.People, FBlock.GrowthRate]));
+
+  Fonts.GUIText.TextOut(ClientRect.Left + 20, ClientRect.Bottom - 150,
+    Format('Ind: %f poll: %f edu: %f lux: %f spa: %f',
+    [ FBlock.Industry, FBlock.Pollution, FBlock.Education, FBlock.Luxury, FBlock.Space]));
 end;
 
 end.
