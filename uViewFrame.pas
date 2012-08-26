@@ -200,8 +200,8 @@ begin
   ay:= ScreenToClient(Mouse.CursorPos).y;
 
   if mc then begin
-    dy := dy + (MP.Y - aY);
-    dx := dx + (MP.X - aX);
+    dy := (MP.Y - aY);
+    dx := (MP.X - aX);
 
     if pressed = [mbRight] then begin
       Camera.turn := Camera.turn - dx;
@@ -219,6 +219,8 @@ begin
 
     if pressed = [mbRight, mbLeft] then begin
       Camera.zoom := Camera.zoom + dy;
+      if Camera.zoom > -10 then
+        Camera.zoom := -10;
     end;
 
     if pressed = [mbLeft] then begin
@@ -265,9 +267,16 @@ end;
 
 procedure TViewFrame.Timestep(DT: Single);
 begin
+  City.Progress(DT);
   if not PausedForInput then begin
     LastEvolve:= LastEvolve + DT;
     if LastEvolve >= 1 then begin
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+      City.CreateRandomCar;
+            
       City.Evolve;
       LastEvolve:= 0;
     end;
