@@ -269,14 +269,13 @@ var
   i: Integer;
 begin
   City.Progress(DT);
-  if not PausedForInput then begin
-    LastEvolve:= LastEvolve + DT;
-    if LastEvolve >= 0.1 then begin
-      City.CreateRandomCar;
-      City.CreateRandomCar;
-      City.CreateRandomCar;
-      City.CreateRandomCar;
-      City.CreateRandomCar;
+  LastEvolve:= LastEvolve + DT;
+  if LastEvolve >= 0.1 then begin
+    City.CreateRandomCar;
+    City.CreateRandomCar;
+    City.CreateRandomCar;
+    City.CreateRandomCar;
+    City.CreateRandomCar;
     City.Evolve;
     LastEvolve:= 0;
   end;
