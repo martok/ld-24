@@ -258,7 +258,7 @@ begin
   Sounds.EffectClick:= LoadSound(skBlock,'click');  
   Sounds.EffectMenu:= LoadSound(skBlock,'menu_open'); 
   Sounds.EffectBuild:= LoadSound(skBlock,'buy');
-//  Sounds.EffectDestroy:= LoadSound(skBlock,'menu_open');
+  Sounds.EffectDestroy:= LoadSound(skBlock,'destroy');
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);

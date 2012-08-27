@@ -170,7 +170,7 @@ procedure TGUIBlock.BuildDestructClick(Sender: TObject);
 begin
   if TGUIMessage(Sender).Answer=btOK then begin
     FCity.DestroyBuilding(FBlock, FSelectedID);
-    TsndInstance.Create(Sounds.EffectDestroy, FFrame.SoundEmitter).Play().Gain:= 0.6;
+    TsndInstance.Create(Sounds.EffectDestroy, FFrame.SoundEmitter).Play().Gain:= 1;
   end;
 end;
 
