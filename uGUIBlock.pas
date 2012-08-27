@@ -77,6 +77,9 @@ type
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
+procedure fieldAtRect(rect: TRect);
+function RectOffset(Rect: TRect; p: TPoint): TRect;
+
 implementation
 
 uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury, uBldSpecial, uSound;

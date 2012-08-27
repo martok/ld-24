@@ -291,6 +291,8 @@ var
   r: Integer;
   o, s: Single;
 begin
+  if Length(fStreets)=0 then
+    exit;
   r := random(Length(fStreets));
   with fStreets[r] do begin
     s := 3 + random*3;

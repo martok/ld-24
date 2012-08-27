@@ -45,6 +45,7 @@ type
     GUIStack: TObjectList;
     Sound: TSoundSystem;
     SoundEmitter: TsndEmitter;
+    procedure StartGame(Level: string);
     procedure PopLayer(const aLayer: TGUILayer = nil);
     procedure PushLayer(const aLayer: TGUILayer);
     procedure NextRound;
@@ -94,7 +95,7 @@ var
 
 implementation
 
-uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock, glBitmap, Math;
+uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock, glBitmap, Math, uGUIMainMenu;
 
 {$R *.dfm}
 
@@ -137,7 +138,6 @@ end;
 
 procedure TViewFrame.FormCreate(Sender: TObject);
 var
-  guiMain: TGUIMain;
   PFList, SampleList: array[0..31] of glInt;
   c, i, maxSample, PF: Integer;
 begin
@@ -174,29 +174,16 @@ begin
   LoadTextures;
   LoadSounds;
 
-  FFrameCount:= 0;
-
-  FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
-  Camera.turn := 15;
-  Camera.tilt := 35;
-  Camera.zoom := -100;
-
-  LastEvolve:= 0;
-  AutoPlay:= false;
-
   GUIStack := TObjectList.Create(true);
-  guiMain := TGUIMain.Create(Self);
-  guiMain.ClientRect := Rect(ClientWidth - GUI_WIDTH, 0, ClientWidth, ClientHeight);
-  PushLayer(guiMain);
-  
-  City:= TCity.Create;
-  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test3.map');
-  City.PopulateStart;
+  FFrameCount:= 0;
 
   BGMusic := TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter);
   BGMusic.Loop(-1, 10).Gain:= 0.3;
 
   Application.OnIdle := ApplicationIdle;
+
+  //StartGame('test3');
+  PushLayer(TGUIMainMenu.Create(Self));
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);
@@ -223,6 +210,8 @@ end;
 
 procedure TViewFrame.LoadTextures;
 begin
+  Textures.GameLogo:= LoadTexture('Logo');
+
   Textures.BUnknown:= LoadTexture('BUnknown');
   Textures.BElementarySchool:= LoadTexture('BElementarySchool');
   Textures.BHighschool:= LoadTexture('BHighschool');
@@ -262,6 +251,27 @@ begin
   Sounds.EffectNextTurn:= LoadSound(skBlock,'next_turn');
 end;
 
+procedure TViewFrame.StartGame(Level: string);
+var
+  guiMain: TGUIMain;
+begin
+  FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
+  Camera.turn := 15;
+  Camera.tilt := 35;
+  Camera.zoom := -100;
+
+  LastEvolve:= 0;
+  AutoPlay:= false;
+
+  guiMain := TGUIMain.Create(Self);
+  guiMain.ClientRect := Rect(ClientWidth - GUI_WIDTH, 0, ClientWidth, ClientHeight);
+  PushLayer(guiMain);
+
+  City:= TCity.Create;
+  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\'+Level+'.map');
+  City.PopulateStart;
+end;
+
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
 const
   time_per_frame = 1000 / 60;
@@ -271,8 +281,9 @@ begin
     Sleep(1);
     exit;
   end;
-  }      
-  Timestep((GetPrecisionTime - LastFrameTime) / 1000);
+  }
+  if Assigned(City) then
+    Timestep((GetPrecisionTime - LastFrameTime) / 1000);
   LastFrameTime := GetPrecisionTime;
 
   Render;
@@ -283,7 +294,7 @@ end;
 
 procedure TViewFrame.Timer1Timer(Sender: TObject);
 begin
-  Caption:= Format('FPS: %d', [FFrameCount]);
+  Caption:= Format('Game Of City Life - FPS: %d', [FFrameCount]);
   FFrameCount:= 0;
 end;
 
@@ -348,53 +359,55 @@ var
   i: integer;
 begin
   PrepareMatrix;
-  glEnable(GL_LIGHTING);
+  if Assigned(City) then begin
+    glEnable(GL_LIGHTING);
 
-  glPushMatrix;
-  glLoadIdentity;
-  glTranslatef(0, 0, Camera.zoom);
-  glRotatef(Camera.tilt, 1, 0, 0);
-  glRotatef(Camera.turn, 0, 1, 0);  
-  glTranslatef(Camera.pos[0], Camera.pos[1], Camera.pos[2]);
-  City.Render(false);
-  glPopMatrix;
+    glPushMatrix;
+    glLoadIdentity;
+    glTranslatef(0, 0, Camera.zoom);
+    glRotatef(Camera.tilt, 1, 0, 0);
+    glRotatef(Camera.turn, 0, 1, 0);
+    glTranslatef(Camera.pos[0], Camera.pos[1], Camera.pos[2]);
+    City.Render(false);
+    glPopMatrix;
+  end;
 
   Enter2dMode(ClientWidth, ClientHeight);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
-
-  r:= rect(-1,0,ClientWidth-GUI_WIDTH, 40);
-  for i := 0 to 1 do begin
-    case i of
-      0: begin
-        SetGLColor(ColorToRGBA(0, 0, 0, 0.75));
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  if Assigned(City) then begin
+    r:= rect(-1,0,ClientWidth-GUI_WIDTH, 40);
+    for i := 0 to 1 do begin
+      case i of
+        0: begin
+          SetGLColor(ColorToRGBA(0, 0, 0, 0.75));
+          glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        end;
+        1: begin
+          SetGLColor(ColorToRGBA(1, 1, 1, 1));
+          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        end;
       end;
-      1: begin
-        SetGLColor(ColorToRGBA(1, 1, 1, 1));
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      end;
-    end;
-    glBegin(GL_QUADS);
+      glBegin(GL_QUADS);
 
-    //SetGLColor(ColorToRGBA(1, 1, 1, 0.5));
-      glVertex2f(r.Left, r.Top);
-      glVertex2f(r.Right+1, r.Top);
-      glVertex2f(r.Right+1, r.Bottom+1);
-      glVertex2f(r.Left, r.Bottom+1);
-    glEnd;
-  end;   
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  InflateRect(r,-10,-10);
-  tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
-  tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
-  Fonts.LargeText.BlockOut(r, format('PPL: %.0n',[City.TotalPeople]));
-  tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
-  Fonts.LargeText.BlockOut(r, format('MON: $%.0n',[City.TotalMoney]));
-  tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
-  Fonts.LargeText.BlockOut(r, format('EDU: %n',[City.TotalEducation]));
-  glDisable(GL_TEXTURE_2D);
-
+      //SetGLColor(ColorToRGBA(1, 1, 1, 0.5));
+        glVertex2f(r.Left, r.Top);
+        glVertex2f(r.Right+1, r.Top);
+        glVertex2f(r.Right+1, r.Bottom+1);
+        glVertex2f(r.Left, r.Bottom+1);
+      glEnd;
+    end;   
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    InflateRect(r,-10,-10);
+    tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
+    tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
+    Fonts.LargeText.BlockOut(r, format('PPL: %.0n',[City.TotalPeople]));
+    tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
+    Fonts.LargeText.BlockOut(r, format('MON: $%.0n',[City.TotalMoney]));
+    tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
+    Fonts.LargeText.BlockOut(r, format('EDU: %n',[City.TotalEducation]));
+    glDisable(GL_TEXTURE_2D);
+  end;
   if GUIStack.Count > 0 then
     TGUILayer(GUIStack[GUIStack.Count-1]).Render;
   Exit2dMode;
@@ -480,7 +493,8 @@ var
   block: TGUIBlock;
 begin
   if not HasMoved then begin
-    if not ((GUIStack.Count > 0) and TGUILayer(GUIStack[GUIStack.Count-1]).MouseClick(MP.X, MP.Y)) then begin
+    if not ((GUIStack.Count > 0) and TGUILayer(GUIStack[GUIStack.Count-1]).MouseClick(MP.X, MP.Y)) and
+      Assigned(City) then begin
       p := RenderForMouseClick(MP.X, MP.Y);
       if (p.X >= 0) and (p.Y >= 0) then begin
         while GUIStack.Count > 1 do
@@ -606,6 +620,7 @@ end;
 procedure TViewFrame.PushLayer(const aLayer: TGUILayer);
 begin
   GUIStack.Add(aLayer);
+  aLayer.ViewportResize(ClientWidth, ClientHeight);
   if GUIStack.Count>1 then begin
     TsndInstance.Create(Sounds.EffectMenu, SoundEmitter).Play.Gain:= 0.6;
   end;
@@ -631,7 +646,8 @@ end;
 procedure TViewFrame.ToggleAutoplay;
 begin
   AutoPlay:= not AutoPlay;
-  TGUIMain(GUIStack[0]).SetAutoplayState(AutoPlay);
+  if GUIStack[0] is TGUIMain then
+    TGUIMain(GUIStack[0]).SetAutoplayState(AutoPlay);
 end;
 
 end.

@@ -14,6 +14,8 @@ var
   end;
 
   Textures: record
+    GameLogo,
+
     BElementarySchool,
     BLibrary,
     BHighschool,
@@ -65,6 +67,7 @@ uses
 procedure FreeTextures;
 begin
   with Textures do begin
+    FreeAndNil(GameLogo);
     FreeAndNil(BElementarySchool);
     FreeAndNil(BLibrary);
     FreeAndNil(BHighschool);

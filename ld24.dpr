@@ -19,7 +19,8 @@ uses
   uCityBlock in 'uCityBlock.pas',
   glBitmap in 'glBitmap.pas',
   uBldLuxury in 'uBldLuxury.pas',
-  uBldSpecial in 'uBldSpecial.pas';
+  uBldSpecial in 'uBldSpecial.pas',
+  uGUIMainMenu in 'uGUIMainMenu.pas';
 
 {$R *.res}
 {$SetPEFlags $20}
