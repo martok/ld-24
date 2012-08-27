@@ -105,8 +105,8 @@ begin
     LoadFromFile(ExtractFilePath(Application.ExeName)+'heightmap.glsl');
     Compile;
     Enable;
-//    Uniform1i('uHeightMap', 0);
-//    Uniform2f('uSize', FSize.X*FBlockDist, FSize.Y*FBlockDist);
+    Uniform1i('uHeightMap', 0);
+    Uniform2f('uSize', FSize.X*FBlockDist, FSize.Y*FBlockDist);
     Disable;
   end;
   
