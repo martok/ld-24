@@ -1,9 +1,10 @@
 Map:
-	Title = Large City
 	BlockCount = 237
 	Height = 25
 	StreetCount = 77
 	Width = 25
+	MapHeight = 50
+	Title = Large City
 	Heightmap = textures\heightmap_large.tga
 	Blocks:
 		0:

@@ -160,8 +160,9 @@ begin
   if not Selection then begin
     glEnable(GL_CULL_FACE);
     glColor4f(0, 0, 0, 1);
-    glCallList(FHeightMapList);
     glPushMatrix;
+    glTranslatef(0, -0.5, 0);
+    glCallList(FHeightMapList);
     glTranslatef(-FBlockDist/2, -1, -FBlockDist/2);
     glColor4f(0, 0, 0.5, 1);
     glBegin(GL_QUADS);
@@ -173,7 +174,7 @@ begin
     glPopMatrix;
     glDisable(GL_CULL_FACE);
     glEnable(GL_LIGHTING);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_DEPTH_BUFFER_BIT);
   end;
   glPushMatrix;
 
@@ -537,7 +538,7 @@ begin
           FHeightMap.GenTexture;
           FHasHeightMap := true;
         end;
-        FHeightMapHeight:= GetValue('Height', 30);
+        FHeightMapHeight:= GetValue('MapHeight', 30);
         FSize := Point(w, h);
         FBlockDist := GetValue('BlockDist', 15);
         ClearBlocks;
