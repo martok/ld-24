@@ -16,6 +16,7 @@ type
     LoadBt: TButton;
     OpenDialog: TOpenDialog;
     SaveDialog: TSaveDialog;
+    LoadTextureBt: TButton;
     procedure ChangeSizeBtClick(Sender: TObject);
     procedure PaintBoxPaint(Sender: TObject);
     procedure PaintBoxMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -24,7 +25,11 @@ type
     procedure PaintBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure SaveBtClick(Sender: TObject);
+    procedure LoadTextureBtClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
+    fTex: TBitmap;
     fSize: TPoint;
     fBlocks: array of array of Byte;
     fStreets: array of packed record
@@ -56,7 +61,8 @@ uses
 procedure TForm1.ChangeSizeBtClick(Sender: TObject);
 begin
   fSize := Point(StrToIntDef(WidthEd.Text, 5), StrToIntDef(HeightEd.Text, 5));
-  SetLength(fBlocks, fSize.X, fSize.Y);  
+  SetLength(fBlocks, fSize.X, fSize.Y);
+  SetLength(fStreets, 0);  
   PaintBox.Width  := BLOCK_SIZE*fSize.X;
   PaintBox.Height := BLOCK_SIZE*fSize.Y;
   PaintBox.Repaint;
@@ -71,7 +77,8 @@ begin
     Brush.Color := clWhite;
     Pen.Color := clBlack;
     Pen.Width := 1;
-    Rectangle(-10, -10, PaintBox.Width+10, PaintBox.Height+10);
+    //Rectangle(-10, -10, PaintBox.Width+10, PaintBox.Height+10);
+    StretchDraw(Rect(0, 0, PaintBox.Width, PaintBox.Height), fTex);
     for x := 0 to High(fBlocks) do
       for y := 0 to High(fBlocks[x]) do begin
         case fBlocks[x, y] of
@@ -195,6 +202,42 @@ begin
       stream.free;
     end;
   end;
+end;
+
+procedure TForm1.LoadTextureBtClick(Sender: TObject);
+var
+  x, y: Integer;
+  r: Byte;
+begin
+  if OpenDialog.Execute then begin
+    fTex.LoadFromFile(OpenDialog.FileName);
+    for x := 0 to fTex.Width-1 do
+      for y := 0 to fTex.Height-1 do begin
+        r := fTex.Canvas.Pixels[x, y] or $FF000000;
+        if r = 128 then
+          fTex.Canvas.Pixels[x, y] := clGreen
+        else if r < 128 then
+          fTex.Canvas.Pixels[x, y] := clBlack
+        else
+          fTex.Canvas.Pixels[x, y] := clWhite;
+      end;
+    PaintBox.Repaint;
+  end;  
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  fTex := TBitmap.Create;
+  fTex.Width  := 128;
+  fTex.Height := 128;
+  fTex.Canvas.Brush.Color := clWhite;
+  fTex.Canvas.Brush.Style := bsSolid;
+  fTex.Canvas.Rectangle(-100, -100, 20, 200);
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  FreeAndNil(fTex);
 end;
 
 end.
