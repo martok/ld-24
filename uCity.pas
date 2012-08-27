@@ -100,7 +100,7 @@ begin
   FTotalMoney:= 10000000;        //TODO
   FTotalEducation:= 0;
 
-  FHeightMapShader := TglShaderProgram.Create(ShaderLog);
+  FHeightMapShader := TglShaderProgram.Create({ShaderLog});
   with FHeightMapShader do begin
     LoadFromFile(ExtractFilePath(Application.ExeName)+'heightmap.glsl');
     Compile;
@@ -112,7 +112,7 @@ begin
   
   FHeightMap := TglBitmap2D.Create;
   FHeightMap.LoadFromFile(ExtractFilePath(Application.ExeName)+'textures\heightmap.tga');
-  FHeightMap.SetWrap(GL_CLAMP, GL_CLAMP, GL_CLAMP);
+  FHeightMap.SetWrap(GL_REPEAT, GL_REPEAT, GL_REPEAT);
   FHeightMap.SetFilter(GL_LINEAR, GL_LINEAR);
   FHeightMap.GenTexture;
 
@@ -158,6 +158,7 @@ begin
     glDisable(GL_LIGHTING);
     FHeightMapShader.Enable;
     FHeightMap.Bind;
+    glEnable(GL_CULL_FACE);
     glColor4f(0, 0, 0, 1);
     glCallList(FHighMapList);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -181,7 +182,6 @@ begin
     glEnable(GL_LIGHTING);
     glClear(GL_DEPTH_BUFFER_BIT);
   end;
-//  exit;
 
   glPushMatrix;
   if not Selection then begin
@@ -612,8 +612,8 @@ begin
     for y := 0 to FSize.Y*GRID-1 do begin
       glBegin(GL_QUAD_STRIP);
         for x := 0 to FSize.X*GRID do begin
-          glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
-          glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
+          glTexCoord2f(x/(FSize.X*GRID),  y   /(FSize.Y*GRID)); glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
+          glTexCoord2f(x/(FSize.X*GRID), (y+1)/(FSize.Y*GRID)); glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
         end;
       glEnd;
     end;
