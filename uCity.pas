@@ -4,7 +4,7 @@ interface
 
 uses
   dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, contnrs, Windows,
-  uglShader, Forms, glBitmap, Types;
+  Forms, glBitmap, Types;
 
 type
   TCityBlocks = array of array of TCityBlock;

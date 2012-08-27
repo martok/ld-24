@@ -276,7 +276,7 @@ end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
 const
-  time_per_frame = 1000 / 60;
+  time_per_frame = 1000 / 80;
 var
   dt: Single;
 begin

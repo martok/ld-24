@@ -11,7 +11,7 @@ copy textures __output\textures\
 copy sounds __output\sounds\
 copy maps __output\maps\
 
-copy *.exe __output\
+copy ld24.exe __output\CityLife.exe
 copy *.dll __output\
 copy *.glsl __output\
 copy README.md __output\
