@@ -270,6 +270,8 @@ begin
   City:= TCity.Create;
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\'+Level+'.map');
   City.PopulateStart;
+  Camera.pos[0] := -City.Size.X / 2;
+  Camera.pos[2] := -City.Size.Y / 2;
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);

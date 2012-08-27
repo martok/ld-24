@@ -51,6 +51,7 @@ type
     FHasHeightMap: Boolean;
     FRound: Integer;
     function GetBlock(X, Y: integer): TCityBlock;
+    function GetSize: TPoint;
     procedure ClearBlocks;
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
     procedure UpdateStats;
@@ -77,6 +78,7 @@ type
     property TotalMoney: Single read FTotalMoney;
     property TotalEducation: Single read FTotalEducation;
     property Round: Integer read FRound;
+    property Size: TPoint read GetSize;
   end;
 
 implementation
@@ -142,6 +144,11 @@ end;
 function TCity.GetBlock(X, Y: integer): TCityBlock;
 begin
   Result:= FCityBlocks[X, Y];
+end;
+
+function TCity.GetSize: TPoint;
+begin
+  result := Point(System.Round(FSize.X * FBlockDist), System.Round(FSize.Y * FBlockDist));
 end;
 
 procedure TCity.ClearBlocks;
@@ -698,6 +705,7 @@ begin
     y:= random(length(FCityBlocks[0]));
     if Assigned(FCityBlocks[x,y]) then begin
       FCityBlocks[x,y].Building[Random(9)]:= TBHouse.Create;
+      FCityBlocks[x,y].UpdateDisplayList;
       break;
     end;
   until False;
