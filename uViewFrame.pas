@@ -149,14 +149,14 @@ begin
   InitOpenGL();
   maxSample := 0;
   PF := 0;
-  gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
+{  gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
   for i := 0 to c-1 do begin
     if SampleList[i] > maxSample then begin
       PF := PFList[i];
       maxSample := sampleList[i];
     end;
   end;
-
+}
   if PF = 0 then
     PF := gluGetPixelFormat(Handle, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
   RC := gluCreateRenderContext(Handle, PF);
@@ -202,7 +202,8 @@ end;
 procedure TViewFrame.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(BGMusic);
-  FreeAndNil(City);
+  FreeAndNil(City); 
+  FreeAndNil(Sound);
   GUIStack.Free;
   TtsFont.DoneTS;
   gluDestroyRenderContext(RC);
@@ -255,7 +256,9 @@ begin
   SoundEmitter:= TsndEmitter.Create;
   Sounds.BackgroundMusic:= LoadSound(skStream,'maximum_chill');
   Sounds.EffectClick:= LoadSound(skBlock,'click');  
-  Sounds.EffectMenu:= LoadSound(skBlock,'menu_open');
+  Sounds.EffectMenu:= LoadSound(skBlock,'menu_open'); 
+  Sounds.EffectBuild:= LoadSound(skBlock,'buy');
+//  Sounds.EffectDestroy:= LoadSound(skBlock,'menu_open');
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -482,7 +485,7 @@ begin
         while GUIStack.Count > 1 do
           GUIStack.Delete(GUIStack.Count-1);
 
-        block := TGUIBlock.Create(City, p.X, p.Y);
+        block := TGUIBlock.Create(Self, City, p.X, p.Y);
         block.ClientRect := Rect(ClientWidth - GUI_WIDTH, 0, ClientWidth, ClientHeight);
         PushLayer(block);
       end;

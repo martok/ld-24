@@ -25,6 +25,7 @@ uses
 {$SetPEFlags $20}
 
 begin
+  fastmm4.ReportMemoryLeaksOnShutdown:= false;
   Application.Initialize;
   Application.CreateForm(TViewFrame, ViewFrame);
   Application.Run;

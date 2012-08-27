@@ -154,33 +154,34 @@ var
   x, y, i, o: integer;
 begin
 //Terrain
-  glDisable(GL_LIGHTING);
-  FHeightMapShader.Enable;
-  FHeightMap.Bind;
-  glColor4f(0, 0, 0, 1);
-  glCallList(FHighMapList);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDepthFunc(GL_ALWAYS);
-  glColor4f(1, 1, 1, 1);
-  glCallList(FHighMapList);
-  FHeightMap.Unbind;
-  FHeightMapShader.Disable;
-  glDepthFunc(GL_LESS);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glPushMatrix;
-  glTranslatef(-FBlockDist/2, -1, -FBlockDist/2);
-  glColor4f(0, 0, 0.5, 1);
-  glBegin(GL_QUADS);
-    glVertex3f(                 0, 0,                  0);
-    glVertex3f(                 0, 0, FSize.Y*FBlockDist);
-    glVertex3f(FSize.X*FBlockDist, 0, FSize.Y*FBlockDist);
-    glVertex3f(FSize.X*FBlockDist, 0,                  0);
-  glEnd;
-  glPopMatrix;
-  glEnable(GL_LIGHTING);  
-  glClear(GL_DEPTH_BUFFER_BIT);
-  
-  exit;
+  if not Selection then begin
+    glDisable(GL_LIGHTING);
+    FHeightMapShader.Enable;
+    FHeightMap.Bind;
+    glColor4f(0, 0, 0, 1);
+    glCallList(FHighMapList);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDepthFunc(GL_ALWAYS);
+    glColor4f(1, 1, 1, 1);
+    glCallList(FHighMapList);
+    FHeightMap.Unbind;
+    FHeightMapShader.Disable;
+    glDepthFunc(GL_LESS);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPushMatrix;
+    glTranslatef(-FBlockDist/2, -1, -FBlockDist/2);
+    glColor4f(0, 0, 0.5, 1);
+    glBegin(GL_QUADS);
+      glVertex3f(                 0, 0,                  0);
+      glVertex3f(                 0, 0, FSize.Y*FBlockDist);
+      glVertex3f(FSize.X*FBlockDist, 0, FSize.Y*FBlockDist);
+      glVertex3f(FSize.X*FBlockDist, 0,                  0);
+    glEnd;
+    glPopMatrix;
+    glEnable(GL_LIGHTING);
+    glClear(GL_DEPTH_BUFFER_BIT);
+  end;
+//  exit;
 
   glPushMatrix;
   if not Selection then begin
