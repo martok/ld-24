@@ -46,7 +46,9 @@ var
   Sounds: record
     BackgroundMusic,
     EffectClick,
-    EffectMenu
+    EffectMenu,
+    EffectBuild,
+    EffectDestroy
     : TsndSound;
   end;
 

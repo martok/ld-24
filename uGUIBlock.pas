@@ -40,6 +40,7 @@ type
   TGUIBlock = class(TGUILayer)
   private
     FCity: TCity;
+    FFrame: TViewFrame;
     FBlock: TCityBlock;
     FSelectedID: Integer;
     procedure BuildDestructClick(Sender: TObject);
@@ -50,7 +51,7 @@ type
     procedure BuildClick(Sender: TObject);
     procedure CloseClick(Sender: TObject);
   public
-    constructor Create(ACity: TCity; X, Y: integer);
+    constructor Create(aFrame: TViewFrame; ACity: TCity; X, Y: integer);
     destructor Destroy; override;
     procedure Render; override;
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
@@ -78,7 +79,7 @@ type
 
 implementation
 
-uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury, uBldSpecial;
+uses uGlobals, uBldHouse, uBldIndustry, uBldEducation, uBldLuxury, uBldSpecial, uSound;
 
 var
   AllBuildings: array[TBuildingCategory, 0..5] of TBuildingClass =
@@ -111,7 +112,7 @@ begin
   inc(result.Bottom,  p.Y);
 end;
 
-constructor TGUIBlock.Create(ACity: TCity; X, Y: integer);
+constructor TGUIBlock.Create(aFrame: TViewFrame; ACity: TCity; X, Y: integer);
 var
   a, b, i: Integer;
   c: TGUIClickable;
@@ -125,6 +126,7 @@ var
 
 begin
   inherited Create;
+  FFrame:= aFrame;
   FCity:= ACity;
   FCity.ActiveBlock:= Point(X, Y);
   FBlock:= FCity.Block[X, Y];
@@ -166,14 +168,17 @@ end;
 
 procedure TGUIBlock.BuildDestructClick(Sender: TObject);
 begin
-  if TGUIMessage(Sender).Answer=btOK then
+  if TGUIMessage(Sender).Answer=btOK then begin
     FCity.DestroyBuilding(FBlock, FSelectedID);
+    TsndInstance.Create(Sounds.EffectDestroy, FFrame.SoundEmitter).Play().Gain:= 0.6;
+  end;
 end;
 
 procedure TGUIBlock.BuildCreateClick(Sender: TObject);
 begin
   if TGUIChooseBuilding(Sender).Result <> nil then
     case FCity.CreateBuilding(TGUIChooseBuilding(Sender).Result, FBlock, FSelectedID) of
+      brBuilt: TsndInstance.Create(Sounds.EffectBuild, FFrame.SoundEmitter).Play.Gain:= 1;
       brErrorUnknown: ViewFrame.PushLayer(TGUIMessage.Create('You can not build here!', [btOK], nil));
       brErrorMoney: ViewFrame.PushLayer(TGUIMessage.Create('You don''t have the money to build this!', [btOK], nil));
       brErrorEdu: ViewFrame.PushLayer(TGUIMessage.Create('You don''t have the education level to build this!', [btOK], nil));

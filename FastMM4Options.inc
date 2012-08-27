@@ -228,7 +228,7 @@ Set the default options for FastMM here.
    this option is selected then both the variable must be set to true and the
    other leak checking options must be applicable for the leak checking to be
    done.}
-  {.$define ManualLeakReportingControl}
+  {$define ManualLeakReportingControl}
 
   {Set this option to disable the display of the hint below the memory leak
    message.}
