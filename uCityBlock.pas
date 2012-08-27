@@ -126,12 +126,14 @@ begin
       if not Selection then begin
         glDisable(GL_LIGHTING);
         glColor4f(1, 1, 1, 1);
+        glDepthFunc(GL_ALWAYS);
         glBegin(GL_LINE_LOOP);
           glVertex3f(-1.5, 0,-1.5);
           glVertex3f(-1.5, 0, 1.5);
           glVertex3f( 1.5, 0, 1.5);
           glVertex3f( 1.5, 0,-1.5);
         glEnd;
+        glDepthFunc(GL_LESS);
         glEnable(GL_LIGHTING);
       end;
     end;
@@ -142,39 +144,39 @@ end;
 procedure TCityBlock.RenderFocus;
   procedure c(a: single);
   begin
-    glColor4f(1,1,0.6,a);
+    glColor4f(0, 1, 0, a);
   end;
 
-  procedure draw;
+  procedure draw(min, max, h: Single);
   begin
     glBegin(GL_QUADS);
-      c(1.0);
+      c(max);
       glVertex3f( 6, 0,-6);
       glVertex3f(-6, 0,-6);
-      c(0.1);
-      glVertex3f(-6, 10,-6);
-      glVertex3f( 6, 10,-6);
+      c(min);
+      glVertex3f(-6, h,-6);
+      glVertex3f( 6, h,-6);
 
-      c(1.0);
+      c(max);
       glVertex3f(-6, 0,-6);
       glVertex3f(-6, 0, 6);
-      c(0.1);
-      glVertex3f(-6, 10, 6);
-      glVertex3f(-6, 10,-6);
+      c(min);
+      glVertex3f(-6, h, 6);
+      glVertex3f(-6, h,-6);
 
-      c(1.0);
+      c(max);
       glVertex3f(-6, 0, 6);
       glVertex3f( 6, 0, 6);
-      c(0.1);
-      glVertex3f( 6, 10, 6);
-      glVertex3f(-6, 10, 6);
+      c(min);
+      glVertex3f( 6, h, 6);
+      glVertex3f(-6, h, 6);
 
-      c(1.0);
+      c(max);
       glVertex3f( 6, 0, 6);
       glVertex3f( 6, 0,-6);
-      c(0.1);
-      glVertex3f( 6, 10,-6);
-      glVertex3f( 6, 10, 6);
+      c(min);
+      glVertex3f( 6, h,-6);
+      glVertex3f( 6, h, 6);
     glEnd;
   end;
 begin
@@ -183,15 +185,23 @@ begin
   glEnable(GL_CULL_FACE);
   glDisable(GL_LIGHTING);
   glFrontFace(GL_CW);
-  draw;
+  draw(0.0, 0.5, 15);
   glFrontFace(GL_CCW);
-  draw;
+  draw(0.0, 0.5, 15);
   glPopAttrib;
 end;
 
 procedure TCityBlock.RenderFloor;
 begin
   glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
+  glBegin(GL_QUADS);
+    glColor4f(0, 0, 0, 1);
+    glVertex3f( 6, 0,-6);
+    glVertex3f(-6, 0,-6);
+    glVertex3f(-6, 0, 6);
+    glVertex3f( 6, 0, 6);  
+  glEnd;
+  glDepthFunc(GL_ALWAYS);
   glBegin(GL_LINE_LOOP);
     //SetGLMaterial(ColorToRGBA(0.9, 0.9, 0.9));
     glLineWidth(2);
@@ -201,6 +211,7 @@ begin
     glVertex3f(-6, 0, 6);
     glVertex3f( 6, 0, 6);
   glEnd;
+  glDepthFunc(GL_LESS);
   glPopAttrib;
 end;
 

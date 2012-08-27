@@ -190,7 +190,7 @@ begin
   PushLayer(guiMain);
   
   City:= TCity.Create;
-  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
+  City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test3.map');
   City.PopulateStart;
 
   BGMusic := TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter);

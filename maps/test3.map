@@ -1,0 +1,1100 @@
+Map:
+	BlockCount = 218
+	Height = 25
+	StreetCount = 0
+	Width = 25
+	Blocks:
+		0:
+			type = 1
+			x = 2
+			y = 3
+		end
+		1:
+			type = 1
+			x = 2
+			y = 7
+		end
+		10:
+			type = 1
+			x = 3
+			y = 19
+		end
+		100:
+			type = 1
+			x = 12
+			y = 9
+		end
+		101:
+			type = 1
+			x = 12
+			y = 10
+		end
+		102:
+			type = 1
+			x = 12
+			y = 15
+		end
+		103:
+			type = 1
+			x = 12
+			y = 16
+		end
+		104:
+			type = 1
+			x = 12
+			y = 17
+		end
+		105:
+			type = 1
+			x = 12
+			y = 18
+		end
+		106:
+			type = 1
+			x = 12
+			y = 19
+		end
+		107:
+			type = 1
+			x = 12
+			y = 20
+		end
+		108:
+			type = 1
+			x = 12
+			y = 21
+		end
+		109:
+			type = 1
+			x = 12
+			y = 22
+		end
+		11:
+			type = 1
+			x = 4
+			y = 3
+		end
+		110:
+			type = 1
+			x = 13
+			y = 7
+		end
+		111:
+			type = 1
+			x = 13
+			y = 8
+		end
+		112:
+			type = 1
+			x = 13
+			y = 9
+		end
+		113:
+			type = 1
+			x = 13
+			y = 10
+		end
+		114:
+			type = 1
+			x = 13
+			y = 11
+		end
+		115:
+			type = 1
+			x = 13
+			y = 16
+		end
+		116:
+			type = 1
+			x = 13
+			y = 17
+		end
+		117:
+			type = 1
+			x = 13
+			y = 18
+		end
+		118:
+			type = 1
+			x = 13
+			y = 19
+		end
+		119:
+			type = 1
+			x = 13
+			y = 20
+		end
+		12:
+			type = 1
+			x = 4
+			y = 4
+		end
+		120:
+			type = 1
+			x = 13
+			y = 21
+		end
+		121:
+			type = 1
+			x = 13
+			y = 22
+		end
+		122:
+			type = 1
+			x = 13
+			y = 23
+		end
+		123:
+			type = 1
+			x = 14
+			y = 8
+		end
+		124:
+			type = 1
+			x = 14
+			y = 9
+		end
+		125:
+			type = 1
+			x = 14
+			y = 10
+		end
+		126:
+			type = 1
+			x = 14
+			y = 11
+		end
+		127:
+			type = 1
+			x = 14
+			y = 12
+		end
+		128:
+			type = 1
+			x = 14
+			y = 16
+		end
+		129:
+			type = 1
+			x = 14
+			y = 17
+		end
+		13:
+			type = 1
+			x = 4
+			y = 9
+		end
+		130:
+			type = 1
+			x = 14
+			y = 18
+		end
+		131:
+			type = 1
+			x = 14
+			y = 19
+		end
+		132:
+			type = 1
+			x = 14
+			y = 20
+		end
+		133:
+			type = 1
+			x = 14
+			y = 21
+		end
+		134:
+			type = 1
+			x = 14
+			y = 22
+		end
+		135:
+			type = 1
+			x = 15
+			y = 8
+		end
+		136:
+			type = 1
+			x = 15
+			y = 9
+		end
+		137:
+			type = 1
+			x = 15
+			y = 10
+		end
+		138:
+			type = 1
+			x = 15
+			y = 11
+		end
+		139:
+			type = 1
+			x = 15
+			y = 12
+		end
+		14:
+			type = 1
+			x = 4
+			y = 10
+		end
+		140:
+			type = 1
+			x = 15
+			y = 13
+		end
+		141:
+			type = 1
+			x = 15
+			y = 16
+		end
+		142:
+			type = 1
+			x = 15
+			y = 17
+		end
+		143:
+			type = 1
+			x = 15
+			y = 18
+		end
+		144:
+			type = 1
+			x = 15
+			y = 19
+		end
+		145:
+			type = 1
+			x = 15
+			y = 20
+		end
+		146:
+			type = 1
+			x = 15
+			y = 21
+		end
+		147:
+			type = 1
+			x = 15
+			y = 22
+		end
+		148:
+			type = 1
+			x = 16
+			y = 8
+		end
+		149:
+			type = 1
+			x = 16
+			y = 9
+		end
+		15:
+			type = 1
+			x = 4
+			y = 11
+		end
+		150:
+			type = 1
+			x = 16
+			y = 10
+		end
+		151:
+			type = 1
+			x = 16
+			y = 11
+		end
+		152:
+			type = 1
+			x = 16
+			y = 12
+		end
+		153:
+			type = 1
+			x = 16
+			y = 13
+		end
+		154:
+			type = 1
+			x = 16
+			y = 16
+		end
+		155:
+			type = 1
+			x = 16
+			y = 17
+		end
+		156:
+			type = 1
+			x = 16
+			y = 18
+		end
+		157:
+			type = 1
+			x = 16
+			y = 19
+		end
+		158:
+			type = 1
+			x = 16
+			y = 20
+		end
+		159:
+			type = 1
+			x = 16
+			y = 21
+		end
+		16:
+			type = 1
+			x = 4
+			y = 12
+		end
+		160:
+			type = 1
+			x = 17
+			y = 8
+		end
+		161:
+			type = 1
+			x = 17
+			y = 9
+		end
+		162:
+			type = 1
+			x = 17
+			y = 10
+		end
+		163:
+			type = 1
+			x = 17
+			y = 11
+		end
+		164:
+			type = 1
+			x = 17
+			y = 12
+		end
+		165:
+			type = 1
+			x = 17
+			y = 16
+		end
+		166:
+			type = 1
+			x = 17
+			y = 17
+		end
+		167:
+			type = 1
+			x = 17
+			y = 18
+		end
+		168:
+			type = 1
+			x = 17
+			y = 19
+		end
+		169:
+			type = 1
+			x = 17
+			y = 20
+		end
+		17:
+			type = 1
+			x = 4
+			y = 13
+		end
+		170:
+			type = 1
+			x = 17
+			y = 21
+		end
+		171:
+			type = 1
+			x = 18
+			y = 7
+		end
+		172:
+			type = 1
+			x = 18
+			y = 8
+		end
+		173:
+			type = 1
+			x = 18
+			y = 9
+		end
+		174:
+			type = 1
+			x = 18
+			y = 10
+		end
+		175:
+			type = 1
+			x = 18
+			y = 11
+		end
+		176:
+			type = 1
+			x = 18
+			y = 16
+		end
+		177:
+			type = 1
+			x = 18
+			y = 17
+		end
+		178:
+			type = 1
+			x = 18
+			y = 18
+		end
+		179:
+			type = 1
+			x = 18
+			y = 19
+		end
+		18:
+			type = 1
+			x = 4
+			y = 14
+		end
+		180:
+			type = 1
+			x = 18
+			y = 20
+		end
+		181:
+			type = 1
+			x = 18
+			y = 21
+		end
+		182:
+			type = 1
+			x = 19
+			y = 7
+		end
+		183:
+			type = 1
+			x = 19
+			y = 8
+		end
+		184:
+			type = 1
+			x = 19
+			y = 9
+		end
+		185:
+			type = 1
+			x = 19
+			y = 10
+		end
+		186:
+			type = 1
+			x = 19
+			y = 15
+		end
+		187:
+			type = 1
+			x = 19
+			y = 16
+		end
+		188:
+			type = 1
+			x = 19
+			y = 17
+		end
+		189:
+			type = 1
+			x = 19
+			y = 18
+		end
+		19:
+			type = 1
+			x = 4
+			y = 15
+		end
+		190:
+			type = 1
+			x = 19
+			y = 19
+		end
+		191:
+			type = 1
+			x = 19
+			y = 20
+		end
+		192:
+			type = 1
+			x = 19
+			y = 21
+		end
+		193:
+			type = 1
+			x = 20
+			y = 6
+		end
+		194:
+			type = 1
+			x = 20
+			y = 7
+		end
+		195:
+			type = 1
+			x = 20
+			y = 8
+		end
+		196:
+			type = 1
+			x = 20
+			y = 9
+		end
+		197:
+			type = 1
+			x = 20
+			y = 10
+		end
+		198:
+			type = 1
+			x = 20
+			y = 14
+		end
+		199:
+			type = 1
+			x = 20
+			y = 15
+		end
+		2:
+			type = 1
+			x = 3
+			y = 3
+		end
+		20:
+			type = 1
+			x = 4
+			y = 16
+		end
+		200:
+			type = 1
+			x = 20
+			y = 16
+		end
+		201:
+			type = 1
+			x = 20
+			y = 17
+		end
+		202:
+			type = 1
+			x = 20
+			y = 18
+		end
+		203:
+			type = 1
+			x = 20
+			y = 19
+		end
+		204:
+			type = 1
+			x = 20
+			y = 20
+		end
+		205:
+			type = 1
+			x = 20
+			y = 21
+		end
+		206:
+			type = 1
+			x = 21
+			y = 5
+		end
+		207:
+			type = 1
+			x = 21
+			y = 6
+		end
+		208:
+			type = 1
+			x = 21
+			y = 7
+		end
+		209:
+			type = 1
+			x = 21
+			y = 8
+		end
+		21:
+			type = 1
+			x = 4
+			y = 17
+		end
+		210:
+			type = 1
+			x = 21
+			y = 9
+		end
+		211:
+			type = 1
+			x = 21
+			y = 17
+		end
+		212:
+			type = 1
+			x = 21
+			y = 18
+		end
+		213:
+			type = 1
+			x = 21
+			y = 19
+		end
+		214:
+			type = 1
+			x = 21
+			y = 20
+		end
+		215:
+			type = 1
+			x = 21
+			y = 21
+		end
+		216:
+			type = 1
+			x = 22
+			y = 8
+		end
+		217:
+			type = 1
+			x = 22
+			y = 9
+		end
+		22:
+			type = 1
+			x = 4
+			y = 18
+		end
+		23:
+			type = 1
+			x = 4
+			y = 19
+		end
+		24:
+			type = 1
+			x = 5
+			y = 3
+		end
+		25:
+			type = 1
+			x = 5
+			y = 4
+		end
+		26:
+			type = 1
+			x = 5
+			y = 5
+		end
+		27:
+			type = 1
+			x = 5
+			y = 10
+		end
+		28:
+			type = 1
+			x = 5
+			y = 11
+		end
+		29:
+			type = 1
+			x = 5
+			y = 12
+		end
+		3:
+			type = 1
+			x = 3
+			y = 4
+		end
+		30:
+			type = 1
+			x = 5
+			y = 13
+		end
+		31:
+			type = 1
+			x = 5
+			y = 14
+		end
+		32:
+			type = 1
+			x = 5
+			y = 15
+		end
+		33:
+			type = 1
+			x = 5
+			y = 16
+		end
+		34:
+			type = 1
+			x = 5
+			y = 17
+		end
+		35:
+			type = 1
+			x = 5
+			y = 18
+		end
+		36:
+			type = 1
+			x = 5
+			y = 19
+		end
+		37:
+			type = 1
+			x = 6
+			y = 3
+		end
+		38:
+			type = 1
+			x = 6
+			y = 4
+		end
+		39:
+			type = 1
+			x = 6
+			y = 5
+		end
+		4:
+			type = 1
+			x = 3
+			y = 8
+		end
+		40:
+			type = 1
+			x = 6
+			y = 6
+		end
+		41:
+			type = 1
+			x = 6
+			y = 12
+		end
+		42:
+			type = 1
+			x = 6
+			y = 13
+		end
+		43:
+			type = 1
+			x = 6
+			y = 14
+		end
+		44:
+			type = 1
+			x = 6
+			y = 15
+		end
+		45:
+			type = 1
+			x = 6
+			y = 16
+		end
+		46:
+			type = 1
+			x = 6
+			y = 17
+		end
+		47:
+			type = 1
+			x = 6
+			y = 18
+		end
+		48:
+			type = 1
+			x = 6
+			y = 19
+		end
+		49:
+			type = 1
+			x = 7
+			y = 3
+		end
+		5:
+			type = 1
+			x = 3
+			y = 9
+		end
+		50:
+			type = 1
+			x = 7
+			y = 4
+		end
+		51:
+			type = 1
+			x = 7
+			y = 5
+		end
+		52:
+			type = 1
+			x = 7
+			y = 6
+		end
+		53:
+			type = 1
+			x = 7
+			y = 7
+		end
+		54:
+			type = 1
+			x = 7
+			y = 13
+		end
+		55:
+			type = 1
+			x = 7
+			y = 14
+		end
+		56:
+			type = 1
+			x = 7
+			y = 15
+		end
+		57:
+			type = 1
+			x = 7
+			y = 16
+		end
+		58:
+			type = 1
+			x = 7
+			y = 17
+		end
+		59:
+			type = 1
+			x = 8
+			y = 3
+		end
+		6:
+			type = 1
+			x = 3
+			y = 15
+		end
+		60:
+			type = 1
+			x = 8
+			y = 4
+		end
+		61:
+			type = 1
+			x = 8
+			y = 5
+		end
+		62:
+			type = 1
+			x = 8
+			y = 6
+		end
+		63:
+			type = 1
+			x = 8
+			y = 7
+		end
+		64:
+			type = 1
+			x = 8
+			y = 8
+		end
+		65:
+			type = 1
+			x = 8
+			y = 9
+		end
+		66:
+			type = 1
+			x = 9
+			y = 3
+		end
+		67:
+			type = 1
+			x = 9
+			y = 4
+		end
+		68:
+			type = 1
+			x = 9
+			y = 5
+		end
+		69:
+			type = 1
+			x = 9
+			y = 6
+		end
+		7:
+			type = 1
+			x = 3
+			y = 16
+		end
+		70:
+			type = 1
+			x = 9
+			y = 7
+		end
+		71:
+			type = 1
+			x = 9
+			y = 8
+		end
+		72:
+			type = 1
+			x = 9
+			y = 9
+		end
+		73:
+			type = 1
+			x = 10
+			y = 5
+		end
+		74:
+			type = 1
+			x = 10
+			y = 6
+		end
+		75:
+			type = 1
+			x = 10
+			y = 7
+		end
+		76:
+			type = 1
+			x = 10
+			y = 8
+		end
+		77:
+			type = 1
+			x = 10
+			y = 9
+		end
+		78:
+			type = 1
+			x = 10
+			y = 10
+		end
+		79:
+			type = 1
+			x = 10
+			y = 17
+		end
+		8:
+			type = 1
+			x = 3
+			y = 17
+		end
+		80:
+			type = 1
+			x = 10
+			y = 18
+		end
+		81:
+			type = 1
+			x = 10
+			y = 19
+		end
+		82:
+			type = 1
+			x = 10
+			y = 20
+		end
+		83:
+			type = 1
+			x = 10
+			y = 21
+		end
+		84:
+			type = 1
+			x = 11
+			y = 6
+		end
+		85:
+			type = 1
+			x = 11
+			y = 7
+		end
+		86:
+			type = 1
+			x = 11
+			y = 8
+		end
+		87:
+			type = 1
+			x = 11
+			y = 9
+		end
+		88:
+			type = 1
+			x = 11
+			y = 10
+		end
+		89:
+			type = 1
+			x = 11
+			y = 14
+		end
+		9:
+			type = 1
+			x = 3
+			y = 18
+		end
+		90:
+			type = 1
+			x = 11
+			y = 15
+		end
+		91:
+			type = 1
+			x = 11
+			y = 16
+		end
+		92:
+			type = 1
+			x = 11
+			y = 17
+		end
+		93:
+			type = 1
+			x = 11
+			y = 18
+		end
+		94:
+			type = 1
+			x = 11
+			y = 19
+		end
+		95:
+			type = 1
+			x = 11
+			y = 20
+		end
+		96:
+			type = 1
+			x = 11
+			y = 21
+		end
+		97:
+			type = 1
+			x = 11
+			y = 22
+		end
+		98:
+			type = 1
+			x = 12
+			y = 7
+		end
+		99:
+			type = 1
+			x = 12
+			y = 8
+		end
+	end
+	Streets:
+	end
+end

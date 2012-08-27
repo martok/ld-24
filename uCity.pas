@@ -157,15 +157,15 @@ begin
 //Terrain
   glDisable(GL_LIGHTING);
   if not Selection then begin
-    //FHeightMapShader.Enable;
-    //FHeightMap.Bind;
+    FHeightMapShader.Enable;
+    FHeightMap.Bind;
     glEnable(GL_CULL_FACE);
     glColor4f(0, 0, 0, 1);
     glCallList(FHighMapList);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLineWidth(2);
     glDepthFunc(GL_LEQUAL);//GL_ALWAYS);
-    glColor4f(1, 1, 1, 1);
+    glColor4f(0.2, 0.2, 0.2, 1);
     glCallList(FHighMapList);
     glDepthFunc(GL_LESS);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -620,8 +620,8 @@ begin
     for y := 0 to FSize.Y*GRID-1 do begin
       glBegin(GL_QUAD_STRIP);
         for x := 0 to FSize.X*GRID do begin
-          glTexCoord2f(x/(FSize.X*GRID),  y   /(FSize.Y*GRID)); glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
-          glTexCoord2f(x/(FSize.X*GRID), (y+1)/(FSize.Y*GRID)); glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
+          glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
+          glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+2)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
         end;
       glEnd;
     end;
