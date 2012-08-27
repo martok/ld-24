@@ -29,6 +29,7 @@ type
     LastEvolve: Single;
     HasMoved: Boolean;
     BGMusic: TsndInstance;
+    AutoPlay: Boolean;
     procedure LoadFonts;
     procedure LoadTextures;
     procedure LoadSounds;
@@ -46,6 +47,8 @@ type
     SoundEmitter: TsndEmitter;
     procedure PopLayer(const aLayer: TGUILayer = nil);
     procedure PushLayer(const aLayer: TGUILayer);
+    procedure NextRound;
+    procedure ToggleAutoplay;
     procedure Timestep(DT: Single);
     procedure Render;
   end;
@@ -146,14 +149,14 @@ begin
   InitOpenGL();
   maxSample := 0;
   PF := 0;
-  {gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
+  gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
   for i := 0 to c-1 do begin
     if SampleList[i] > maxSample then begin
       PF := PFList[i];
       maxSample := sampleList[i];
     end;
   end;
-  }
+
   if PF = 0 then
     PF := gluGetPixelFormat(Handle, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
   RC := gluCreateRenderContext(Handle, PF);
@@ -179,14 +182,16 @@ begin
   Camera.zoom := -100;
 
   LastEvolve:= 0;
+  AutoPlay:= false;
 
   GUIStack := TObjectList.Create(true);
-  guiMain := TGUIMain.Create;
+  guiMain := TGUIMain.Create(Self);
   guiMain.ClientRect := Rect(ClientWidth - GUI_WIDTH, 0, ClientWidth, ClientHeight);
   PushLayer(guiMain);
   
   City:= TCity.Create;
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
+  City.PopulateStart;
 
   BGMusic := TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter);
   BGMusic.Loop(-1, 10).Gain:= 0.3;
@@ -249,7 +254,8 @@ procedure TViewFrame.LoadSounds;
 begin
   SoundEmitter:= TsndEmitter.Create;
   Sounds.BackgroundMusic:= LoadSound(skStream,'maximum_chill');
-  Sounds.EffectClick:= LoadSound(skBlock,'click');
+  Sounds.EffectClick:= LoadSound(skBlock,'click');  
+  Sounds.EffectMenu:= LoadSound(skBlock,'menu_open');
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -309,7 +315,8 @@ begin
     City.CreateRandomCar;
     City.CreateRandomCar;
     City.CreateRandomCar;
-    City.Evolve;
+    if AutoPlay then
+      City.Evolve;
     LastEvolve:= 0;
   end;
 end;
@@ -377,11 +384,11 @@ begin
   InflateRect(r,-10,-10);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
   tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
-  Fonts.LargeText.BlockOut(r, format('PPL: %f',[City.TotalPeople]));
+  Fonts.LargeText.BlockOut(r, format('PPL: %.0n',[City.TotalPeople]));
   tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
-  Fonts.LargeText.BlockOut(r, format('MON: $%f',[City.TotalMoney]));
+  Fonts.LargeText.BlockOut(r, format('MON: $%.0n',[City.TotalMoney]));
   tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
-  Fonts.LargeText.BlockOut(r, format('EDU: %f',[City.TotalEducation]));
+  Fonts.LargeText.BlockOut(r, format('EDU: %n',[City.TotalEducation]));
   glDisable(GL_TEXTURE_2D);
 
   if GUIStack.Count > 0 then
@@ -595,6 +602,9 @@ end;
 procedure TViewFrame.PushLayer(const aLayer: TGUILayer);
 begin
   GUIStack.Add(aLayer);
+  if GUIStack.Count>1 then begin
+    TsndInstance.Create(Sounds.EffectMenu, SoundEmitter).Play.Gain:= 0.6;
+  end;
 end;
 
 procedure TViewFrame.FormResize(Sender: TObject);
@@ -604,6 +614,19 @@ begin
   if Assigned(GUIStack) then
     for i := 0 to GUIStack.Count-1 do
         TGUILayer(GUIStack[i]).ViewportResize(ClientWidth, ClientHeight);
+end;
+
+procedure TViewFrame.NextRound;
+begin
+  if not AutoPlay then begin
+    City.Evolve;
+  end;
+end;
+
+procedure TViewFrame.ToggleAutoplay;
+begin
+  AutoPlay:= not AutoPlay;
+  TGUIMain(GUIStack[0]).SetAutoplayState(AutoPlay);
 end;
 
 end.

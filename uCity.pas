@@ -4,7 +4,7 @@ interface
 
 uses
   dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, contnrs, Windows,
-  uglShader, Forms, glBitmap;
+  uglShader, Forms, glBitmap, Types;
 
 type
   TCityBlocks = array of array of TCityBlock;
@@ -32,6 +32,7 @@ type
 
   { TCity }
 
+  TBuildResult = (brBuilt, brErrorUnknown, brErrorMoney, brErrorEdu);
   TCity = class
   private
     FSize: TPoint;
@@ -45,6 +46,7 @@ type
     FHighMapList: GLuint;
     FHeightMap: TglBitmap2D;
     FHeightMapShader: TglShaderProgram;
+    FActiveBlock: TPoint;
     function GetBlock(X, Y: integer): TCityBlock;
     procedure ClearBlocks;
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
@@ -57,12 +59,14 @@ type
     property Block[X, Y: integer]: TCityBlock read GetBlock;
     procedure Evolve;
     procedure Render(Selection: boolean);
+    property ActiveBlock: TPoint read FActiveBlock write FActiveBlock;
     procedure Progress(const aDeltaTime: Single);
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
+    procedure PopulateStart;
 
-    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): Boolean; overload;
-    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): Boolean; overload;
+    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): TBuildResult; overload;
+    function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): TBuildResult; overload;
     procedure DestroyBuilding(Where: TCityBlock; index: integer);
 
     property TotalPeople: Single read FTotalPeople;
@@ -72,7 +76,8 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes, Types, uBldSpecial, Dialogs;
+uses
+  SysUtils, uConfigFile, Classes, uBldSpecial, uBldHouse, Dialogs;
 
 { TCity }
 
@@ -90,8 +95,9 @@ begin
       FCityBlocks[x, y]:= TCityBlock.Create(x, y, btNormal);
     end;
   end;
+  FActiveBlock:=Point(-1,-1);
   FTotalPeople:= 0;
-  FTotalMoney:= 0;
+  FTotalMoney:= 10000000;        //TODO
   FTotalEducation:= 0;
 
   FHeightMapShader := TglShaderProgram.Create(ShaderLog);
@@ -249,7 +255,18 @@ begin
       end;
     end;
   end;
-
+  if not Selection then begin
+    if FActiveBlock.X>=0 then begin
+      x:= FActiveBlock.x;
+      y:= FActiveBlock.y;
+      if Assigned(FCityBlocks[x, y]) then begin
+        glPushMatrix;
+        glTranslatef(x * FBlockDist, 0, y * FBlockDist);
+        FCityBlocks[x, y].RenderFocus;
+        glPopMatrix;
+      end;
+    end;
+  end;
   glPopMatrix;
 end;
 
@@ -424,11 +441,11 @@ begin
     end;
 end;
 
-function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock): Boolean;
+function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock): TBuildResult;
 var
   i: integer;
 begin
-  result := false;
+  result := brErrorUnknown;
   for i:= 0 to 8 do
     if Where.Building[i] = nil then begin
       result := CreateBuilding(Building, Where, i);
@@ -436,7 +453,7 @@ begin
     end;
 end;
 
-function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): Boolean;
+function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): TBuildResult;
 
   function IsEmpty: Boolean;
   var
@@ -450,7 +467,7 @@ function TCity.CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot:
   end;
 
 begin
-  result := false;
+  result := brErrorUnknown;
   if Assigned(Where.Building[Slot]) then
     raise Exception.Create('slot is not empty');
   if (Building.ClassParent = TBSpecial) then begin
@@ -461,14 +478,20 @@ begin
     if (Where.Building[4] is TBSpecial) then
       exit;
   end;
+  if Building.Price > FTotalMoney then begin
+    Result:= brErrorMoney;
+    exit;
+  end;
+  FTotalMoney:= FTotalMoney - Building.Price;
   Where.Building[Slot]:= Building.Create;
-  result := true;
+  result := brBuilt;
   UpdateStats;
 end;
 
 procedure TCity.DestroyBuilding(Where: TCityBlock; index: integer);
 begin
   if Where.Building[index] <> nil then begin
+    FTotalMoney:= FTotalMoney + 0.6 * Where.Building[index].Price;
     Where.Building[index].Free;
     Where.Building[index]:= nil;
   end;
@@ -493,10 +516,10 @@ begin
           c:= 0.315693 + 1.1698*b + 0.377239*b*b - 1.74776*b*b*b;
           cb.GrowthRate:= c*2;
         end;
-        cb.GrowthRate:= cb.GrowthRate + 0.5 * (1 + cb.Luxury);
+        cb.GrowthRate:= cb.GrowthRate + 0.5 * (0.3 + cb.Luxury);
         cb.GrowthRate:= cb.GrowthRate + 0.5 * cb.Education;
         cb.GrowthRate:= cb.GrowthRate + 0.2 * cb.Industry;
-        cb.GrowthRate:= cb.GrowthRate - 0.1 * cb.Pollution;
+        cb.GrowthRate:= cb.GrowthRate - 0.4 * cb.Pollution;
 
         cb.People:= cb.People + cb.GrowthRate;
         if cb.People<0 then
@@ -600,6 +623,21 @@ end;
 procedure TCity.ShaderLog(Sender: TObject; const Msg: String);
 begin
   ShowMessage(Msg);
+end;
+
+procedure TCity.PopulateStart;
+var
+  x,y: integer;
+begin
+  repeat
+    x:= random(length(FCityBlocks));
+    y:= random(length(FCityBlocks[0]));
+    if Assigned(FCityBlocks[x,y]) then begin
+      FCityBlocks[x,y].Building[Random(9)]:= TBHouse.Create;
+      break;
+    end;
+  until False;
+  UpdateStats;
 end;
 
 { TCar }

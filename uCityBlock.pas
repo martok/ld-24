@@ -41,6 +41,7 @@ type
     property People: single read FPeople write FPeople;
     property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
     procedure Render(Selection: boolean);
+    procedure RenderFocus;
   end;
 
   TBuildingClass = class of TBuilding;
@@ -84,15 +85,6 @@ begin
   FPosX:= X;
   FPosY:= Y;
   FBlockType := BlockType;
-  FFields[0]:= TBHouse.Create;
-  FFields[1]:= TBHouse.Create;
-  FFields[2]:= TBHouse.Create;
-  FFields[3]:= TBHouse.Create;
-  FFields[5]:= TBHouse.Create;
-  FFields[6]:= TBHouse.Create;
-  FFields[7]:= TBHouse.Create;
-  FFields[8]:= TBHouse.Create;
-  FFields[4]:= TBAppartement.Create;
 end;
 
 destructor TCityBlock.Destroy;
@@ -130,18 +122,70 @@ begin
       else
         FFields[b].Render(1 + FPeople/10);
     end else begin
-      glDisable(GL_LIGHTING);
-      glColor4f(1, 1, 1, 1);
-      glBegin(GL_LINE_LOOP);
-        glVertex3f(-1.5, 0,-1.5);
-        glVertex3f(-1.5, 0, 1.5);
-        glVertex3f( 1.5, 0, 1.5);
-        glVertex3f( 1.5, 0,-1.5);
-      glEnd;
-      glEnable(GL_LIGHTING);
+      if not Selection then begin
+        glDisable(GL_LIGHTING);
+        glColor4f(1, 1, 1, 1);
+        glBegin(GL_LINE_LOOP);
+          glVertex3f(-1.5, 0,-1.5);
+          glVertex3f(-1.5, 0, 1.5);
+          glVertex3f( 1.5, 0, 1.5);
+          glVertex3f( 1.5, 0,-1.5);
+        glEnd;
+        glEnable(GL_LIGHTING);
+      end;
     end;
     glPopMatrix;    
   end;
+end;
+
+procedure TCityBlock.RenderFocus;
+  procedure c(a: single);
+  begin
+    glColor4f(1,1,0.6,a);
+  end;
+
+  procedure draw;
+  begin
+    glBegin(GL_QUADS);
+      c(1.0);
+      glVertex3f( 6, 0,-6);
+      glVertex3f(-6, 0,-6);
+      c(0.1);
+      glVertex3f(-6, 10,-6);
+      glVertex3f( 6, 10,-6);
+
+      c(1.0);
+      glVertex3f(-6, 0,-6);
+      glVertex3f(-6, 0, 6);
+      c(0.1);
+      glVertex3f(-6, 10, 6);
+      glVertex3f(-6, 10,-6);
+
+      c(1.0);
+      glVertex3f(-6, 0, 6);
+      glVertex3f( 6, 0, 6);
+      c(0.1);
+      glVertex3f( 6, 10, 6);
+      glVertex3f(-6, 10, 6);
+
+      c(1.0);
+      glVertex3f( 6, 0, 6);
+      glVertex3f( 6, 0,-6);
+      c(0.1);
+      glVertex3f( 6, 10,-6);
+      glVertex3f( 6, 10, 6);
+    glEnd;
+  end;
+begin
+  glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
+  glEnable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
+  glDisable(GL_LIGHTING);
+  glFrontFace(GL_CW);
+  draw;
+  glFrontFace(GL_CCW);
+  draw;
+  glPopAttrib;
 end;
 
 procedure TCityBlock.RenderFloor;
