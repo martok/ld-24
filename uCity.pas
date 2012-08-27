@@ -106,6 +106,7 @@ begin
     Compile;
     Enable;
     Uniform1i('uHeightMap', 0);
+    Uniform1f('uHeight', 25);
     Uniform2f('uSize', FSize.X*FBlockDist, FSize.Y*FBlockDist);
     Disable;
   end;
@@ -161,13 +162,14 @@ begin
   glColor4f(0, 0, 0, 1);
   glCallList(FHighMapList);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDepthFunc(GL_ALWAYS);
+  glLineWidth(2);
+  glDepthFunc(GL_LEQUAL);//GL_ALWAYS);
   glColor4f(1, 1, 1, 1);
   glCallList(FHighMapList);
-  FHeightMap.Unbind;
-  FHeightMapShader.Disable;
   glDepthFunc(GL_LESS);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  FHeightMap.Unbind;
+  FHeightMapShader.Disable;  
   glPushMatrix;
   glTranslatef(-FBlockDist/2, -1, -FBlockDist/2);
   glColor4f(0, 0, 0.5, 1);
@@ -178,9 +180,9 @@ begin
     glVertex3f(FSize.X*FBlockDist, 0,                  0);
   glEnd;
   glPopMatrix;
+  glDisable(GL_CULL_FACE);
   glEnable(GL_LIGHTING);  
   glClear(GL_DEPTH_BUFFER_BIT);
-  exit;
 
   glPushMatrix;
   if not Selection then begin
@@ -600,7 +602,7 @@ procedure TCity.CreateHeightMap;
 var
   x, y: Integer;
 const
-  GRID = 2;
+  GRID = 4;
 begin
   if FHighMapList <> 0 then
     glDeleteLists(FHighMapList, 1);
