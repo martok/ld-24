@@ -14,3 +14,4 @@ copy maps __output\maps\
 copy *.exe __output\
 copy *.dll __output\
 copy *.glsl __output\
+copy README.md __output\
