@@ -160,7 +160,6 @@ var
 begin
   if (GetTickCount - fMouseDownTime) > 500 then begin
     up := Point(((X + BLOCK_SIZE div 2) div BLOCK_SIZE)*BLOCK_SIZE, ((Y + BLOCK_SIZE div 2) div BLOCK_SIZE)*BLOCK_SIZE);
-    ShowMessage(IntToStr(Length(fStreets)));
     SetLength(fStreets, Length(fStreets)+1);
     with fStreets[High(fStreets)] do begin
       startPos.x := fMouseDown.x div BLOCK_SIZE;
