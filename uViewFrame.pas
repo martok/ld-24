@@ -325,8 +325,8 @@ begin
 
   City.Progress(DT);
   LastEvolve:= LastEvolve + DT;
-  if LastEvolve >= 0.1 then begin
-//    c:= Round(Random*Log10(City.TotalPeople)*0.8);
+  if (LastEvolve >= 0.1) and (City.TotalPeople > 0) then begin
+    c:= Round(Random*Log10(City.TotalPeople)*0.8);
     if c > 5 then c:= 5;
     for i:= 1 to c do
       City.CreateRandomCar; 
@@ -399,7 +399,7 @@ begin
     InflateRect(r,-10,-10);
     tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
     tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
-    Fonts.LargeText.BlockOut(r, format('PPL: %.0n',[City.TotalPeople]));
+    Fonts.LargeText.BlockOut(r, format('PPL: %.0n RND: %d',[City.TotalPeople, City.Round]));
     tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
     Fonts.LargeText.BlockOut(r, format('MON: $%.0n',[City.TotalMoney]));
     tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);

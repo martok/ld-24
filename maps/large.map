@@ -1,8 +1,9 @@
 Map:
-	BlockCount = 238
+	BlockCount = 237
 	Height = 25
 	StreetCount = 77
 	Width = 25
+	Heightmap = textures\heightmap_large.tga
 	Blocks:
 		0:
 			type = 0
@@ -22,52 +23,52 @@ Map:
 		100:
 			type = 0
 			x = 11
-			y = 18
+			y = 19
 		end
 		101:
 			type = 0
 			x = 11
-			y = 19
+			y = 20
 		end
 		102:
 			type = 0
 			x = 11
-			y = 20
+			y = 21
 		end
 		103:
 			type = 0
 			x = 11
-			y = 21
-		end
-		104:
-			type = 0
-			x = 11
 			y = 22
 		end
-		105:
+		104:
 			type = 0
 			x = 12
 			y = 6
 		end
-		106:
+		105:
 			type = 0
 			x = 12
 			y = 7
 		end
-		107:
+		106:
 			type = 0
 			x = 12
 			y = 8
 		end
-		108:
+		107:
 			type = 0
 			x = 12
 			y = 9
 		end
-		109:
+		108:
 			type = 0
 			x = 12
 			y = 10
+		end
+		109:
+			type = 0
+			x = 12
+			y = 11
 		end
 		11:
 			type = 0
@@ -77,52 +78,52 @@ Map:
 		110:
 			type = 0
 			x = 12
-			y = 11
+			y = 15
 		end
 		111:
 			type = 0
 			x = 12
-			y = 15
+			y = 16
 		end
 		112:
 			type = 0
 			x = 12
-			y = 16
+			y = 17
 		end
 		113:
 			type = 0
 			x = 12
-			y = 17
+			y = 18
 		end
 		114:
 			type = 0
 			x = 12
-			y = 18
+			y = 19
 		end
 		115:
 			type = 0
 			x = 12
-			y = 19
+			y = 20
 		end
 		116:
 			type = 0
 			x = 12
-			y = 20
+			y = 21
 		end
 		117:
 			type = 0
 			x = 12
-			y = 21
+			y = 22
 		end
 		118:
 			type = 0
 			x = 12
-			y = 22
+			y = 23
 		end
 		119:
 			type = 0
-			x = 12
-			y = 23
+			x = 13
+			y = 7
 		end
 		12:
 			type = 0
@@ -132,52 +133,52 @@ Map:
 		120:
 			type = 0
 			x = 13
-			y = 7
+			y = 8
 		end
 		121:
 			type = 0
 			x = 13
-			y = 8
+			y = 9
 		end
 		122:
 			type = 0
 			x = 13
-			y = 9
+			y = 10
 		end
 		123:
 			type = 0
 			x = 13
-			y = 10
+			y = 11
 		end
 		124:
 			type = 0
 			x = 13
-			y = 11
+			y = 12
 		end
 		125:
 			type = 0
 			x = 13
-			y = 12
+			y = 16
 		end
 		126:
 			type = 0
 			x = 13
-			y = 16
+			y = 17
 		end
 		127:
 			type = 0
 			x = 13
-			y = 17
+			y = 18
 		end
 		128:
 			type = 0
 			x = 13
-			y = 18
+			y = 19
 		end
 		129:
 			type = 0
 			x = 13
-			y = 19
+			y = 20
 		end
 		13:
 			type = 0
@@ -187,52 +188,52 @@ Map:
 		130:
 			type = 0
 			x = 13
-			y = 20
+			y = 21
 		end
 		131:
 			type = 0
 			x = 13
-			y = 21
+			y = 22
 		end
 		132:
 			type = 0
 			x = 13
-			y = 22
-		end
-		133:
-			type = 0
-			x = 13
 			y = 23
 		end
-		134:
+		133:
 			type = 0
 			x = 14
 			y = 8
 		end
-		135:
+		134:
 			type = 0
 			x = 14
 			y = 9
 		end
-		136:
+		135:
 			type = 0
 			x = 14
 			y = 10
 		end
-		137:
+		136:
 			type = 0
 			x = 14
 			y = 11
 		end
-		138:
+		137:
 			type = 0
 			x = 14
 			y = 12
 		end
-		139:
+		138:
 			type = 0
 			x = 14
 			y = 16
+		end
+		139:
+			type = 0
+			x = 14
+			y = 17
 		end
 		14:
 			type = 0
@@ -242,52 +243,52 @@ Map:
 		140:
 			type = 0
 			x = 14
-			y = 17
+			y = 18
 		end
 		141:
-			type = 0
+			type = 3
 			x = 14
-			y = 18
+			y = 19
 		end
 		142:
 			type = 0
 			x = 14
-			y = 19
+			y = 20
 		end
 		143:
 			type = 0
 			x = 14
-			y = 20
+			y = 21
 		end
 		144:
 			type = 0
 			x = 14
-			y = 21
-		end
-		145:
-			type = 0
-			x = 14
 			y = 22
 		end
-		146:
+		145:
 			type = 0
 			x = 15
 			y = 8
 		end
-		147:
+		146:
 			type = 0
 			x = 15
 			y = 9
 		end
-		148:
+		147:
 			type = 0
 			x = 15
 			y = 10
 		end
-		149:
+		148:
 			type = 0
 			x = 15
 			y = 11
+		end
+		149:
+			type = 0
+			x = 15
+			y = 12
 		end
 		15:
 			type = 0
@@ -297,52 +298,52 @@ Map:
 		150:
 			type = 0
 			x = 15
-			y = 12
+			y = 13
 		end
 		151:
 			type = 0
 			x = 15
-			y = 13
+			y = 16
 		end
 		152:
 			type = 0
 			x = 15
-			y = 16
+			y = 17
 		end
 		153:
 			type = 0
 			x = 15
-			y = 17
+			y = 18
 		end
 		154:
 			type = 0
 			x = 15
-			y = 18
+			y = 19
 		end
 		155:
 			type = 0
 			x = 15
-			y = 19
+			y = 20
 		end
 		156:
 			type = 0
 			x = 15
-			y = 20
+			y = 21
 		end
 		157:
 			type = 0
 			x = 15
-			y = 21
+			y = 22
 		end
 		158:
 			type = 0
-			x = 15
-			y = 22
+			x = 16
+			y = 8
 		end
 		159:
 			type = 0
 			x = 16
-			y = 8
+			y = 9
 		end
 		16:
 			type = 0
@@ -352,52 +353,52 @@ Map:
 		160:
 			type = 0
 			x = 16
-			y = 9
+			y = 10
 		end
 		161:
 			type = 0
 			x = 16
-			y = 10
+			y = 11
 		end
 		162:
 			type = 0
 			x = 16
-			y = 11
+			y = 12
 		end
 		163:
 			type = 0
 			x = 16
-			y = 12
+			y = 13
 		end
 		164:
 			type = 0
 			x = 16
-			y = 13
+			y = 16
 		end
 		165:
 			type = 0
 			x = 16
-			y = 16
+			y = 17
 		end
 		166:
 			type = 0
 			x = 16
-			y = 17
+			y = 18
 		end
 		167:
 			type = 0
 			x = 16
-			y = 18
+			y = 19
 		end
 		168:
 			type = 0
 			x = 16
-			y = 19
+			y = 20
 		end
 		169:
 			type = 0
 			x = 16
-			y = 20
+			y = 21
 		end
 		17:
 			type = 0
@@ -406,53 +407,53 @@ Map:
 		end
 		170:
 			type = 0
-			x = 16
-			y = 21
+			x = 17
+			y = 8
 		end
 		171:
 			type = 0
 			x = 17
-			y = 8
+			y = 9
 		end
 		172:
 			type = 0
 			x = 17
-			y = 9
+			y = 10
 		end
 		173:
 			type = 0
 			x = 17
-			y = 10
+			y = 11
 		end
 		174:
 			type = 0
 			x = 17
-			y = 11
+			y = 12
 		end
 		175:
 			type = 0
 			x = 17
-			y = 12
+			y = 16
 		end
 		176:
 			type = 0
 			x = 17
-			y = 16
+			y = 17
 		end
 		177:
-			type = 0
+			type = 4
 			x = 17
-			y = 17
+			y = 18
 		end
 		178:
 			type = 0
 			x = 17
-			y = 18
+			y = 19
 		end
 		179:
 			type = 0
 			x = 17
-			y = 19
+			y = 20
 		end
 		18:
 			type = 0
@@ -462,52 +463,52 @@ Map:
 		180:
 			type = 0
 			x = 17
-			y = 20
-		end
-		181:
-			type = 0
-			x = 17
 			y = 21
 		end
-		182:
+		181:
 			type = 0
 			x = 18
 			y = 7
 		end
-		183:
+		182:
 			type = 0
 			x = 18
 			y = 8
 		end
-		184:
+		183:
 			type = 0
 			x = 18
 			y = 9
 		end
-		185:
+		184:
 			type = 0
 			x = 18
 			y = 10
 		end
-		186:
+		185:
 			type = 0
 			x = 18
 			y = 11
 		end
-		187:
+		186:
 			type = 0
 			x = 18
 			y = 16
 		end
-		188:
+		187:
 			type = 0
 			x = 18
 			y = 17
 		end
-		189:
+		188:
 			type = 0
 			x = 18
 			y = 18
+		end
+		189:
+			type = 0
+			x = 18
+			y = 19
 		end
 		19:
 			type = 0
@@ -517,52 +518,52 @@ Map:
 		190:
 			type = 0
 			x = 18
-			y = 19
+			y = 20
 		end
 		191:
 			type = 0
 			x = 18
-			y = 20
-		end
-		192:
-			type = 0
-			x = 18
 			y = 21
 		end
-		193:
+		192:
 			type = 0
 			x = 19
 			y = 6
 		end
-		194:
+		193:
 			type = 0
 			x = 19
 			y = 7
 		end
-		195:
+		194:
 			type = 0
 			x = 19
 			y = 8
 		end
-		196:
+		195:
 			type = 0
 			x = 19
 			y = 9
 		end
-		197:
+		196:
 			type = 0
 			x = 19
 			y = 10
 		end
-		198:
+		197:
 			type = 0
 			x = 19
 			y = 15
 		end
-		199:
+		198:
 			type = 0
 			x = 19
 			y = 16
+		end
+		199:
+			type = 0
+			x = 19
+			y = 17
 		end
 		2:
 			type = 0
@@ -577,52 +578,52 @@ Map:
 		200:
 			type = 0
 			x = 19
-			y = 17
+			y = 18
 		end
 		201:
 			type = 0
 			x = 19
-			y = 18
+			y = 19
 		end
 		202:
 			type = 0
 			x = 19
-			y = 19
+			y = 20
 		end
 		203:
 			type = 0
 			x = 19
-			y = 20
-		end
-		204:
-			type = 0
-			x = 19
 			y = 21
 		end
-		205:
+		204:
 			type = 0
 			x = 20
 			y = 5
 		end
-		206:
+		205:
 			type = 0
 			x = 20
 			y = 6
 		end
-		207:
+		206:
 			type = 0
 			x = 20
 			y = 7
 		end
-		208:
+		207:
 			type = 0
 			x = 20
 			y = 8
 		end
-		209:
+		208:
 			type = 0
 			x = 20
 			y = 9
+		end
+		209:
+			type = 0
+			x = 20
+			y = 10
 		end
 		21:
 			type = 0
@@ -632,107 +633,107 @@ Map:
 		210:
 			type = 0
 			x = 20
-			y = 10
+			y = 14
 		end
 		211:
 			type = 0
 			x = 20
-			y = 14
+			y = 15
 		end
 		212:
 			type = 0
 			x = 20
-			y = 15
+			y = 16
 		end
 		213:
 			type = 0
 			x = 20
-			y = 16
+			y = 17
 		end
 		214:
 			type = 0
 			x = 20
-			y = 17
+			y = 18
 		end
 		215:
 			type = 0
 			x = 20
-			y = 18
+			y = 19
 		end
 		216:
 			type = 0
 			x = 20
-			y = 19
+			y = 20
 		end
 		217:
 			type = 0
 			x = 20
-			y = 20
+			y = 21
 		end
 		218:
-			type = 0
-			x = 20
-			y = 21
+			type = 2
+			x = 21
+			y = 4
 		end
 		219:
 			type = 0
 			x = 21
-			y = 4
+			y = 5
 		end
 		22:
-			type = 0
+			type = 3
 			x = 4
 			y = 17
 		end
 		220:
 			type = 0
 			x = 21
-			y = 5
+			y = 6
 		end
 		221:
 			type = 0
 			x = 21
-			y = 6
+			y = 7
 		end
 		222:
 			type = 0
 			x = 21
-			y = 7
+			y = 8
 		end
 		223:
 			type = 0
 			x = 21
-			y = 8
+			y = 9
 		end
 		224:
 			type = 0
 			x = 21
-			y = 9
+			y = 13
 		end
 		225:
 			type = 0
 			x = 21
-			y = 13
+			y = 14
 		end
 		226:
 			type = 0
 			x = 21
-			y = 14
+			y = 15
 		end
 		227:
 			type = 0
 			x = 21
-			y = 15
+			y = 16
 		end
 		228:
 			type = 0
 			x = 21
-			y = 16
+			y = 17
 		end
 		229:
 			type = 0
 			x = 21
-			y = 17
+			y = 18
 		end
 		23:
 			type = 0
@@ -742,39 +743,34 @@ Map:
 		230:
 			type = 0
 			x = 21
-			y = 18
+			y = 19
 		end
 		231:
 			type = 0
 			x = 21
-			y = 19
+			y = 20
 		end
 		232:
 			type = 0
 			x = 21
-			y = 20
-		end
-		233:
-			type = 0
-			x = 21
 			y = 21
 		end
-		234:
+		233:
 			type = 0
 			x = 22
 			y = 7
 		end
-		235:
+		234:
 			type = 0
 			x = 22
 			y = 8
 		end
-		236:
+		235:
 			type = 0
 			x = 22
 			y = 9
 		end
-		237:
+		236:
 			type = 0
 			x = 22
 			y = 20
@@ -825,7 +821,7 @@ Map:
 			y = 13
 		end
 		32:
-			type = 0
+			type = 4
 			x = 5
 			y = 14
 		end
@@ -1065,7 +1061,7 @@ Map:
 			y = 9
 		end
 		76:
-			type = 0
+			type = 1
 			x = 9
 			y = 10
 		end
@@ -1105,39 +1101,39 @@ Map:
 			y = 9
 		end
 		83:
-			type = 0
+			type = 1
 			x = 10
 			y = 10
 		end
 		84:
-			type = 4
-			x = 10
-			y = 16
-		end
-		85:
 			type = 0
 			x = 10
 			y = 17
 		end
-		86:
+		85:
 			type = 0
 			x = 10
 			y = 18
 		end
-		87:
+		86:
 			type = 0
 			x = 10
 			y = 19
 		end
-		88:
+		87:
 			type = 0
 			x = 10
 			y = 20
 		end
-		89:
+		88:
 			type = 0
 			x = 10
 			y = 21
+		end
+		89:
+			type = 0
+			x = 11
+			y = 5
 		end
 		9:
 			type = 0
@@ -1147,52 +1143,52 @@ Map:
 		90:
 			type = 0
 			x = 11
-			y = 5
+			y = 6
 		end
 		91:
 			type = 0
 			x = 11
-			y = 6
+			y = 7
 		end
 		92:
 			type = 0
 			x = 11
-			y = 7
+			y = 8
 		end
 		93:
 			type = 0
 			x = 11
-			y = 8
+			y = 9
 		end
 		94:
 			type = 0
 			x = 11
-			y = 9
+			y = 10
 		end
 		95:
 			type = 0
 			x = 11
-			y = 10
+			y = 14
 		end
 		96:
 			type = 0
 			x = 11
-			y = 14
+			y = 15
 		end
 		97:
 			type = 0
 			x = 11
-			y = 15
+			y = 16
 		end
 		98:
 			type = 0
 			x = 11
-			y = 16
+			y = 17
 		end
 		99:
 			type = 0
 			x = 11
-			y = 17
+			y = 18
 		end
 	end
 	Streets:

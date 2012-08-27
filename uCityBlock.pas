@@ -41,9 +41,11 @@ type
     property GrowthRate: single read FGrowthRate write FGrowthRate;
     property People: single read FPeople write FPeople;
     property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
+    property BlockType: TBlockType read FBlockType;
+
     procedure RenderGeometry(Selection: boolean);
     procedure Render(Selection: boolean);
-    procedure RenderFocus;
+    procedure RenderFocus(r: Single = 1; g: Single = 1; b: Single = 1; h: Single = 30);
     procedure UpdateDisplayList;    
   end;
 
@@ -93,8 +95,8 @@ begin
   FBlockType := BlockType;
   FDisplayList := glGenLists(1);
 
-  for i := 0 to 8 do
-    FFields[i] := TBAppartement1stClass.Create;
+  //for i := 0 to 8 do
+  //  FFields[i] := TBAppartement1stClass.Create;
 
   UpdateDisplayList;
 end;
@@ -161,10 +163,10 @@ begin
     RenderGeometry(Selection);
 end;
 
-procedure TCityBlock.RenderFocus;
+procedure TCityBlock.RenderFocus(r: Single = 1; g: Single = 1; b: Single = 1; h: Single = 30);
   procedure c(a: single);
   begin
-    glColor4f(0, 1, 0, a);
+    glColor4f(r, g, b, a);
   end;
 
   procedure draw(min, max, h: Single);
@@ -205,9 +207,9 @@ begin
   glEnable(GL_CULL_FACE);
   glDisable(GL_LIGHTING);
   glFrontFace(GL_CW);
-  draw(0.0, 0.5, 15);
+  draw(0.0, 0.5, h);
   glFrontFace(GL_CCW);
-  draw(0.0, 0.5, 15);
+  draw(0.0, 0.5, h);
   glPopAttrib;
 end;
 
@@ -215,7 +217,18 @@ procedure TCityBlock.RenderFloor;
 begin
   glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
   glBegin(GL_QUADS);
-    glColor4f(0, 0, 0, 1);
+    case FBlockType of
+      btNormal:
+        glColor4f(0, 0, 0, 1);
+      btIndustry:
+        glColor4f(1, 0, 0, 1);
+      btResearch:
+        glColor4f(0, 0, 1, 1);
+      btHouse:
+        glColor4f(1, 1, 0, 1);
+      btLuxury:
+        glColor4f(0, 1, 0, 1);
+    end;
     glVertex3f( 6, -0.1,-6);
     glVertex3f(-6, -0.1,-6);
     glVertex3f(-6, -0.1, 6);

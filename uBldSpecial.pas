@@ -12,6 +12,7 @@ type
     class function NeededBlockType: TBlockType; virtual;
     class function MinEducation: Integer; override;
   end;
+  TBSpecialClass = class of TBSpecial;
 
   TBResearchCenter = class(TBSpecial)
   private

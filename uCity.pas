@@ -43,11 +43,13 @@ type
     FTotalEducation: Single;
     FTotalMoney: Single;
     FTotalPeople: Single;
-    FHighMapList: GLuint;
+    FHeightMapList: GLuint;
     FStreetsList: GLuint;
     FHeightMap: TglBitmap2D;
     FHeightMapShader: TglShaderProgram;
     FActiveBlock: TPoint;
+    FHasHeightMap: Boolean;
+    FRound: Integer;
     function GetBlock(X, Y: integer): TCityBlock;
     procedure ClearBlocks;
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
@@ -74,6 +76,7 @@ type
     property TotalPeople: Single read FTotalPeople;
     property TotalMoney: Single read FTotalMoney;
     property TotalEducation: Single read FTotalEducation;
+    property Round: Integer read FRound;
   end;
 
 implementation
@@ -101,6 +104,7 @@ begin
   FTotalPeople:= 0;
   FTotalMoney:= 10000000;        //TODO
   FTotalEducation:= 0;
+  FRound := 0;
 
   FHeightMapShader := TglShaderProgram.Create({ShaderLog});
   with FHeightMapShader do begin
@@ -108,16 +112,15 @@ begin
     Compile;
     Enable;
     Uniform1i('uHeightMap', 0);
-    Uniform1f('uHeight', 25);
+    Uniform1f('uHeight', 50);
     Uniform2f('uSize', FSize.X*FBlockDist, FSize.Y*FBlockDist);
     Disable;
   end;
   
   FHeightMap := TglBitmap2D.Create;
-  FHeightMap.LoadFromFile(ExtractFilePath(Application.ExeName)+'textures\heightmap.tga');
   FHeightMap.SetWrap(GL_REPEAT, GL_REPEAT, GL_REPEAT);
   FHeightMap.SetFilter(GL_LINEAR, GL_LINEAR);
-  FHeightMap.GenTexture;
+  FHasHeightMap := False;
 
   CreateHeightMap;
 end;
@@ -128,7 +131,7 @@ var
 begin
   FreeAndNil(FHeightMap);
   FreeAndNil(FHeightMapShader);
-  glDeleteLists(FHighMapList, 1);
+  glDeleteLists(FHeightMapList, 1);
   FCars.Free;
   for x:= 0 to high(FCityBlocks) do
     for y:= 0 to high(FCityBlocks[x]) do
@@ -159,11 +162,13 @@ begin
 //Terrain
   glDisable(GL_LIGHTING);
   if not Selection then begin
-    FHeightMapShader.Enable;
-    FHeightMap.Bind;
+    if FHasHeightMap then begin
+      FHeightMapShader.Enable;
+      FHeightMap.Bind;
+    end;
     glEnable(GL_CULL_FACE);
     glColor4f(0, 0, 0, 1);
-    glCallList(FHighMapList);
+    glCallList(FHeightMapList);
     FHeightMap.Unbind;
     FHeightMapShader.Disable;
     glPushMatrix;
@@ -226,7 +231,7 @@ begin
     end;
   end;
   if not Selection then begin
-    if FActiveBlock.X>=0 then begin
+    if FActiveBlock.X >= 0 then begin
       x:= FActiveBlock.x;
       y:= FActiveBlock.y;
       if Assigned(FCityBlocks[x, y]) then begin
@@ -447,6 +452,8 @@ begin
     if not IsEmpty then
       exit;
     slot := 4;
+    if TBSpecialClass(Building).NeededBlockType <> Where.BlockType then
+      exit;
   end else begin
     if (Where.Building[4] is TBSpecial) then
       exit;
@@ -461,6 +468,7 @@ begin
   end;
   FTotalMoney:= FTotalMoney - Building.Price;
   Where.Building[Slot]:= Building.Create;
+  Where.UpdateDisplayList;
   result := brBuilt;
   UpdateStats;
 end;
@@ -471,6 +479,7 @@ begin
     FTotalMoney:= FTotalMoney + 0.6 * Where.Building[index].Price;
     Where.Building[index].Free;
     Where.Building[index]:= nil;
+    Where.UpdateDisplayList;
   end;
   UpdateStats;
 end;
@@ -483,6 +492,7 @@ var
 begin
   FTotalPeople:= 0;
   FTotalEducation:= 0;
+  inc(FRound);
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];
@@ -520,6 +530,7 @@ var
   kcf: TkcfConfigFile;
   stream: TFileStream;
   w, h, x, y, c, i, j, t: Integer;
+  s: String;
 begin
   if not FileExists(aFilename) then
     raise Exception.Create('invalid filepath: '+aFilename);
@@ -531,6 +542,16 @@ begin
       with kcf.Section('Map') do begin
         w := GetValue('Width', 10);
         h := GetValue('Height', 10);
+        s := ExtractFilePath(Application.ExeName) + GetValue('Heightmap', '');
+        FHasHeightMap := False;
+        if FileExists(s) then begin
+          FHeightMap.LoadFromFile(s);
+          FHeightMap.GenTexture;
+          FHasHeightMap := true;
+        end;
+        FHeightMapShader.Enable;
+        FHeightMapShader.Uniform1f('uHeight', GetValue('Height', 30));
+        FHeightMapShader.Disable;
         FSize := Point(w, h);
         FBlockDist := GetValue('BlockDist', 15);
         ClearBlocks;
@@ -585,10 +606,10 @@ var
 const
   GRID = 4;
 begin
-  if FHighMapList <> 0 then
-    glDeleteLists(FHighMapList, 1);
-  FHighMapList := glGenLists(1);
-  glNewList(FHighMapList, GL_COMPILE);
+  if FHeightMapList <> 0 then
+    glDeleteLists(FHeightMapList, 1);
+  FHeightMapList := glGenLists(1);
+  glNewList(FHeightMapList, GL_COMPILE);
     glColor4f(0, 0, 0, 1);
     glPushMatrix;
     glTranslatef(-FBlockDist/2, 0, -FBlockDist/2);

@@ -98,6 +98,7 @@ begin
            1: Brush.Color := clRed;
            2: Brush.Color := clBlue;
            3: Brush.Color := clYellow;
+           4: Brush.Color := clGreen;
         end;
         Rectangle(
           x*BLOCK_SIZE+BLOCK_BORDER,
@@ -159,6 +160,7 @@ var
 begin
   if (GetTickCount - fMouseDownTime) > 500 then begin
     up := Point(((X + BLOCK_SIZE div 2) div BLOCK_SIZE)*BLOCK_SIZE, ((Y + BLOCK_SIZE div 2) div BLOCK_SIZE)*BLOCK_SIZE);
+    ShowMessage(IntToStr(Length(fStreets)));
     SetLength(fStreets, Length(fStreets)+1);
     with fStreets[High(fStreets)] do begin
       startPos.x := fMouseDown.x div BLOCK_SIZE;
@@ -307,6 +309,7 @@ begin
             end;
           end;
         end;
+        UpdateStreetList;
         PaintBox.Repaint;
       finally
         kcf.Free;
@@ -315,9 +318,8 @@ begin
       stream.Free;
     end;
 
-      fSize := Point(StrToIntDef(WidthEd.Text, 5), StrToIntDef(HeightEd.Text, 5));
+    fSize := Point(StrToIntDef(WidthEd.Text, 5), StrToIntDef(HeightEd.Text, 5));
     SetLength(fBlocks, fSize.X, fSize.Y);
-    SetLength(fStreets, 0);
     PaintBox.Width  := BLOCK_SIZE*fSize.X;
     PaintBox.Height := BLOCK_SIZE*fSize.Y;
     PaintBox.Repaint;
