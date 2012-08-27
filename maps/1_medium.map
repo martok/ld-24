@@ -1,0 +1,12 @@
+Map:
+	Title = Medium City
+	BlockCount = 0
+	Height = 20
+	StreetCount = 0
+	Width = 20
+	Heightmap = textures\heightmap_medium.tga
+	Blocks:
+	end
+	Streets:
+	end
+end

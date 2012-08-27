@@ -180,10 +180,8 @@ begin
   BGMusic := TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter);
   BGMusic.Loop(-1, 10).Gain:= 0.3;
 
-  Application.OnIdle := ApplicationIdle;
-
-  //StartGame('test3');
   PushLayer(TGUIMainMenu.Create(Self));
+  Application.OnIdle := ApplicationIdle;  
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);
