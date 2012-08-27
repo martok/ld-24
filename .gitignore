@@ -4,3 +4,4 @@
 *.dof
 *.res
 *.ddp
+__output*
