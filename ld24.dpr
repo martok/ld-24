@@ -1,6 +1,7 @@
 program ld24;
 
 uses
+  FastMM4,
   Forms,
   uViewFrame in 'uViewFrame.pas' {ViewFrame},
   uBldIndustry in 'uBldIndustry.pas',
@@ -21,6 +22,7 @@ uses
   uBldSpecial in 'uBldSpecial.pas';
 
 {$R *.res}
+{$SetPEFlags $20}
 
 begin
   Application.Initialize;

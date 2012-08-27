@@ -28,6 +28,7 @@ type
     LastFrameTime: Double;
     LastEvolve: Single;
     HasMoved: Boolean;
+    BGMusic: TsndInstance;
     procedure LoadFonts;
     procedure LoadTextures;
     procedure LoadSounds;
@@ -187,16 +188,24 @@ begin
   City:= TCity.Create;
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
 
+  BGMusic := TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter);
+  BGMusic.Loop(-1, 10).Gain:= 0.3;
+
   Application.OnIdle := ApplicationIdle;
-  TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter).Loop(-1, 10).Gain:= 0.3;
 end;
 
 procedure TViewFrame.FormDestroy(Sender: TObject);
 begin
+  FreeAndNil(BGMusic);
   FreeAndNil(City);
   GUIStack.Free;
   TtsFont.DoneTS;
   gluDestroyRenderContext(RC);
+
+  FreeTextures;
+  FreeFonts;
+  FreeSounds;
+
   inherited;
 end;
 

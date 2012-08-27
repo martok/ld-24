@@ -3,7 +3,8 @@ unit uCity;
 interface
 
 uses
-  dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, contnrs;
+  dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, contnrs, Windows,
+  uglShader, Forms, glBitmap;
 
 type
   TCityBlocks = array of array of TCityBlock;
@@ -33,6 +34,7 @@ type
 
   TCity = class
   private
+    FSize: TPoint;
     FCityBlocks: TCityBlocks;
     FStreets: TStreets;
     FBlockDist: Single;
@@ -40,10 +42,15 @@ type
     FTotalEducation: Single;
     FTotalMoney: Single;
     FTotalPeople: Single;
+    FHighMapList: GLuint;
+    FHeightMap: TglBitmap2D;
+    FHeightMapShader: TglShaderProgram;
     function GetBlock(X, Y: integer): TCityBlock;
     procedure ClearBlocks;
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
     procedure UpdateStats;
+    procedure CreateHeightMap;
+    procedure ShaderLog(Sender: TObject; const Msg: String);
   public
     constructor Create;
     destructor Destroy; override;
@@ -65,7 +72,7 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes, Types, uBldSpecial;
+uses SysUtils, uConfigFile, Classes, Types, uBldSpecial, Dialogs;
 
 { TCity }
 
@@ -75,6 +82,7 @@ var
 begin
   inherited Create;
   FCars := TObjectList.Create(true);
+  FSize := Point(10, 10);
   SetLength(FCityBlocks, 10, 10);
   SetLength(FStreets, 0);
   for x:= 0 to high(FCityBlocks) do begin
@@ -85,12 +93,33 @@ begin
   FTotalPeople:= 0;
   FTotalMoney:= 0;
   FTotalEducation:= 0;
+
+  FHeightMapShader := TglShaderProgram.Create(ShaderLog);
+  with FHeightMapShader do begin
+    LoadFromFile(ExtractFilePath(Application.ExeName)+'heightmap.glsl');
+    Compile;
+    Enable;
+//    Uniform1i('uHeightMap', 0);
+//    Uniform2f('uSize', FSize.X*FBlockDist, FSize.Y*FBlockDist);
+    Disable;
+  end;
+  
+  FHeightMap := TglBitmap2D.Create;
+  FHeightMap.LoadFromFile(ExtractFilePath(Application.ExeName)+'textures\heightmap.tga');
+  FHeightMap.SetWrap(GL_CLAMP, GL_CLAMP, GL_CLAMP);
+  FHeightMap.SetFilter(GL_LINEAR, GL_LINEAR);
+  FHeightMap.GenTexture;
+
+  CreateHeightMap;
 end;
 
 destructor TCity.Destroy;
 var
   x, y: integer;
 begin
+  FreeAndNil(FHeightMap);
+  FreeAndNil(FHeightMapShader);
+  glDeleteLists(FHighMapList, 1);
   FCars.Free;
   for x:= 0 to high(FCityBlocks) do
     for y:= 0 to high(FCityBlocks[x]) do
@@ -118,6 +147,35 @@ procedure TCity.Render(Selection: boolean);
 var
   x, y, i, o: integer;
 begin
+//Terrain
+  glDisable(GL_LIGHTING);
+  FHeightMapShader.Enable;
+  FHeightMap.Bind;
+  glColor4f(0, 0, 0, 1);
+  glCallList(FHighMapList);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDepthFunc(GL_ALWAYS);
+  glColor4f(1, 1, 1, 1);
+  glCallList(FHighMapList);
+  FHeightMap.Unbind;
+  FHeightMapShader.Disable;
+  glDepthFunc(GL_LESS);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glPushMatrix;
+  glTranslatef(-FBlockDist/2, -1, -FBlockDist/2);
+  glColor4f(0, 0, 0.5, 1);
+  glBegin(GL_QUADS);
+    glVertex3f(                 0, 0,                  0);
+    glVertex3f(                 0, 0, FSize.Y*FBlockDist);
+    glVertex3f(FSize.X*FBlockDist, 0, FSize.Y*FBlockDist);
+    glVertex3f(FSize.X*FBlockDist, 0,                  0);
+  glEnd;
+  glPopMatrix;
+  glEnable(GL_LIGHTING);  
+  glClear(GL_DEPTH_BUFFER_BIT);
+  
+  exit;
+
   glPushMatrix;
   if not Selection then begin
     //Streets
@@ -468,6 +526,7 @@ begin
       with kcf.Section('Map') do begin
         w := GetValue('Width', 10);
         h := GetValue('Height', 10);
+        FSize := Point(w, h);
         FBlockDist := GetValue('BlockDist', 15);
         ClearBlocks;
         SetLength(FCityBlocks, w, h);
@@ -504,6 +563,7 @@ begin
           end;
         end;
       end;
+      CreateHeightMap;
     finally
       kcf.Free;
     end;
@@ -511,6 +571,35 @@ begin
     stream.Free;
   end;
   UpdateStats;
+end;
+
+procedure TCity.CreateHeightMap;
+var
+  x, y: Integer;
+const
+  GRID = 2;
+begin
+  if FHighMapList <> 0 then
+    glDeleteLists(FHighMapList, 1);
+  FHighMapList := glGenLists(1);
+  glNewList(FHighMapList, GL_COMPILE);
+    glPushMatrix;
+    glTranslatef(-FBlockDist/2, 0, -FBlockDist/2);
+    for y := 0 to FSize.Y*GRID-1 do begin
+      glBegin(GL_QUAD_STRIP);
+        for x := 0 to FSize.X*GRID do begin
+          glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
+          glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
+        end;
+      glEnd;
+    end;
+    glPopMatrix;
+  glEndList;
+end;
+
+procedure TCity.ShaderLog(Sender: TObject; const Msg: String);
+begin
+  ShowMessage(Msg);
 end;
 
 { TCar }
