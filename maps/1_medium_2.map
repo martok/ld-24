@@ -1,0 +1,821 @@
+Map:
+	BlockCount = 86
+	Height = 15
+	StreetCount = 54
+	Width = 20
+	MapHeight = 40
+	Title = Medium City 2
+	Heightmap = textures\heightmap_medium_2.tga
+	Blocks:
+		0:
+			type = 0
+			x = 2
+			y = 9
+		end
+		1:
+			type = 0
+			x = 2
+			y = 10
+		end
+		10:
+			type = 0
+			x = 3
+			y = 10
+		end
+		11:
+			type = 0
+			x = 3
+			y = 11
+		end
+		12:
+			type = 0
+			x = 4
+			y = 2
+		end
+		13:
+			type = 0
+			x = 4
+			y = 3
+		end
+		14:
+			type = 0
+			x = 4
+			y = 4
+		end
+		15:
+			type = 0
+			x = 4
+			y = 5
+		end
+		16:
+			type = 0
+			x = 4
+			y = 6
+		end
+		17:
+			type = 0
+			x = 4
+			y = 7
+		end
+		18:
+			type = 0
+			x = 4
+			y = 8
+		end
+		19:
+			type = 0
+			x = 4
+			y = 9
+		end
+		2:
+			type = 0
+			x = 2
+			y = 11
+		end
+		20:
+			type = 0
+			x = 4
+			y = 10
+		end
+		21:
+			type = 0
+			x = 5
+			y = 2
+		end
+		22:
+			type = 0
+			x = 5
+			y = 3
+		end
+		23:
+			type = 3
+			x = 5
+			y = 4
+		end
+		24:
+			type = 0
+			x = 5
+			y = 5
+		end
+		25:
+			type = 0
+			x = 5
+			y = 6
+		end
+		26:
+			type = 0
+			x = 5
+			y = 7
+		end
+		27:
+			type = 0
+			x = 5
+			y = 8
+		end
+		28:
+			type = 0
+			x = 6
+			y = 2
+		end
+		29:
+			type = 0
+			x = 6
+			y = 3
+		end
+		3:
+			type = 0
+			x = 3
+			y = 3
+		end
+		30:
+			type = 0
+			x = 6
+			y = 4
+		end
+		31:
+			type = 0
+			x = 6
+			y = 5
+		end
+		32:
+			type = 0
+			x = 7
+			y = 2
+		end
+		33:
+			type = 0
+			x = 7
+			y = 3
+		end
+		34:
+			type = 0
+			x = 7
+			y = 4
+		end
+		35:
+			type = 0
+			x = 7
+			y = 12
+		end
+		36:
+			type = 0
+			x = 8
+			y = 2
+		end
+		37:
+			type = 0
+			x = 8
+			y = 3
+		end
+		38:
+			type = 0
+			x = 8
+			y = 4
+		end
+		39:
+			type = 0
+			x = 8
+			y = 11
+		end
+		4:
+			type = 0
+			x = 3
+			y = 4
+		end
+		40:
+			type = 0
+			x = 8
+			y = 12
+		end
+		41:
+			type = 0
+			x = 8
+			y = 13
+		end
+		42:
+			type = 0
+			x = 9
+			y = 1
+		end
+		43:
+			type = 0
+			x = 9
+			y = 2
+		end
+		44:
+			type = 0
+			x = 9
+			y = 3
+		end
+		45:
+			type = 0
+			x = 9
+			y = 7
+		end
+		46:
+			type = 0
+			x = 9
+			y = 8
+		end
+		47:
+			type = 0
+			x = 9
+			y = 11
+		end
+		48:
+			type = 0
+			x = 9
+			y = 12
+		end
+		49:
+			type = 0
+			x = 10
+			y = 2
+		end
+		5:
+			type = 0
+			x = 3
+			y = 5
+		end
+		50:
+			type = 0
+			x = 10
+			y = 3
+		end
+		51:
+			type = 0
+			x = 10
+			y = 7
+		end
+		52:
+			type = 0
+			x = 10
+			y = 8
+		end
+		53:
+			type = 0
+			x = 10
+			y = 12
+		end
+		54:
+			type = 0
+			x = 11
+			y = 2
+		end
+		55:
+			type = 0
+			x = 11
+			y = 3
+		end
+		56:
+			type = 0
+			x = 11
+			y = 6
+		end
+		57:
+			type = 2
+			x = 11
+			y = 7
+		end
+		58:
+			type = 0
+			x = 11
+			y = 8
+		end
+		59:
+			type = 0
+			x = 11
+			y = 12
+		end
+		6:
+			type = 0
+			x = 3
+			y = 6
+		end
+		60:
+			type = 0
+			x = 12
+			y = 2
+		end
+		61:
+			type = 0
+			x = 12
+			y = 3
+		end
+		62:
+			type = 0
+			x = 12
+			y = 6
+		end
+		63:
+			type = 0
+			x = 12
+			y = 7
+		end
+		64:
+			type = 0
+			x = 12
+			y = 8
+		end
+		65:
+			type = 0
+			x = 12
+			y = 11
+		end
+		66:
+			type = 0
+			x = 12
+			y = 12
+		end
+		67:
+			type = 0
+			x = 13
+			y = 2
+		end
+		68:
+			type = 0
+			x = 13
+			y = 7
+		end
+		69:
+			type = 0
+			x = 13
+			y = 11
+		end
+		7:
+			type = 0
+			x = 3
+			y = 7
+		end
+		70:
+			type = 4
+			x = 13
+			y = 12
+		end
+		71:
+			type = 0
+			x = 14
+			y = 2
+		end
+		72:
+			type = 0
+			x = 14
+			y = 11
+		end
+		73:
+			type = 0
+			x = 14
+			y = 12
+		end
+		74:
+			type = 0
+			x = 15
+			y = 2
+		end
+		75:
+			type = 0
+			x = 15
+			y = 10
+		end
+		76:
+			type = 0
+			x = 15
+			y = 11
+		end
+		77:
+			type = 0
+			x = 16
+			y = 6
+		end
+		78:
+			type = 0
+			x = 16
+			y = 7
+		end
+		79:
+			type = 0
+			x = 16
+			y = 8
+		end
+		8:
+			type = 0
+			x = 3
+			y = 8
+		end
+		80:
+			type = 0
+			x = 16
+			y = 9
+		end
+		81:
+			type = 0
+			x = 16
+			y = 10
+		end
+		82:
+			type = 0
+			x = 16
+			y = 11
+		end
+		83:
+			type = 0
+			x = 17
+			y = 5
+		end
+		84:
+			type = 0
+			x = 17
+			y = 6
+		end
+		85:
+			type = 0
+			x = 17
+			y = 7
+		end
+		9:
+			type = 0
+			x = 3
+			y = 9
+		end
+	end
+	Streets:
+		0:
+			EndX = 12
+			EndY = 13
+			StartX = 12
+			StartY = 2
+			Width = 1
+		end
+		1:
+			EndX = 13
+			EndY = 4
+			StartX = 13
+			StartY = 2
+			Width = 1
+		end
+		10:
+			EndX = 6
+			EndY = 9
+			StartX = 6
+			StartY = 2
+			Width = 1
+		end
+		11:
+			EndX = 5
+			EndY = 11
+			StartX = 5
+			StartY = 2
+			Width = 1
+		end
+		12:
+			EndX = 4
+			EndY = 12
+			StartX = 4
+			StartY = 2
+			Width = 1
+		end
+		13:
+			EndX = 3
+			EndY = 12
+			StartX = 3
+			StartY = 3
+			Width = 1
+		end
+		14:
+			EndX = 2
+			EndY = 12
+			StartX = 2
+			StartY = 9
+			Width = 1
+		end
+		15:
+			EndX = 4
+			EndY = 12
+			StartX = 2
+			StartY = 12
+			Width = 1
+		end
+		16:
+			EndX = 5
+			EndY = 11
+			StartX = 2
+			StartY = 11
+			Width = 1
+		end
+		17:
+			EndX = 5
+			EndY = 10
+			StartX = 2
+			StartY = 10
+			Width = 1
+		end
+		18:
+			EndX = 6
+			EndY = 9
+			StartX = 2
+			StartY = 9
+			Width = 1
+		end
+		19:
+			EndX = 6
+			EndY = 8
+			StartX = 3
+			StartY = 8
+			Width = 1
+		end
+		2:
+			EndX = 14
+			EndY = 3
+			StartX = 14
+			StartY = 2
+			Width = 1
+		end
+		20:
+			EndX = 6
+			EndY = 7
+			StartX = 3
+			StartY = 7
+			Width = 1
+		end
+		21:
+			EndX = 7
+			EndY = 6
+			StartX = 3
+			StartY = 6
+			Width = 1
+		end
+		22:
+			EndX = 9
+			EndY = 5
+			StartX = 3
+			StartY = 5
+			Width = 1
+		end
+		23:
+			EndX = 13
+			EndY = 4
+			StartX = 3
+			StartY = 4
+			Width = 1
+		end
+		24:
+			EndX = 16
+			EndY = 3
+			StartX = 3
+			StartY = 3
+			Width = 1
+		end
+		25:
+			EndX = 16
+			EndY = 2
+			StartX = 4
+			StartY = 2
+			Width = 1
+		end
+		26:
+			EndX = 17
+			EndY = 12
+			StartX = 7
+			StartY = 12
+			Width = 1
+		end
+		27:
+			EndX = 15
+			EndY = 13
+			StartX = 7
+			StartY = 13
+			Width = 1
+		end
+		28:
+			EndX = 8
+			EndY = 14
+			StartX = 8
+			StartY = 11
+			Width = 1
+		end
+		29:
+			EndX = 9
+			EndY = 14
+			StartX = 9
+			StartY = 11
+			Width = 1
+		end
+		3:
+			EndX = 15
+			EndY = 3
+			StartX = 15
+			StartY = 2
+			Width = 1
+		end
+		30:
+			EndX = 10
+			EndY = 13
+			StartX = 10
+			StartY = 12
+			Width = 1
+		end
+		31:
+			EndX = 11
+			EndY = 13
+			StartX = 11
+			StartY = 12
+			Width = 1
+		end
+		32:
+			EndX = 13
+			EndY = 13
+			StartX = 13
+			StartY = 11
+			Width = 1
+		end
+		33:
+			EndX = 17
+			EndY = 11
+			StartX = 12
+			StartY = 11
+			Width = 1
+		end
+		34:
+			EndX = 17
+			EndY = 10
+			StartX = 15
+			StartY = 10
+			Width = 1
+		end
+		35:
+			EndX = 17
+			EndY = 9
+			StartX = 16
+			StartY = 9
+			Width = 1
+		end
+		36:
+			EndX = 18
+			EndY = 8
+			StartX = 16
+			StartY = 8
+			Width = 1
+		end
+		37:
+			EndX = 18
+			EndY = 7
+			StartX = 16
+			StartY = 7
+			Width = 1
+		end
+		38:
+			EndX = 18
+			EndY = 6
+			StartX = 16
+			StartY = 6
+			Width = 1
+		end
+		39:
+			EndX = 18
+			EndY = 5
+			StartX = 17
+			StartY = 5
+			Width = 1
+		end
+		4:
+			EndX = 16
+			EndY = 3
+			StartX = 16
+			StartY = 2
+			Width = 1
+		end
+		40:
+			EndX = 18
+			EndY = 8
+			StartX = 18
+			StartY = 5
+			Width = 1
+		end
+		41:
+			EndX = 17
+			EndY = 12
+			StartX = 17
+			StartY = 5
+			Width = 1
+		end
+		42:
+			EndX = 16
+			EndY = 12
+			StartX = 16
+			StartY = 6
+			Width = 1
+		end
+		43:
+			EndX = 15
+			EndY = 13
+			StartX = 15
+			StartY = 10
+			Width = 1
+		end
+		44:
+			EndX = 14
+			EndY = 13
+			StartX = 14
+			StartY = 11
+			Width = 1
+		end
+		45:
+			EndX = 9
+			EndY = 11
+			StartX = 8
+			StartY = 11
+			Width = 1
+		end
+		46:
+			EndX = 7
+			EndY = 13
+			StartX = 7
+			StartY = 12
+			Width = 1
+		end
+		47:
+			EndX = 5
+			EndY = 11
+			StartX = 7
+			StartY = 12
+			Width = 1
+		end
+		48:
+			EndX = 10
+			EndY = 9
+			StartX = 10
+			StartY = 7
+			Width = 1
+		end
+		49:
+			EndX = 11
+			EndY = 9
+			StartX = 11
+			StartY = 6
+			Width = 1
+		end
+		5:
+			EndX = 11
+			EndY = 4
+			StartX = 11
+			StartY = 2
+			Width = 1
+		end
+		50:
+			EndX = 14
+			EndY = 8
+			StartX = 9
+			StartY = 8
+			Width = 1
+		end
+		51:
+			EndX = 13
+			EndY = 7
+			StartX = 10
+			StartY = 7
+			Width = 1
+		end
+		52:
+			EndX = 13
+			EndY = 9
+			StartX = 13
+			StartY = 7
+			Width = 1
+		end
+		53:
+			EndX = 13
+			EndY = 9
+			StartX = 10
+			StartY = 9
+			Width = 1
+		end
+		6:
+			EndX = 10
+			EndY = 4
+			StartX = 10
+			StartY = 1
+			Width = 1
+		end
+		7:
+			EndX = 9
+			EndY = 5
+			StartX = 9
+			StartY = 1
+			Width = 1
+		end
+		8:
+			EndX = 8
+			EndY = 5
+			StartX = 8
+			StartY = 2
+			Width = 1
+		end
+		9:
+			EndX = 7
+			EndY = 6
+			StartX = 7
+			StartY = 2
+			Width = 1
+		end
+	end
+end
