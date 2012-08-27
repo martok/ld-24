@@ -644,6 +644,7 @@ begin
         end;
       end;
     glEnd;
+    glLineWidth(1);
     glDepthFunc(GL_LESS);
     glPopMatrix;
   glEndList;

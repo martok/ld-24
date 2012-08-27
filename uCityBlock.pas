@@ -45,8 +45,8 @@ type
 
     procedure RenderGeometry(Selection: boolean);
     procedure Render(Selection: boolean);
-    procedure RenderFocus(r: Single = 1; g: Single = 1; b: Single = 1; h: Single = 30);
-    procedure UpdateDisplayList;    
+    procedure RenderFocus;
+    procedure UpdateDisplayList;
   end;
 
   TBuildingClass = class of TBuilding;
@@ -163,10 +163,10 @@ begin
     RenderGeometry(Selection);
 end;
 
-procedure TCityBlock.RenderFocus(r: Single = 1; g: Single = 1; b: Single = 1; h: Single = 30);
+procedure TCityBlock.RenderFocus;
   procedure c(a: single);
   begin
-    glColor4f(r, g, b, a);
+    glColor4f(0, 1, 0, a);
   end;
 
   procedure draw(min, max, h: Single);
@@ -207,9 +207,9 @@ begin
   glEnable(GL_CULL_FACE);
   glDisable(GL_LIGHTING);
   glFrontFace(GL_CW);
-  draw(0.0, 0.5, h);
+  draw(0.0, 0.5, 30);
   glFrontFace(GL_CCW);
-  draw(0.0, 0.5, h);
+  draw(0.0, 0.5, 30);
   glPopAttrib;
 end;
 
