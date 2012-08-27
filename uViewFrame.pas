@@ -191,6 +191,7 @@ begin
   
   City:= TCity.Create;
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\test2.map');
+  City.PopulateStart;
 
   Application.OnIdle := ApplicationIdle;
   TsndInstance.Create(Sounds.BackgroundMusic, SoundEmitter).Loop(-1, 10).Gain:= 0.3;

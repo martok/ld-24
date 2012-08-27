@@ -85,15 +85,6 @@ begin
   FPosX:= X;
   FPosY:= Y;
   FBlockType := BlockType;
-  FFields[0]:= TBHouse.Create;
-  FFields[1]:= TBHouse.Create;
-  FFields[2]:= TBHouse.Create;
-  FFields[3]:= TBHouse.Create;
-  FFields[5]:= TBHouse.Create;
-  FFields[6]:= TBHouse.Create;
-  FFields[7]:= TBHouse.Create;
-  FFields[8]:= TBHouse.Create;
-  FFields[4]:= TBAppartement.Create;
 end;
 
 destructor TCityBlock.Destroy;
@@ -131,15 +122,17 @@ begin
       else
         FFields[b].Render(1 + FPeople/10);
     end else begin
-      glDisable(GL_LIGHTING);
-      glColor4f(1, 1, 1, 1);
-      glBegin(GL_LINE_LOOP);
-        glVertex3f(-1.5, 0,-1.5);
-        glVertex3f(-1.5, 0, 1.5);
-        glVertex3f( 1.5, 0, 1.5);
-        glVertex3f( 1.5, 0,-1.5);
-      glEnd;
-      glEnable(GL_LIGHTING);
+      if not Selection then begin
+        glDisable(GL_LIGHTING);
+        glColor4f(1, 1, 1, 1);
+        glBegin(GL_LINE_LOOP);
+          glVertex3f(-1.5, 0,-1.5);
+          glVertex3f(-1.5, 0, 1.5);
+          glVertex3f( 1.5, 0, 1.5);
+          glVertex3f( 1.5, 0,-1.5);
+        glEnd;
+        glEnable(GL_LIGHTING);
+      end;
     end;
     glPopMatrix;    
   end;

@@ -56,6 +56,7 @@ type
     procedure Progress(const aDeltaTime: Single);
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
+    procedure PopulateStart;
 
     function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): TBuildResult; overload;
     function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): TBuildResult; overload;
@@ -68,7 +69,7 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes, uBldSpecial;
+uses SysUtils, uConfigFile, Classes, uBldSpecial, uBldHouse;
 
 { TCity }
 
@@ -456,10 +457,10 @@ begin
           c:= 0.315693 + 1.1698*b + 0.377239*b*b - 1.74776*b*b*b;
           cb.GrowthRate:= c*2;
         end;
-        cb.GrowthRate:= cb.GrowthRate + 0.5 * (1 + cb.Luxury);
+        cb.GrowthRate:= cb.GrowthRate + 0.5 * (0.3 + cb.Luxury);
         cb.GrowthRate:= cb.GrowthRate + 0.5 * cb.Education;
         cb.GrowthRate:= cb.GrowthRate + 0.2 * cb.Industry;
-        cb.GrowthRate:= cb.GrowthRate - 0.1 * cb.Pollution;
+        cb.GrowthRate:= cb.GrowthRate - 0.4 * cb.Pollution;
 
         cb.People:= cb.People + cb.GrowthRate;
         if cb.People<0 then
@@ -531,6 +532,21 @@ begin
   finally
     stream.Free;
   end;
+  UpdateStats;
+end;
+
+procedure TCity.PopulateStart;
+var
+  x,y: integer;
+begin
+  repeat
+    x:= random(length(FCityBlocks));
+    y:= random(length(FCityBlocks[0]));
+    if Assigned(FCityBlocks[x,y]) then begin
+      FCityBlocks[x,y].Building[Random(9)]:= TBHouse.Create;
+      break;
+    end;
+  until False;
   UpdateStats;
 end;
 
