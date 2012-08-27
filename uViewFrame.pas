@@ -94,7 +94,7 @@ var
 
 implementation
 
-uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock, glBitmap;
+uses GLHelper, uCityBlock, uFonts, uGlobals, uGUIBlock, glBitmap, Math;
 
 {$R *.dfm}
 
@@ -294,6 +294,7 @@ end;
 procedure TViewFrame.Timestep(DT: Single);
 var
   dx, dy: Single;
+  i, c: integer;
 begin
   dx := 0;
   dy := 0;
@@ -313,11 +314,10 @@ begin
   City.Progress(DT);
   LastEvolve:= LastEvolve + DT;
   if LastEvolve >= 0.1 then begin
-    City.CreateRandomCar;
-    City.CreateRandomCar;
-    City.CreateRandomCar;
-    City.CreateRandomCar;
-    City.CreateRandomCar;
+    c:= Round(Random*Log10(City.TotalPeople)*0.8);
+    if c > 5 then c:= 5;
+    for i:= 1 to c do
+      City.CreateRandomCar; 
     if AutoPlay then
       City.Evolve;
     LastEvolve:= 0;
