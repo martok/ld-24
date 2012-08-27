@@ -277,16 +277,18 @@ end;
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
 const
   time_per_frame = 1000 / 60;
+var
+  dt: Single;
 begin
-  {
-  if GetPrecisionTime - LastFrameTime < time_per_frame then begin
+  dt:= GetPrecisionTime - LastFrameTime;
+  if dt < time_per_frame then begin
     Sleep(1);
     exit;
   end;
-  }
-  if Assigned(City) then
-    Timestep((GetPrecisionTime - LastFrameTime) / 1000);
   LastFrameTime := GetPrecisionTime;
+
+  if Assigned(City) then
+    Timestep(dt / 1000);
 
   Render;
   inc(FFrameCount);
@@ -370,7 +372,7 @@ begin
     glRotatef(Camera.tilt, 1, 0, 0);
     glRotatef(Camera.turn, 0, 1, 0);
     glTranslatef(Camera.pos[0], Camera.pos[1], Camera.pos[2]);
-    City.Render(false);
+    City.Render(KeyPressed(VK_F3));
     glPopMatrix;
   end;
 

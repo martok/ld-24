@@ -46,7 +46,7 @@ type
     FHeightMapList: GLuint;
     FStreetsList: GLuint;
     FHeightMap: TglBitmap2D;
-    FHeightMapShader: TglShaderProgram;
+    FHeightMapHeight: Single;
     FActiveBlock: TPoint;
     FHasHeightMap: Boolean;
     FRound: Integer;
@@ -108,17 +108,6 @@ begin
   FTotalEducation:= 0;
   FRound := 0;
 
-  FHeightMapShader := TglShaderProgram.Create({ShaderLog});
-  with FHeightMapShader do begin
-    LoadFromFile(ExtractFilePath(Application.ExeName)+'heightmap.glsl');
-    Compile;
-    Enable;
-    Uniform1i('uHeightMap', 0);
-    Uniform1f('uHeight', 50);
-    Uniform2f('uSize', FSize.X*FBlockDist, FSize.Y*FBlockDist);
-    Disable;
-  end;
-  
   FHeightMap := TglBitmap2D.Create;
   FHeightMap.SetWrap(GL_REPEAT, GL_REPEAT, GL_REPEAT);
   FHeightMap.SetFilter(GL_LINEAR, GL_LINEAR);
@@ -132,7 +121,6 @@ var
   x, y: integer;
 begin
   FreeAndNil(FHeightMap);
-  FreeAndNil(FHeightMapShader);
   glDeleteLists(FHeightMapList, 1);
   FCars.Free;
   for x:= 0 to high(FCityBlocks) do
@@ -168,16 +156,11 @@ var
 begin
 //Terrain
   glDisable(GL_LIGHTING);
+  glDisable(GL_TEXTURE_2D);
   if not Selection then begin
-    if FHasHeightMap then begin
-      FHeightMapShader.Enable;
-      FHeightMap.Bind;
-    end;
     glEnable(GL_CULL_FACE);
     glColor4f(0, 0, 0, 1);
     glCallList(FHeightMapList);
-    FHeightMap.Unbind;
-    FHeightMapShader.Disable;
     glPushMatrix;
     glTranslatef(-FBlockDist/2, -1, -FBlockDist/2);
     glColor4f(0, 0, 0.5, 1);
@@ -208,8 +191,6 @@ begin
     glDepthFunc(GL_LESS);
 
     glEnable(GL_LIGHTING);
-    glShadeModel(GL_SMOOTH);
-    SetGLMaterial(c_Yellow);
     glLight(VectorMake(2, 10, 5, 0),
       ColorToRGBA(0.1, 0.1, 0.1),
       ColorToRGBA(0.8, 0.8, 0.8),
@@ -556,9 +537,7 @@ begin
           FHeightMap.GenTexture;
           FHasHeightMap := true;
         end;
-        FHeightMapShader.Enable;
-        FHeightMapShader.Uniform1f('uHeight', GetValue('Height', 30));
-        FHeightMapShader.Disable;
+        FHeightMapHeight:= GetValue('Height', 30);
         FSize := Point(w, h);
         FBlockDist := GetValue('BlockDist', 15);
         ClearBlocks;
@@ -610,11 +589,24 @@ end;
 procedure TCity.CreateHeightMap;
 var
   x, y: Integer;
+  h: single;
 const
-  GRID = 4;
+  GRID = 8;
+
+  function HeightAtTextCoord(s,t: single): Single;
+  var pp: TglBitmapPixelPosition;
+      pd: TglBitmapPixelData;
+  begin
+    pp.X:= System.Round(FHeightMap.Width * s);
+    pp.Y:= System.Round(FHeightMap.Height * t);
+    FHeightMap.GetPixel(pp, pd);
+    Result:= -(0.5-pd.Red/255)*FHeightMapHeight;
+  end;
 begin
   if FHeightMapList <> 0 then
     glDeleteLists(FHeightMapList, 1);
+  FHeightMap.GetDataFromTexture;
+
   FHeightMapList := glGenLists(1);
   glNewList(FHeightMapList, GL_COMPILE);
     glColor4f(0, 0, 0, 1);
@@ -623,8 +615,10 @@ begin
     for y := 0 to FSize.Y*GRID-1 do begin
       glBegin(GL_QUAD_STRIP);
         for x := 0 to FSize.X*GRID do begin
-          glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
-          glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+2)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
+          h:= HeightAtTextCoord((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2));
+          glVertex3f(x * FBlockDist/GRID, h,  y    * FBlockDist/GRID);
+          h:= HeightAtTextCoord((x+1)/(FSize.X*GRID+2), (y+2)/(FSize.Y*GRID+2));
+          glVertex3f(x * FBlockDist/GRID, h, (y+1) * FBlockDist/GRID);
         end;
       glEnd;
     end;
@@ -635,13 +629,17 @@ begin
       for x := 0 to FSize.X*GRID do begin
         for y := 0 to FSize.Y*GRID do begin
           if (y < FSize.Y*GRID) then begin
-            glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
-            glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+2)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
+            h:= HeightAtTextCoord((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2));
+            glVertex3f(x * FBlockDist/GRID, h,  y    * FBlockDist/GRID);
+            h:= HeightAtTextCoord((x+1)/(FSize.X*GRID+2), (y+2)/(FSize.Y*GRID+2));
+            glVertex3f(x * FBlockDist/GRID, h, (y+1) * FBlockDist/GRID);
           end;
 
           if (x < FSize.X*GRID) then begin
-            glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f( x    * FBlockDist/GRID, 0, y * FBlockDist/GRID);
-            glTexCoord2f((x+2)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f((x+1) * FBlockDist/GRID, 0, y * FBlockDist/GRID);
+            h:= HeightAtTextCoord((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2));
+            glVertex3f( x    * FBlockDist/GRID, h, y * FBlockDist/GRID);
+            h:= HeightAtTextCoord((x+2)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2));
+            glVertex3f((x+1) * FBlockDist/GRID, h, y * FBlockDist/GRID);
           end;
         end;
       end;

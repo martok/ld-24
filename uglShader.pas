@@ -105,7 +105,7 @@ type
     function UniformMatrix3fv(const aName: String; aTranspose: Boolean; aCount: GLint; aP1: PGLFloat): Boolean;
     function UniformMatrix4fv(const aName: String; aTranspose: Boolean; aCount: GLint; aP1: PGLFloat): Boolean;
 
-    function GetUniformfv(const aName: String; var aP: PGLfloat): Boolean;
+    function GetUniformfv(const aName: String; var aP: TGLfloat): Boolean;
     function GetUniformfi(const aName: String; var aP: PGLint): Boolean;
 
     procedure LoadFromFile(aFilename: String);
@@ -794,12 +794,12 @@ end;
 //@Name: Name der Variablen die gelesen werden soll;
 //@p: Zeiger auf die Variable, in die der gelesene Wert geschrieben werden soll;
 //@result: TRUE wenn erfolgreich, sonst FALSE (Variablenname konnte nicht aufgelöst werden);
-function TglShaderProgram.GetUniformfv(const aName: String; var aP: PGLfloat): Boolean;
+function TglShaderProgram.GetUniformfv(const aName: String; var aP: TGLfloat): Boolean;
 var
   pos: GLint;
 begin
   if GetUniformLocation(aName, pos) then
-    glGetUniformfv(fProgramObj, pos, aP);
+    glGetUniformfv(fProgramObj, pos, @aP);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
