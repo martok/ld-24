@@ -48,7 +48,8 @@ var
     EffectClick,
     EffectMenu,
     EffectBuild,
-    EffectDestroy
+    EffectDestroy,
+    EffectNextTurn
     : TsndSound;
   end;
 
@@ -102,6 +103,10 @@ begin
   with Sounds do begin
     FreeAndNil(BackgroundMusic);
     FreeAndNil(EffectClick);
+    FreeAndNil(EffectMenu);
+    FreeAndNil(EffectBuild);
+    FreeAndNil(EffectDestroy);
+    FreeAndNil(EffectNextTurn);
   end;
 end;
 

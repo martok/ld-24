@@ -258,7 +258,8 @@ begin
   Sounds.EffectClick:= LoadSound(skBlock,'click');  
   Sounds.EffectMenu:= LoadSound(skBlock,'menu_open'); 
   Sounds.EffectBuild:= LoadSound(skBlock,'buy');
-//  Sounds.EffectDestroy:= LoadSound(skBlock,'menu_open');
+  Sounds.EffectDestroy:= LoadSound(skBlock,'destroy');
+  Sounds.EffectNextTurn:= LoadSound(skBlock,'next_turn');
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -622,6 +623,7 @@ end;
 procedure TViewFrame.NextRound;
 begin
   if not AutoPlay then begin
+    TsndInstance.Create(Sounds.EffectNextTurn, SoundEmitter).Play().Gain:= 1;
     City.Evolve;
   end;
 end;
