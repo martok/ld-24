@@ -15,6 +15,7 @@ var
 
   Textures: record
     GameLogo,
+    MenuBG,
 
     BElementarySchool,
     BLibrary,
@@ -68,6 +69,7 @@ procedure FreeTextures;
 begin
   with Textures do begin
     FreeAndNil(GameLogo);
+    FreeAndNil(MenuBG);
     FreeAndNil(BElementarySchool);
     FreeAndNil(BLibrary);
     FreeAndNil(BHighschool);

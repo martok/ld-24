@@ -68,7 +68,7 @@ type
     procedure Progress(const aDeltaTime: Single);
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
-    procedure PopulateStart;
+    function PopulateStart: TPoint;
 
     function CreateBuilding(Building: TBuildingClass; Where: TCityBlock): TBuildResult; overload;
     function CreateBuilding(Building: TBuildingClass; Where: TCityBlock; Slot: Integer): TBuildResult; overload;
@@ -79,6 +79,7 @@ type
     property TotalEducation: Single read FTotalEducation;
     property Round: Integer read FRound;
     property Size: TPoint read GetSize;
+    property BlockDist: Single read FBlockDist;
   end;
 
 implementation
@@ -696,7 +697,7 @@ begin
   ShowMessage(Msg);
 end;
 
-procedure TCity.PopulateStart;
+function TCity.PopulateStart: TPoint;
 var
   x,y: integer;
 begin
@@ -706,6 +707,7 @@ begin
     if Assigned(FCityBlocks[x,y]) then begin
       FCityBlocks[x,y].Building[Random(9)]:= TBHouse.Create;
       FCityBlocks[x,y].UpdateDisplayList;
+      Result:= Point(x,y);
       break;
     end;
   until False;

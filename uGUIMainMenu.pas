@@ -7,7 +7,12 @@ uses
   glBitmap;
 
 type
-  TGUIMainMenu = class(TGUILayer)
+  TMainMenuGUI = class(TGUILayer)
+  public
+    procedure BackgroundDraw(WinW, WinH: Integer);
+  end;
+
+  TGUIMainMenu = class(TMainMenuGUI)
   private
     FFrame: TViewFrame;
     FFiles: TStringList;
@@ -20,7 +25,7 @@ type
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
 
-  TGUIMainHelp = class(TGUILayer)
+  TGUIMainHelp = class(TMainMenuGUI)
   private
     procedure BackClick(Sender: TObject);
   public
@@ -31,7 +36,7 @@ type
 
 implementation
 
-uses uGUIBlock, uGlobals, uConfigFile;
+uses uGUIBlock, uGlobals, uConfigFile, Math;
 
 { TGUIMainMenu }
 
@@ -221,6 +226,21 @@ const
 begin
   inherited;
   ClientRect := Rect((aWidth-w) div 2, (aHeight-h) div 2, (aWidth+w) div 2, (aHeight+h) div 2);
+end;
+
+{ TMainMenuGUI }
+
+procedure TMainMenuGUI.BackgroundDraw(WinW, WinH: Integer);
+var
+  s: single;
+  r: TRect;
+begin
+  s:= min(Textures.MenuBG.Height/WinH, Textures.MenuBG.Width/WinW);
+  r:= Rect(0,0,ceil(Textures.MenuBG.Width/s), ceil(Textures.MenuBG.Height/s));
+  r:= RectOffset(r, Point((WinW-r.Right-r.Left) div 2,(WinH-r.Bottom-r.Top) div 2));
+  Textures.MenuBG.Bind();
+  fieldAtRect(r);
+  Textures.MenuBG.Unbind();
 end;
 
 end.
