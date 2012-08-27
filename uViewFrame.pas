@@ -149,14 +149,14 @@ begin
   InitOpenGL();
   maxSample := 0;
   PF := 0;
-  gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
+  {gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
   for i := 0 to c-1 do begin
     if SampleList[i] > maxSample then begin
       PF := PFList[i];
       maxSample := sampleList[i];
     end;
   end;
-
+  }
   if PF = 0 then
     PF := gluGetPixelFormat(Handle, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
   RC := gluCreateRenderContext(Handle, PF);
