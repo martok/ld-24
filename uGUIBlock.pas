@@ -9,8 +9,15 @@ uses
 type
   TGUIMain = class(TGUILayer)
   private
+    FAutoplayBtn: TGUIClickable;
+    FFrame: TViewFrame;
+    procedure NextRoundClick(Sender: TObject);
+    procedure AutoPlayClick(Sender: TObject);
   public
+    constructor Create(aFrame: TViewFrame);
+    procedure Render; override;
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
+    procedure SetAutoplayState(Playing: boolean);
   end;
 
   TGUIButton = (btOK, btYes, btNo, btCancel, btAbort);
@@ -44,6 +51,7 @@ type
     procedure CloseClick(Sender: TObject);
   public
     constructor Create(ACity: TCity; X, Y: integer);
+    destructor Destroy; override;
     procedure Render; override;
     procedure ViewportResize(const aWidth, aHeight: Integer); override;
   end;
@@ -118,6 +126,7 @@ var
 begin
   inherited Create;
   FCity:= ACity;
+  FCity.ActiveBlock:= Point(X, Y);
   FBlock:= FCity.Block[X, Y];
   FSelectedID := -1;
 
@@ -286,6 +295,12 @@ begin
   ClientRect := Rect(aWidth - GUI_WIDTH, 0, aWidth, aHeight);
 end;
 
+destructor TGUIBlock.Destroy;
+begin
+  FCity.ActiveBlock:= Point(-1,-1);
+  inherited;
+end;
+
 { TGUIMessage }
 
 procedure TGUIMessage.OnBtnClick(Sender: TObject);
@@ -376,7 +391,7 @@ begin
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
-  end;  
+  end;
 end;
 
 procedure TGUIMessage.ViewportResize(const aWidth, aHeight: Integer);
@@ -539,6 +554,7 @@ begin
         Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
       end;
       ord(low(TBuildingCategory))..ord(high(TBuildingCategory)): begin
+        t:= nil;
         case TBuildingCategory(TGUIClickable(fClickables[i]).Tag) of
           bcEdu: t:= Textures.BLibrary;
           bcLux: t:= Textures.BPark;
@@ -592,6 +608,73 @@ begin
 end;
 
 { TGUIMain }
+
+constructor TGUIMain.Create(aFrame: TViewFrame);
+var
+  c: TGUIClickable;
+begin
+  inherited Create;
+
+  FFrame:= aFrame;
+
+  c:= TGUIClickable.Create(Rect(10,10, GUI_WIDTH-10, 35), NextRoundClick);
+  c.Text:= 'Next Round';
+  fClickables.Add(c);
+
+  FAutoplayBtn:= TGUIClickable.Create(Rect(10,45, GUI_WIDTH-10, 70), AutoplayClick);
+  FAutoplayBtn.Text:= 'Autoplay >>';
+  fClickables.Add(FAutoplayBtn);
+end;
+
+procedure TGUIMain.Render;
+var
+  i: Integer;
+  r: TRect;
+begin
+  inherited;
+  tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
+  tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
+
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  for i := 0 to fClickables.Count-1 do begin
+    r := TGUIClickable(fClickables[i]).Rect;
+    glDisable(GL_TEXTURE_2D);
+    if (PtInRect(r, fMousePos)) then
+      glColor4f(1, 1, 1, 0.2)
+    else begin
+      if i=0 then
+        glColor4f(1, 0, 0, 0.5)
+      else
+        glColor4f(0, 0, 0, 0.5);
+    end;
+    fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glColor4f(1, 1, 1, 1);
+    fieldAtRect(RectOffset(r, ClientRect.TopLeft));
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    Fonts.GUIText.BlockOut(RectOffset(r, ClientRect.TopLeft), TGUIClickable(fClickables[i]).Text);
+  end;
+end;
+
+procedure TGUIMain.AutoPlayClick(Sender: TObject);
+begin
+  FFrame.ToggleAutoplay;
+end;
+
+procedure TGUIMain.NextRoundClick(Sender: TObject);
+begin
+  FFrame.NextRound;
+end;
+
+procedure TGUIMain.SetAutoplayState(Playing: boolean);
+begin
+  if Playing then
+    FAutoplayBtn.Text:= 'Stop Autoplay'
+  else
+    FAutoplayBtn.Text:= 'Autoplay >>';
+end;
 
 procedure TGUIMain.ViewportResize(const aWidth, aHeight: Integer);
 begin

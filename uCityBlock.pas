@@ -41,6 +41,7 @@ type
     property People: single read FPeople write FPeople;
     property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
     procedure Render(Selection: boolean);
+    procedure RenderFocus;
   end;
 
   TBuildingClass = class of TBuilding;
@@ -142,6 +143,56 @@ begin
     end;
     glPopMatrix;    
   end;
+end;
+
+procedure TCityBlock.RenderFocus;
+  procedure c(a: single);
+  begin
+    glColor4f(1,1,0.6,a);
+  end;
+
+  procedure draw;
+  begin
+    glBegin(GL_QUADS);
+      c(1.0);
+      glVertex3f( 6, 0,-6);
+      glVertex3f(-6, 0,-6);
+      c(0.1);
+      glVertex3f(-6, 10,-6);
+      glVertex3f( 6, 10,-6);
+
+      c(1.0);
+      glVertex3f(-6, 0,-6);
+      glVertex3f(-6, 0, 6);
+      c(0.1);
+      glVertex3f(-6, 10, 6);
+      glVertex3f(-6, 10,-6);
+
+      c(1.0);
+      glVertex3f(-6, 0, 6);
+      glVertex3f( 6, 0, 6);
+      c(0.1);
+      glVertex3f( 6, 10, 6);
+      glVertex3f(-6, 10, 6);
+
+      c(1.0);
+      glVertex3f( 6, 0, 6);
+      glVertex3f( 6, 0,-6);
+      c(0.1);
+      glVertex3f( 6, 10,-6);
+      glVertex3f( 6, 10, 6);
+    glEnd;
+  end;
+begin
+  glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
+  glEnable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
+  glDisable(GL_LIGHTING);
+  glFrontFace(GL_CW);
+  draw;
+  glFrontFace(GL_CCW);
+  draw;
+  glPopAttrib;
 end;
 
 procedure TCityBlock.RenderFloor;

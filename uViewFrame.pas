@@ -28,6 +28,8 @@ type
     LastFrameTime: Double;
     LastEvolve: Single;
     HasMoved: Boolean;
+
+    AutoPlay: Boolean;
     procedure LoadFonts;
     procedure LoadTextures;
     procedure LoadSounds;
@@ -45,6 +47,8 @@ type
     SoundEmitter: TsndEmitter;
     procedure PopLayer(const aLayer: TGUILayer = nil);
     procedure PushLayer(const aLayer: TGUILayer);
+    procedure NextRound;
+    procedure ToggleAutoplay;
     procedure Timestep(DT: Single);
     procedure Render;
   end;
@@ -145,14 +149,14 @@ begin
   InitOpenGL();
   maxSample := 0;
   PF := 0;
-  {gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
+  gluGetAntiAliasingPixelFormats(@PFList[0], @SampleList[0], 32, c);
   for i := 0 to c-1 do begin
     if SampleList[i] > maxSample then begin
       PF := PFList[i];
       maxSample := sampleList[i];
     end;
   end;
-  }
+
   if PF = 0 then
     PF := gluGetPixelFormat(Handle, [opDoubleBuffered], 32, 24, 0, 0, 0, 0);
   RC := gluCreateRenderContext(Handle, PF);
@@ -178,9 +182,10 @@ begin
   Camera.zoom := -100;
 
   LastEvolve:= 0;
+  AutoPlay:= false;
 
   GUIStack := TObjectList.Create(true);
-  guiMain := TGUIMain.Create;
+  guiMain := TGUIMain.Create(Self);
   guiMain.ClientRect := Rect(ClientWidth - GUI_WIDTH, 0, ClientWidth, ClientHeight);
   PushLayer(guiMain);
   
@@ -301,7 +306,8 @@ begin
     City.CreateRandomCar;
     City.CreateRandomCar;
     City.CreateRandomCar;
-    City.Evolve;
+    if AutoPlay then
+      City.Evolve;
     LastEvolve:= 0;
   end;
 end;
@@ -599,6 +605,19 @@ begin
   if Assigned(GUIStack) then
     for i := 0 to GUIStack.Count-1 do
         TGUILayer(GUIStack[i]).ViewportResize(ClientWidth, ClientHeight);
+end;
+
+procedure TViewFrame.NextRound;
+begin
+  if not AutoPlay then begin
+    City.Evolve;
+  end;
+end;
+
+procedure TViewFrame.ToggleAutoplay;
+begin
+  AutoPlay:= not AutoPlay;
+  TGUIMain(GUIStack[0]).SetAutoplayState(AutoPlay);
 end;
 
 end.

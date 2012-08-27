@@ -3,7 +3,7 @@ unit uCity;
 interface
 
 uses
-  dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, Contnrs;
+  Types, dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, Contnrs;
 
 type
   TCityBlocks = array of array of TCityBlock;
@@ -41,6 +41,7 @@ type
     FTotalEducation: Single;
     FTotalMoney: Single;
     FTotalPeople: Single;
+    FActiveBlock: TPoint;
     function GetBlock(X, Y: integer): TCityBlock;
     procedure ClearBlocks;
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
@@ -51,6 +52,7 @@ type
     property Block[X, Y: integer]: TCityBlock read GetBlock;
     procedure Evolve;
     procedure Render(Selection: boolean);
+    property ActiveBlock: TPoint read FActiveBlock write FActiveBlock;
     procedure Progress(const aDeltaTime: Single);
     procedure CreateRandomCar;
     procedure LoadFromFile(const aFilename: String);
@@ -66,7 +68,7 @@ type
 
 implementation
 
-uses SysUtils, uConfigFile, Classes, Types, uBldSpecial;
+uses SysUtils, uConfigFile, Classes, uBldSpecial;
 
 { TCity }
 
@@ -83,6 +85,7 @@ begin
       FCityBlocks[x, y]:= TCityBlock.Create(x, y, btNormal);
     end;
   end;
+  FActiveBlock:=Point(-1,-1);
   FTotalPeople:= 0;
   FTotalMoney:= 10000000;        //TODO
   FTotalEducation:= 0;
@@ -192,7 +195,18 @@ begin
       end;
     end;
   end;
-
+  if not Selection then begin
+    if FActiveBlock.X>=0 then begin
+      x:= FActiveBlock.x;
+      y:= FActiveBlock.y;
+      if Assigned(FCityBlocks[x, y]) then begin
+        glPushMatrix;
+        glTranslatef(x * FBlockDist, 0, y * FBlockDist);
+        FCityBlocks[x, y].RenderFocus;
+        glPopMatrix;
+      end;
+    end;
+  end;
   glPopMatrix;
 end;
 
