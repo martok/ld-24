@@ -210,7 +210,8 @@ end;
 
 procedure TViewFrame.LoadTextures;
 begin
-  Textures.GameLogo:= LoadTexture('Logo');
+  Textures.GameLogo:= LoadTexture('Logo');  
+  Textures.MenuBG:= LoadTexture('MenuBG');
 
   Textures.BUnknown:= LoadTexture('BUnknown');
   Textures.BElementarySchool:= LoadTexture('BElementarySchool');
@@ -254,6 +255,7 @@ end;
 procedure TViewFrame.StartGame(Level: string);
 var
   guiMain: TGUIMain;
+  ct: TPoint;
 begin
   FillChar(Camera.pos[0], SizeOf(Camera.pos), 0);
   Camera.turn := 15;
@@ -269,9 +271,9 @@ begin
 
   City:= TCity.Create;
   City.LoadFromFile(ExtractFilePath(Application.ExeName)+'maps\'+Level+'.map');
-  City.PopulateStart;
-  Camera.pos[0] := -City.Size.X / 2;
-  Camera.pos[2] := -City.Size.Y / 2;
+  ct:= City.PopulateStart;
+  Camera.pos[0] := -ct.X * City.BlockDist;
+  Camera.pos[2] := -ct.Y * City.BlockDist;
 end;
 
 procedure TViewFrame.ApplicationIdle(Sender: TObject; var Done: Boolean);
@@ -409,11 +411,13 @@ begin
     tsSetParameteri(TS_ALIGN, TS_ALIGN_RIGHT);
     Fonts.LargeText.BlockOut(r, format('EDU: %n',[City.TotalEducation]));
     glDisable(GL_TEXTURE_2D);
+  end else begin
+    if GUIStack[0] is TMainMenuGUI then
+      TMainMenuGUI(GUIStack[0]).BackgroundDraw(ClientWidth, ClientHeight);
   end;
   if GUIStack.Count > 0 then
     TGUILayer(GUIStack[GUIStack.Count-1]).Render;
   Exit2dMode;
-
   SwapBuffers(RC.DC);
 end;
 
