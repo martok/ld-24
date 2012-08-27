@@ -46,7 +46,7 @@ begin
   inherited Create;
   FFrame:= aFrame;
   c:= TGUIClickable.Create(Bounds(300, 20, 280, 35), HelpClick);
-  c.Text:= 'What''ts this?';
+  c.Text:= 'What''s this?';
   fClickables.Add(c);
 
   FFiles:= TStringList.Create;
@@ -59,7 +59,7 @@ begin
           if map.SectionExists('Map') then begin
             s:= map.Section('Map').GetValue('Title',ChangeFileExt(sr.Name,''));
             c:= TGUIClickable.Create(Bounds(300, 120+FFiles.Count*40, 280, 35), StartGameClick);
-            c.Tag:= FFiles.Add(s);
+            c.Tag:= FFiles.Add(ChangeFileExt(sr.Name,''));
             c.Text:= s;
             fClickables.Add(c);
           end;
