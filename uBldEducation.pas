@@ -8,7 +8,7 @@ uses
 type
   TBElementarySchool = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     constructor Create; override;
     function SEducation: Integer; override;
@@ -19,7 +19,7 @@ type
 
   TBLibrary = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     constructor Create; override;
     function SEducation: Integer; override;
@@ -31,7 +31,7 @@ type
 
   TBHighschool = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     constructor Create; override;
     function SEducation: Integer; override;
@@ -43,7 +43,7 @@ type
 
   TBCollege = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     constructor Create; override;
     function SEducation: Integer; override;
@@ -63,9 +63,9 @@ begin
   FColor:= ColorToRGBA(0,1,0.6);
 end;
 
-procedure TBElementarySchool.RenderShape(Height: Single);
+procedure TBElementarySchool.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2.0);
+  inherited RenderShape(2.0, Outline);
 end;
 
 class function TBElementarySchool.DisplayName: String;
@@ -96,9 +96,9 @@ begin
   FColor:= ColorToRGBA(0,1,0.6);
 end;
 
-procedure TBLibrary.RenderShape(Height: Single);
+procedure TBLibrary.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2.5);
+  inherited RenderShape(2.5, Outline);
 end;
 
 class function TBLibrary.DisplayName: String;
@@ -134,9 +134,9 @@ begin
   FColor:= ColorToRGBA(0,1,0.6);
 end;
 
-procedure TBHighschool.RenderShape(Height: Single);
+procedure TBHighschool.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2.5);
+  inherited RenderShape(2.5, Outline);
 end;
 
 class function TBHighschool.DisplayName: String;
@@ -172,9 +172,9 @@ begin
   FColor:= ColorToRGBA(0,1,0.6);
 end;
 
-procedure TBCollege.RenderShape(Height: Single);
+procedure TBCollege.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2.5);
+  inherited RenderShape(2.5, Outline);
 end;
 
 class function TBCollege.DisplayName: String;

@@ -326,7 +326,7 @@ begin
   City.Progress(DT);
   LastEvolve:= LastEvolve + DT;
   if LastEvolve >= 0.1 then begin
-    c:= Round(Random*Log10(City.TotalPeople)*0.8);
+//    c:= Round(Random*Log10(City.TotalPeople)*0.8);
     if c > 5 then c:= 5;
     for i:= 1 to c do
       City.CreateRandomCar; 
@@ -381,16 +381,14 @@ begin
       case i of
         0: begin
           SetGLColor(ColorToRGBA(0, 0, 0, 0.75));
-          glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          glBegin(GL_QUADS);
         end;
         1: begin
           SetGLColor(ColorToRGBA(1, 1, 1, 1));
-          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          glBegin(GL_LINES);
         end;
       end;
-      glBegin(GL_QUADS);
 
-      //SetGLColor(ColorToRGBA(1, 1, 1, 0.5));
         glVertex2f(r.Left, r.Top);
         glVertex2f(r.Right+1, r.Top);
         glVertex2f(r.Right+1, r.Bottom+1);

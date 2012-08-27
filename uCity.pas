@@ -44,6 +44,7 @@ type
     FTotalMoney: Single;
     FTotalPeople: Single;
     FHighMapList: GLuint;
+    FStreetsList: GLuint;
     FHeightMap: TglBitmap2D;
     FHeightMapShader: TglShaderProgram;
     FActiveBlock: TPoint;
@@ -52,6 +53,7 @@ type
     procedure FillBuildingEffect(Bdg: TBuilding; StartX, StartY: integer);
     procedure UpdateStats;
     procedure CreateHeightMap;
+    procedure CreateStreets;
     procedure ShaderLog(Sender: TObject; const Msg: String);
   public
     constructor Create;
@@ -152,7 +154,7 @@ end;
 
 procedure TCity.Render(Selection: boolean);
 var
-  x, y, i, o: integer;
+  x, y, i: integer;
 begin
 //Terrain
   glDisable(GL_LIGHTING);
@@ -162,13 +164,6 @@ begin
     glEnable(GL_CULL_FACE);
     glColor4f(0, 0, 0, 1);
     glCallList(FHighMapList);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(2);
-    glDepthFunc(GL_LEQUAL);//GL_ALWAYS);
-    glColor4f(0.2, 0.2, 0.2, 1);
-    glCallList(FHighMapList);
-    glDepthFunc(GL_LESS);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     FHeightMap.Unbind;
     FHeightMapShader.Disable;
     glPushMatrix;
@@ -186,37 +181,10 @@ begin
     glClear(GL_DEPTH_BUFFER_BIT);
   end;
   glPushMatrix;
+
   if not Selection then begin
     //Streets
-    glPushMatrix;
-    glTranslatef(-7.5, 0, -7.5);
-    //glColor4f(0.7, 0.7, 0.7, 1);
-    SetGLMaterial(ColorToRGBA(0.7, 0.7, 0.7));
-    glBegin(GL_QUADS);
-      glNormal3f(0, 1, 0);
-      for i := 0 to High(FStreets) do with FStreets[i] do begin
-        if (startPos.y-endPos.y = 0) or ((Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) > 1) then begin
-          if (startPos.x < endPos.x) then
-            o := 1
-          else
-            o := -1;
-          glVertex3f(startPos.x*FBlockDist-o, 0, startPos.y*FBlockDist+width);
-          glVertex3f(startPos.x*FBlockDist-o, 0, startPos.y*FBlockDist-width);
-          glVertex3f(endPos.x*FBlockDist+o, 0, endPos.y*FBlockDist-width);
-          glVertex3f(endPos.x*FBlockDist+o, 0, endPos.y*FBlockDist+width);
-        end else begin
-          if (startPos.y < endPos.y) then
-            o := 1
-          else
-            o := -1;
-          glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-o);
-          glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-o);
-          glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+o);
-          glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+o);
-        end;
-      end;
-    glEnd;
-    glPopMatrix;
+    glCallList(FStreetsList);
 
     //Cars
     glDepthFunc(GL_ALWAYS);
@@ -245,14 +213,13 @@ begin
         glTranslatef(x * FBlockDist, 0, y * FBlockDist);
         if Selection then begin
           glBegin(GL_QUADS);
-          glColor3ub(x, y, 255);
-          glVertex3f( 6, 0,-6);
-          glVertex3f(-6, 0,-6);
-          glVertex3f(-6, 0, 6);
-          glVertex3f( 6, 0, 6);
+            glColor3ub(x, y, 255);
+            glVertex3f( 6, 0,-6);
+            glVertex3f(-6, 0,-6);
+            glVertex3f(-6, 0, 6);
+            glVertex3f( 6, 0, 6);
           glEnd;
         end;
-
         FCityBlocks[x, y].Render(Selection);
         glPopMatrix;
       end;
@@ -291,7 +258,7 @@ var
   r: Integer;
   o, s: Single;
 begin
-  if Length(fStreets)=0 then
+  if Length(fStreets) = 0 then
     exit;
   r := random(Length(fStreets));
   with fStreets[r] do begin
@@ -542,6 +509,10 @@ begin
       end;
     end;
   end;
+  for x:= 0 to high(FCityBlocks) do
+    for y:= 0 to high(FCityBlocks[x]) do
+      if Assigned(FCityBlocks[x, y]) then
+        FCityBlocks[x, y].UpdateDisplayList;
 end;
 
 procedure TCity.LoadFromFile(const aFilename: String);
@@ -598,6 +569,7 @@ begin
         end;
       end;
       CreateHeightMap;
+      CreateStreets;
     finally
       kcf.Free;
     end;
@@ -617,6 +589,7 @@ begin
     glDeleteLists(FHighMapList, 1);
   FHighMapList := glGenLists(1);
   glNewList(FHighMapList, GL_COMPILE);
+    glColor4f(0, 0, 0, 1);
     glPushMatrix;
     glTranslatef(-FBlockDist/2, 0, -FBlockDist/2);
     for y := 0 to FSize.Y*GRID-1 do begin
@@ -627,6 +600,65 @@ begin
         end;
       glEnd;
     end;
+    glColor4f(0.2, 0.2, 0.2, 1);
+    glDepthFunc(GL_LEQUAL);
+    glLineWidth(2);
+    glBegin(GL_LINES);
+      for x := 0 to FSize.X*GRID do begin
+        for y := 0 to FSize.Y*GRID do begin
+          if (y < FSize.Y*GRID) then begin
+            glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0,  y    * FBlockDist/GRID);
+            glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+2)/(FSize.Y*GRID+2)); glVertex3f(x * FBlockDist/GRID, 0, (y+1) * FBlockDist/GRID);
+          end;
+
+          if (x < FSize.X*GRID) then begin
+            glTexCoord2f((x+1)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f( x    * FBlockDist/GRID, 0, y * FBlockDist/GRID);
+            glTexCoord2f((x+2)/(FSize.X*GRID+2), (y+1)/(FSize.Y*GRID+2)); glVertex3f((x+1) * FBlockDist/GRID, 0, y * FBlockDist/GRID);
+          end;
+        end;
+      end;
+    glEnd;
+    glDepthFunc(GL_LESS);
+    glPopMatrix;
+  glEndList;
+end;
+
+procedure TCity.CreateStreets;
+var
+  i, o: Integer; 
+begin
+  if FStreetsList <> 0 then
+    glDeleteLists(FStreetsList, 1);
+  FStreetsList := glGenLists(1);
+  glNewList(FStreetsList, GL_COMPILE);
+    glPushMatrix;
+    glTranslatef(-7.5, 0, -7.5);
+    //glColor4f(0.7, 0.7, 0.7, 1);
+    SetGLMaterial(ColorToRGBA(0.7, 0.7, 0.7));
+    glBegin(GL_QUADS);
+      glNormal3f(0, 1, 0);
+      for i := 0 to High(FStreets) do with FStreets[i] do begin
+        if (startPos.y-endPos.y = 0) or ((Sqr(startPos.x-endPos.x) / Sqr(startPos.y-endPos.y)) > 1) then begin
+          if (startPos.x < endPos.x) then
+            o := 1
+          else
+            o := -1;
+          glVertex3f(startPos.x*FBlockDist-o, 0, startPos.y*FBlockDist+width);
+          glVertex3f(startPos.x*FBlockDist-o, 0, startPos.y*FBlockDist-width);
+          glVertex3f(endPos.x*FBlockDist+o, 0, endPos.y*FBlockDist-width);
+          glVertex3f(endPos.x*FBlockDist+o, 0, endPos.y*FBlockDist+width);
+        end else begin
+          if (startPos.y < endPos.y) then
+            o := 1
+          else
+            o := -1;
+          glVertex3f(startPos.x*FBlockDist+width, 0, startPos.y*FBlockDist-o);
+          glVertex3f(startPos.x*FBlockDist-width, 0, startPos.y*FBlockDist-o);
+          glVertex3f(endPos.x*FBlockDist-width, 0, endPos.y*FBlockDist+o);
+          glVertex3f(endPos.x*FBlockDist+width, 0, endPos.y*FBlockDist+o);
+        end;
+      end;
+    glEnd;
     glPopMatrix;
   glEndList;
 end;

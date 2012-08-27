@@ -23,6 +23,7 @@ type
     FSpace: single;
     FBlockType: TBlockType;
     FGrowthRate: single;
+    FDisplayList: GLuint;
     function GetBuilding(Index: integer): TBuilding;
     procedure SetBuilding(Index: integer; const Value: TBuilding);
   protected
@@ -40,8 +41,10 @@ type
     property GrowthRate: single read FGrowthRate write FGrowthRate;
     property People: single read FPeople write FPeople;
     property Building[Index: integer]: TBuilding read GetBuilding write SetBuilding;
+    procedure RenderGeometry(Selection: boolean);
     procedure Render(Selection: boolean);
     procedure RenderFocus;
+    procedure UpdateDisplayList;    
   end;
 
   TBuildingClass = class of TBuilding;
@@ -52,7 +55,7 @@ type
     FColor: TRGBA;
     FSelectMode: boolean;
     // !!! DOES NOT SET ANY COLORS, IF FSelectMode = TRUE !!!
-    procedure RenderShape(Height: Single); virtual;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); virtual;
   public
     constructor Create; virtual;
     procedure RenderSelect(r, g, b: byte; Height: Single);
@@ -81,17 +84,26 @@ uses
 { TCityBlock }
 
 constructor TCityBlock.Create(X, Y: Integer; BlockType: TBlockType);
+var
+  i: Integer;
 begin
   inherited Create;
   FPosX:= X;
   FPosY:= Y;
   FBlockType := BlockType;
+  FDisplayList := glGenLists(1);
+
+  for i := 0 to 8 do
+    FFields[i] := TBAppartement1stClass.Create;
+
+  UpdateDisplayList;
 end;
 
 destructor TCityBlock.Destroy;
 var
   b: integer;
 begin
+  glDeleteLists(FDisplayList, 1);
   for b:= 0 to high(FFields) do
     FreeAndNil(FFields[b]);
   inherited;
@@ -102,7 +114,7 @@ begin
   Result:= FFields[Index];
 end;
 
-procedure TCityBlock.Render(Selection: boolean);
+procedure TCityBlock.RenderGeometry(Selection: boolean);
 var
   b, x, y: integer;
 begin
@@ -126,7 +138,7 @@ begin
       if not Selection then begin
         glDisable(GL_LIGHTING);
         glColor4f(1, 1, 1, 1);
-        glDepthFunc(GL_ALWAYS);
+        glDepthFunc(GL_LEQUAL);
         glBegin(GL_LINE_LOOP);
           glVertex3f(-1.5, 0,-1.5);
           glVertex3f(-1.5, 0, 1.5);
@@ -139,6 +151,14 @@ begin
     end;
     glPopMatrix;    
   end;
+end;
+           
+procedure TCityBlock.Render(Selection: boolean);
+begin
+  if not Selection then
+    glCallList(FDisplayList)
+  else
+    RenderGeometry(Selection);
 end;
 
 procedure TCityBlock.RenderFocus;
@@ -196,12 +216,12 @@ begin
   glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
   glBegin(GL_QUADS);
     glColor4f(0, 0, 0, 1);
-    glVertex3f( 6, 0,-6);
-    glVertex3f(-6, 0,-6);
-    glVertex3f(-6, 0, 6);
-    glVertex3f( 6, 0, 6);  
+    glVertex3f( 6, -0.1,-6);
+    glVertex3f(-6, -0.1,-6);
+    glVertex3f(-6, -0.1, 6);
+    glVertex3f( 6, -0.1, 6);
   glEnd;
-  glDepthFunc(GL_ALWAYS);
+  glDepthFunc(GL_LEQUAL);
   glBegin(GL_LINE_LOOP);
     //SetGLMaterial(ColorToRGBA(0.9, 0.9, 0.9));
     glLineWidth(2);
@@ -213,6 +233,13 @@ begin
   glEnd;
   glDepthFunc(GL_LESS);
   glPopAttrib;
+end;
+
+procedure TCityBlock.UpdateDisplayList;
+begin
+  glNewList(FDisplayList, GL_COMPILE);
+    RenderGeometry(false);
+  glEndList;
 end;
 
 procedure TCityBlock.SetBuilding(Index: integer; const Value: TBuilding);
@@ -237,13 +264,13 @@ begin
   glPushAttrib(GL_DEPTH_BUFFER_BIT or GL_ENABLE_BIT or GL_POLYGON_BIT or GL_LINE_BIT);
   glEnable(GL_LIGHTING);
   SetGLMaterial(FColor);
-  RenderShape(aHeight);
+  RenderShape(aHeight, false);
 
   glDisable(GL_LIGHTING);
   SetGLColor(FColor);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glLineWidth(2);
-  RenderShape(aHeight);
+  RenderShape(aHeight, true);
   glPopAttrib;
 end;
 
@@ -263,27 +290,38 @@ begin
   end;
 end;
 
-procedure TBuilding.RenderShape(Height: Single);
+procedure TBuilding.RenderShape(Height: Single; Outline: Boolean = false);
 var
   w: Single;
 begin
+  glDepthFunc(GL_LEQUAL);
   w := 1.5;
   if (self is TBSpecial) then
     w := 5.5;
-  glBegin(GL_QUADS);
+  if not Outline then
+    glBegin(GL_QUADS)
+  else
+    glBegin(GL_LINE_LOOP);
     // Front Face
   glNormal3f( 0.0, 0.0, 1.0);                  // Normal Pointing Towards Viewer
   glTexCoord2f(0.0, 0.0); glVertex3f(-w, 0.0,  w);  // Point 1 (Front)
   glTexCoord2f(1.0, 0.0); glVertex3f( w, 0.0,  w);  // Point 2 (Front)
   glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Front)
   glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 4 (Front)
+  if Outline then begin
+    glEnd;
+    glBegin(GL_LINE_LOOP);
+  end;
   // Back Face
   glNormal3f( 0.0, 0.0, -1.0);                  // Normal Pointing Away From Viewer
   glTexCoord2f(1.0, 0.0); glVertex3f(-w, 0.0, -w);  // Point 1 (Back)
   glTexCoord2f(1.0, 1.0); glVertex3f(-w,  Height, -w);  // Point 2 (Back)
   glTexCoord2f(0.0, 1.0); glVertex3f( w,  Height, -w);  // Point 3 (Back)
   glTexCoord2f(0.0, 0.0); glVertex3f( w, 0.0, -w);  // Point 4 (Back)
-
+  if Outline then begin
+    glEnd;
+    glBegin(GL_LINE_LOOP);
+  end;
   // Top Face
   glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
   glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height, -w);  // Point 1 (Top)
@@ -294,40 +332,51 @@ begin
     glEnd;
 
     Texture.Bind(true);
-    glPushAttrib(GL_LIGHTING_BIT or GL_ENABLE_BIT or GL_DEPTH_FUNC);
+    glPushAttrib(GL_LIGHTING_BIT or GL_ENABLE_BIT);
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
-    glDepthFunc(GL_LEQUAL);
     glColor3f(1,1,1);
 
-    glBegin(GL_QUADS);
-    glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
-    glTexCoord2f(0.0, 0.0); glVertex3f(-w,  Height, -w);  // Point 1 (Top)
-    glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 2 (Top)
-    glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Top)
-    glTexCoord2f(1.0, 0.0); glVertex3f( w,  Height, -w);  // Point 4 (Top)
+    if not Outline then
+      glBegin(GL_QUADS)
+    else
+      glBegin(GL_LINE_LOOP);
+      glNormal3f( 0.0, 1.0, 0.0);                  // Normal Pointing Up
+      glTexCoord2f(0.0, 0.0); glVertex3f(-w,  Height, -w);  // Point 1 (Top)
+      glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 2 (Top)
+      glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Top)
+      glTexCoord2f(1.0, 0.0); glVertex3f( w,  Height, -w);  // Point 4 (Top)
     glEnd;
 
     Texture.Unbind(true);
+    SetGLColor(FColor);    
     glPopAttrib;
 
-    glBegin(GL_QUADS);
+    if not Outline then
+      glBegin(GL_QUADS)
+    else
+      glBegin(GL_LINE_LOOP);
   end;
 
 
   // Right face
   glNormal3f( 1.0, 0.0, 0.0);                  // Normal Pointing Right
   glTexCoord2f(1.0, 0.0); glVertex3f( w, 0.0, -w);  // Point 1 (Right)
-  glTexCoord2f(1.0, 1.0); glVertex3f( w,  Height, -w);  // Point 2 (Right)
-  glTexCoord2f(0.0, 1.0); glVertex3f( w,  Height,  w);  // Point 3 (Right)
+  glTexCoord2f(1.0, 1.0); glVertex3f( w, Height, -w);  // Point 2 (Right)
+  glTexCoord2f(0.0, 1.0); glVertex3f( w, Height,  w);  // Point 3 (Right)
   glTexCoord2f(0.0, 0.0); glVertex3f( w, 0.0,  w);  // Point 4 (Right)
+  if Outline then begin
+    glEnd;
+    glBegin(GL_LINE_LOOP);
+  end;  
   // Left Face
   glNormal3f(-1.0, 0.0, 0.0);                  // Normal Pointing Left
   glTexCoord2f(0.0, 0.0); glVertex3f(-w, 0.0, -w);  // Point 1 (Left)
   glTexCoord2f(1.0, 0.0); glVertex3f(-w, 0.0,  w);  // Point 2 (Left)
-  glTexCoord2f(1.0, 1.0); glVertex3f(-w,  Height,  w);  // Point 3 (Left)
-  glTexCoord2f(0.0, 1.0); glVertex3f(-w,  Height, -w);  // Point 4 (Left)
+  glTexCoord2f(1.0, 1.0); glVertex3f(-w, Height,  w);  // Point 3 (Left)
+  glTexCoord2f(0.0, 1.0); glVertex3f(-w, Height, -w);  // Point 4 (Left)
   glEnd;
+  glDepthFunc(GL_LESS);
 end;
 
 function TBuilding.SLuxury: integer;

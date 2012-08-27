@@ -17,6 +17,7 @@ type
     OpenDialog: TOpenDialog;
     SaveDialog: TSaveDialog;
     LoadTextureBt: TButton;
+    StreetsLB: TListBox;
     procedure ChangeSizeBtClick(Sender: TObject);
     procedure PaintBoxPaint(Sender: TObject);
     procedure PaintBoxMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -28,10 +29,14 @@ type
     procedure LoadTextureBtClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure LoadBtClick(Sender: TObject);
+    procedure StreetsLBClick(Sender: TObject);
+    procedure StreetsLBKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     fTex: TBitmap;
     fSize: TPoint;
-    fBlocks: array of array of Byte;
+    fBlocks: array of array of Shortint;
     fStreets: array of packed record
       width: Byte;
       startPos, endPos: packed record
@@ -40,6 +45,7 @@ type
     end;
     fMousePos, fMouseDown: TPoint;
     fMouseDownTime: Cardinal;
+    procedure UpdateStreetList;
   public
     { Public declarations }
   end;
@@ -59,9 +65,14 @@ uses
 {$R *.dfm}
 
 procedure TForm1.ChangeSizeBtClick(Sender: TObject);
+var
+  x, y: Integer;
 begin
   fSize := Point(StrToIntDef(WidthEd.Text, 5), StrToIntDef(HeightEd.Text, 5));
   SetLength(fBlocks, fSize.X, fSize.Y);
+  for x := 0 to High(fBlocks) do
+    for y := 0 to High(fBlocks[x]) do
+      fBlocks[x, y] := -1;
   SetLength(fStreets, 0);  
   PaintBox.Width  := BLOCK_SIZE*fSize.X;
   PaintBox.Height := BLOCK_SIZE*fSize.Y;
@@ -82,8 +93,11 @@ begin
     for x := 0 to High(fBlocks) do
       for y := 0 to High(fBlocks[x]) do begin
         case fBlocks[x, y] of
-          0: Brush.Color := clWhite;
-          1: Brush.Color := clBlack;
+          -1: Brush.Color := clWhite;
+           0: Brush.Color := clBlack;
+           1: Brush.Color := clRed;
+           2: Brush.Color := clBlue;
+           3: Brush.Color := clYellow;
         end;
         Rectangle(
           x*BLOCK_SIZE+BLOCK_BORDER,
@@ -95,8 +109,12 @@ begin
     Pen.Color := clGray;
     Pen.Width := 3;
     for i := 0 to High(fStreets) do with fStreets[i] do begin
+      if i = StreetsLB.ItemIndex then
+        Pen.Color := clRed;
       MoveTo(Round(startPos.x * BLOCK_SIZE), Round(startPos.y * BLOCK_SIZE));
       LineTo(Round(endPos.x * BLOCK_SIZE), Round(endPos.y * BLOCK_SIZE));
+      if i = StreetsLB.ItemIndex then
+        Pen.Color := clGray;
     end;
 
     if fMouseDownTime > 0 then begin
@@ -122,8 +140,8 @@ begin
   y := fMousePos.y div BLOCK_SIZE;
   if (x >= 0) and (x < fSize.X) and (y >= 0) and (y < fSize.Y) then begin
     inc(fBlocks[x, y]);
-    if (fBlocks[x, y] > 1) then
-      fBlocks[x, y] := 0;
+    if (fBlocks[x, y] > 4) then
+      fBlocks[x, y] := -1;
     PaintBox.Repaint;
   end;
 end;
@@ -149,6 +167,7 @@ begin
       endPos.y := up.y div BLOCK_SIZE;
       width := 1;
     end;
+    UpdateStreetList;
   end;
   PaintBox.Repaint;  
   fMouseDownTime := 0;
@@ -172,7 +191,7 @@ begin
           with Section('Blocks') do begin
             for x := 0 to High(fBlocks) do
               for y := 0 to High(fBlocks[x]) do
-                if fBlocks[x, y] <> 0 then begin
+                if fBlocks[x, y] >= 0 then begin
                   with Section(IntToStr(c)) do begin
                     SetValue('x', x);
                     SetValue('y', y);
@@ -238,6 +257,104 @@ end;
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(fTex);
+end;
+
+procedure TForm1.LoadBtClick(Sender: TObject);
+var
+  stream: TFileStream;
+  kcf: TkcfConfigFile;
+  i, c, x, y, t: Integer;
+begin
+  if OpenDialog.Execute then begin
+    stream := TFileStream.Create(OpenDialog.FileName, fmOpenRead);
+    try
+      kcf := TkcfConfigFile.Create(stream);
+      try
+        with kcf.Section('Map') do begin
+          fSize.X := GetValue('Width', 10);
+          fSize.Y := GetValue('Height', 10);
+          WidthEd.Text := IntToStr(fSize.X);
+          HeightEd.Text := IntToStr(fSize.Y);
+
+          SetLength(fBlocks, fSize.X, fSize.Y);
+          for x := 0 to High(fBlocks) do
+            for y := 0 to High(fBlocks[x]) do
+              fBlocks[x, y] := -1;
+              
+          c := GetValue('BlockCount', 0);
+          with Section('Blocks') do begin
+            for i := 0 to c-1 do begin
+              with Section(IntToStr(i)) do begin
+                x := GetValue('x', -1);
+                y := GetValue('y', -1);
+                t := GetValue('type', 0);
+                fBlocks[x, y] := t;
+              end;
+            end;
+          end;
+
+          c := GetValue('StreetCount', 0);
+          SetLength(fStreets, c);
+          with Section('Streets') do begin
+            for i := 0 to c-1 do begin
+              with Section(IntToStr(i)) do begin
+                fStreets[i].startPos.x := GetValue('StartX', 0);
+                fStreets[i].startPos.y := GetValue('StartY', 0);
+                fStreets[i].endPos.x := GetValue('EndX', 0);
+                fStreets[i].endPos.y := GetValue('EndY', 0);
+                fStreets[i].width := GetValue('Width', 1);
+              end;
+            end;
+          end;
+        end;
+        PaintBox.Repaint;
+      finally
+        kcf.Free;
+      end;
+    finally
+      stream.Free;
+    end;
+
+      fSize := Point(StrToIntDef(WidthEd.Text, 5), StrToIntDef(HeightEd.Text, 5));
+    SetLength(fBlocks, fSize.X, fSize.Y);
+    SetLength(fStreets, 0);
+    PaintBox.Width  := BLOCK_SIZE*fSize.X;
+    PaintBox.Height := BLOCK_SIZE*fSize.Y;
+    PaintBox.Repaint;
+  end;
+end;
+
+procedure TForm1.UpdateStreetList;
+var
+  i: Integer;
+begin
+  with StreetsLB.Items do begin
+    BeginUpdate;
+    Clear;
+    for i := 0 to High(fStreets) do with (fStreets[i]) do begin
+      Add(format('%f,%f - %f,%f - %d',
+      [startPos.x, startPos.y, endPos.x, endPos.y, width]));
+    end;
+    EndUpdate;
+  end;
+end;
+
+procedure TForm1.StreetsLBClick(Sender: TObject);
+begin
+  PaintBox.Repaint;
+end;
+
+procedure TForm1.StreetsLBKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+var
+  i: Integer;
+begin
+  if (Key = VK_DELETE) and (StreetsLB.ItemIndex >= 0) then begin
+    for i := StreetsLB.ItemIndex to High(fStreets)-1 do
+      fStreets[i] := fStreets[i+1];
+    SetLength(fStreets, High(fStreets));
+    UpdateStreetList;
+    PaintBox.Repaint;
+  end;
 end;
 
 end.

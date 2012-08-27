@@ -8,7 +8,7 @@ uses
 type
   TBPark = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLuxury: Integer; override;
     function SPollution: Integer; override;
@@ -20,7 +20,7 @@ type
 
   TBCinema = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLuxury: Integer; override;
     constructor Create; override;
@@ -34,7 +34,7 @@ type
 
   TBPool = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLuxury: Integer; override;
     constructor Create; override;
@@ -46,7 +46,7 @@ type
 
   TBShopping = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLuxury: Integer; override;
     function SPollution: Integer; override;
@@ -59,7 +59,7 @@ type
 
   TBTheater = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLuxury: Integer; override;
     constructor Create; override;
@@ -73,7 +73,7 @@ type
 
   TBCasino = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLuxury: Integer; override;
     function SPollution: Integer; override;
@@ -97,9 +97,9 @@ begin
   FColor:= ColorToRGBA(0.5,1,0);
 end;
 
-procedure TBPark.RenderShape(Height: Single);
+procedure TBPark.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(0.5);
+  inherited RenderShape(0.5, Outline);
 end;
 
 class function TBPark.DisplayName: String;
@@ -135,9 +135,9 @@ begin
   FColor:= ColorToRGBA(0.5,1,0);
 end;
 
-procedure TBCinema.RenderShape(Height: Single);
+procedure TBCinema.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(1.5);
+  inherited RenderShape(1.5, Outline);
 end;
 
 class function TBCinema.DisplayName: String;
@@ -183,9 +183,9 @@ begin
   FColor:= ColorToRGBA(0.5,1,0);
 end;
 
-procedure TBPool.RenderShape(Height: Single);
+procedure TBPool.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(1);
+  inherited RenderShape(1, Outline);
 end;
 
 class function TBPool.DisplayName: String;
@@ -221,9 +221,9 @@ begin
   FColor:= ColorToRGBA(0.5,1,0);
 end;
 
-procedure TBShopping.RenderShape(Height: Single);
+procedure TBShopping.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2);
+  inherited RenderShape(2, Outline);
 end;
 
 class function TBShopping.DisplayName: String;
@@ -264,9 +264,9 @@ begin
   FColor:= ColorToRGBA(0.5,1,0);
 end;
 
-procedure TBTheater.RenderShape(Height: Single);
+procedure TBTheater.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2);
+  inherited RenderShape(2, Outline);
 end;
 
 class function TBTheater.DisplayName: String;
@@ -312,9 +312,9 @@ begin
   FColor:= ColorToRGBA(0.5,1,0);
 end;
 
-procedure TBCasino.RenderShape(Height: Single);
+procedure TBCasino.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(3);
+  inherited RenderShape(3, Outline);
 end;
 
 class function TBCasino.DisplayName: String;

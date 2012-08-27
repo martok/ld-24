@@ -8,7 +8,7 @@ uses
 type
   TBHouse = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLivingSpace: Integer; override;
     constructor Create; override;
@@ -19,7 +19,7 @@ type
 
   TBAppartement = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLivingSpace: Integer; override;
     constructor Create; override;
@@ -30,7 +30,7 @@ type
 
   TBAppartement1stClass = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SLivingSpace: Integer; override;  
     function SLuxury: Integer; override;
@@ -51,9 +51,9 @@ begin
   FColor:= ColorToRGBA(0.5, 0.5, 1);
 end;
 
-procedure TBHouse.RenderShape(Height: Single);
+procedure TBHouse.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape((0.5 + FRndHeight) * Height);
+  inherited RenderShape((0.5 + FRndHeight) * Height, Outline);
 end;
 
 class function TBHouse.DisplayName: String;
@@ -84,9 +84,9 @@ begin
   FColor:= ColorToRGBA(0.5, 0.5, 1);
 end;
 
-procedure TBAppartement.RenderShape(Height: Single);
+procedure TBAppartement.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape((0.8 + FRndHeight) * Height);
+  inherited RenderShape((0.8 + FRndHeight) * Height, Outline);
 end;
 
 class function TBAppartement.DisplayName: String;
@@ -117,9 +117,9 @@ begin
   FColor:= ColorToRGBA(0.5, 0.5, 1);
 end;
 
-procedure TBAppartement1stClass.RenderShape(Height: Single);
+procedure TBAppartement1stClass.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape((0.8 + FRndHeight) * Height);
+  inherited RenderShape((0.8 + FRndHeight) * Height, Outline);
 end;
 
 class function TBAppartement1stClass.DisplayName: String;

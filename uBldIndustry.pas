@@ -8,7 +8,7 @@ uses
 type
   TBSmallIndustry = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;
@@ -20,7 +20,7 @@ type
 
   TBFactory = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;
@@ -35,7 +35,7 @@ type
 
   TBFactories = class(TBuilding)
   protected
-    procedure RenderShape(Height: Single); override;
+    procedure RenderShape(Height: Single; Outline: Boolean = false); override;
   public
     function SIndustryValue: Integer; override;
     function SPollution: Integer; override;
@@ -58,9 +58,9 @@ begin
   FColor:= ColorToRGBA(1,0.3,0.0);
 end;
 
-procedure TBSmallIndustry.RenderShape(Height: Single);
+procedure TBSmallIndustry.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(1);
+  inherited RenderShape(1, Outline);
 end;
 
 class function TBSmallIndustry.DisplayName: String;
@@ -96,9 +96,9 @@ begin
   FColor:= ColorToRGBA(1,0.3,0.0);
 end;
 
-procedure TBFactory.RenderShape(Height: Single);
+procedure TBFactory.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(2);
+  inherited RenderShape(2, Outline);
 end;
 
 class function TBFactory.DisplayName: String;
@@ -149,9 +149,9 @@ begin
   FColor:= ColorToRGBA(1,0.3,0.0);
 end;
 
-procedure TBFactories.RenderShape(Height: Single);
+procedure TBFactories.RenderShape(Height: Single; Outline: Boolean = false);
 begin
-  inherited RenderShape(4);
+  inherited RenderShape(4, Outline);
 end;
 
 class function TBFactories.DisplayName: String;
