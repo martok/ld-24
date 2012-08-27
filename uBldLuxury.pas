@@ -29,6 +29,7 @@ type
     class function Price: Integer; override;
     function SRange: Integer; override;
     function SEffectLoss: Single; override;
+    class function MinEducation: Integer; override;
   end;
 
   TBPool = class(TBuilding)
@@ -40,6 +41,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
   end;
 
   TBShopping = class(TBuilding)
@@ -52,6 +54,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
   end;
 
   TBTheater = class(TBuilding)
@@ -65,6 +68,7 @@ type
     class function Price: Integer; override;
     function SRange: Integer; override;
     function SEffectLoss: Single; override;
+    class function MinEducation: Integer; override;
   end;
 
   TBCasino = class(TBuilding)
@@ -79,6 +83,7 @@ type
     class function Price: Integer; override;
     function SRange: Integer; override;
     function SEffectLoss: Single; override;
+    class function MinEducation: Integer; override;
   end;
 
 implementation
@@ -165,6 +170,11 @@ begin
   Result:= 3;
 end;
 
+class function TBCinema.MinEducation: Integer;
+begin
+  Result:= 2;
+end;
+
 { TBPool }
 
 constructor TBPool.Create;
@@ -196,6 +206,11 @@ end;
 class function TBPool.Texture: TglBitmap2D;
 begin
   Result:= Textures.BPool;
+end;
+
+class function TBPool.MinEducation: Integer;
+begin
+  Result:= 2;
 end;
 
 { TBShopping }
@@ -236,6 +251,11 @@ begin
   Result:= Textures.BShopping;
 end;
 
+class function TBShopping.MinEducation: Integer;
+begin
+  Result:= 3;
+end;
+
 { TBTheater }
 
 constructor TBTheater.Create;
@@ -261,7 +281,7 @@ end;
 
 function TBTheater.SLuxury: Integer;
 begin
-  Result:= 3;
+  Result:= 4;
 end;
 
 class function TBTheater.Texture: TglBitmap2D;
@@ -277,6 +297,11 @@ end;
 function TBTheater.SRange: Integer;
 begin
   Result:= 3;
+end;
+
+class function TBTheater.MinEducation: Integer;
+begin
+  Result:= 4;
 end;
 
 { TBCasino }
@@ -325,6 +350,11 @@ end;
 function TBCasino.SRange: Integer;
 begin
   Result:= 5;
+end;
+
+class function TBCasino.MinEducation: Integer;
+begin
+  Result:= 4;
 end;
 
 end.

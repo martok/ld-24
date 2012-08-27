@@ -38,6 +38,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
   end;
 
 implementation
@@ -144,6 +145,11 @@ end;
 function TBAppartement1stClass.SLuxury: Integer;
 begin
   Result:= 1;
+end;
+
+class function TBAppartement1stClass.MinEducation: Integer;
+begin
+  Result:= 4;
 end;
 
 end.

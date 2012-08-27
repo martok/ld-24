@@ -70,6 +70,7 @@ type
     class function Texture: TglBitmap2D; virtual;
     class function DisplayName: string; virtual;
     class function Price: Integer; virtual;
+    class function MinEducation: Integer; virtual;
   end;
 
 implementation
@@ -366,6 +367,11 @@ end;
 class function TBuilding.Price: Integer;
 begin
   Result:= 1000;
+end;
+
+class function TBuilding.MinEducation: Integer;
+begin
+  Result:= 0;
 end;
 
 end.

@@ -377,10 +377,11 @@ var
         if f > 1 then f:= 1;
         cb.Industry:= cb.Industry + Bdg.SIndustryValue * f;
         cb.Pollution:= cb.Pollution + Bdg.SPollution * f;
-        cb.Education:= cb.Education + Bdg.SEducation * f;
         cb.Luxury:= cb.Luxury + Bdg.SLuxury * f;
-        if dist = 0 then
+        if dist = 0 then begin
+          cb.Education:= cb.Education + Bdg.SEducation * f;
           cb.Space:= cb.Space + Bdg.SLivingSpace * f;
+        end;
       end;
     end;
   begin
@@ -481,6 +482,10 @@ begin
     if (Where.Building[4] is TBSpecial) then
       exit;
   end;
+  if Building.MinEducation > FTotalEducation then begin
+    Result:= brErrorEdu;
+    exit;
+  end;
   if Building.Price > FTotalMoney then begin
     Result:= brErrorMoney;
     exit;
@@ -508,6 +513,7 @@ var
   a,b,c: Single;
 begin
   FTotalPeople:= 0;
+  FTotalEducation:= 0;
   for x:= 0 to high(FCityBlocks) do begin
     for y:= 0 to high(FCityBlocks[x]) do begin
       cb:= FCityBlocks[x, y];

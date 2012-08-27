@@ -10,6 +10,7 @@ type
   private
   public
     class function NeededBlockType: TBlockType; virtual;
+    class function MinEducation: Integer; override;
   end;
 
   TBResearchCenter = class(TBSpecial)
@@ -64,6 +65,11 @@ uses
   uGlobals;
 
 { TBSpecial }
+
+class function TBSpecial.MinEducation: Integer;
+begin
+  Result:= 50;
+end;
 
 class function TBSpecial.NeededBlockType: TBlockType;
 begin

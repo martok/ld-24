@@ -26,6 +26,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
   end;
 
   TBHighschool = class(TBuilding)
@@ -37,6 +38,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
   end;
 
   TBCollege = class(TBuilding)
@@ -48,6 +50,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
   end;
 
 implementation
@@ -118,6 +121,11 @@ begin
   Result:= Textures.BLibrary;
 end;
 
+class function TBLibrary.MinEducation: Integer;
+begin
+  MinEducation:= 1;
+end;
+
 { TBHighschool }
 
 constructor TBHighschool.Create;
@@ -151,6 +159,11 @@ begin
   Result:= Textures.BHighschool;
 end;
 
+class function TBHighschool.MinEducation: Integer;
+begin
+  Result:= 2;
+end;
+
 { TBCollege }
 
 constructor TBCollege.Create;
@@ -182,6 +195,11 @@ end;
 class function TBCollege.Texture: TglBitmap2D;
 begin
   Result:= Textures.BCollege;
+end;
+
+class function TBCollege.MinEducation: Integer;
+begin
+  Result:= 2;
 end;
 
 end.

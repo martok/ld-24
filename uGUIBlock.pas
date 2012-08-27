@@ -459,7 +459,7 @@ var
   procedure AddButton(Cls: TBuildingClass);
   var
     x, y: Integer;
-    effects: string;
+    edu,effects: string;
     inst: TBuilding;
   begin
     x := 20;
@@ -491,10 +491,13 @@ var
     finally
       inst.Free;
     end;
+    edu:= '';
+    if Cls.MinEducation<>0 then
+      edu:= format(', and %d EDU',[Cls.MinEducation]); 
 
     click := TGUIClickable.Create(Rect(x+50,y,x+610,y+35), OnBtnClick);
     click.Tag:= Integer(Cls);
-    click.Text:= Cls.DisplayName + sLineBreak+'$'+IntToStr(Cls.Price)+#9+effects;
+    click.Text:= Cls.DisplayName + sLineBreak+'$'+IntToStr(Cls.Price)+edu+#9+effects;
     fCatList.Add(click);
   end;
 begin

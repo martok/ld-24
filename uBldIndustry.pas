@@ -28,6 +28,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
     function SEffectLoss: Single; override;
     function SRange: Integer; override;
   end;
@@ -42,6 +43,7 @@ type
     class function Texture: TglBitmap2D; override;
     class function DisplayName: String; override;
     class function Price: Integer; override;
+    class function MinEducation: Integer; override;
     function SEffectLoss: Single; override;
     function SRange: Integer; override;
   end;
@@ -134,6 +136,11 @@ begin
   Result:= 2;
 end;
 
+class function TBFactory.MinEducation: Integer;
+begin
+  Result:= 2;
+end;
+
 { TBFactories }
 
 constructor TBFactories.Create;
@@ -180,6 +187,11 @@ end;
 function TBFactories.SRange: Integer;
 begin
   Result:= 4; 
+end;
+
+class function TBFactories.MinEducation: Integer;
+begin
+  Result:= 10;
 end;
 
 end.
