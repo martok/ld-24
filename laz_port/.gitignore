@@ -1,0 +1,8 @@
+*.~*
+*.dcu
+*.cfg
+*.dof
+*.res
+*.ddp
+__output*
+/lib/

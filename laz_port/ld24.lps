@@ -1,0 +1,520 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="9"/>
+    <BuildModes Active="Default"/>
+    <Units Count="37">
+      <Unit0>
+        <Filename Value="ld24.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="0"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="29" Y="3"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="uViewFrame.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="ViewFrame"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="uViewFrame"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="3"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="187"/>
+        <CursorPos X="51" Y="202"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="uBldIndustry.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uBldIndustry"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="uFonts.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uFonts"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="79" Y="8"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="uGlobals.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uGlobals"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="44" Y="12"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="uGUIBlock.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uGUIBlock"/>
+        <EditorIndex Value="2"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="73"/>
+        <CursorPos X="80" Y="87"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="dglOpenGL.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dglOpenGL"/>
+        <EditorIndex Value="4"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="18087"/>
+        <CursorPos X="12" Y="18145"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="FastGL.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FastGL"/>
+        <EditorIndex Value="5"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="330"/>
+        <CursorPos X="12" Y="358"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="GLHelper.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="GLHelper"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="60"/>
+        <CursorPos X="83" Y="78"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="uBldEducation.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uBldEducation"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="uBldHouse.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uBldHouse"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="uCity.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uCity"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="181"/>
+        <CursorPos X="23" Y="198"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="uCityBlock.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uCityBlock"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="glBitmap.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="glBitmap"/>
+        <EditorIndex Value="6"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="3401"/>
+        <CursorPos X="15" Y="3429"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="uBldLuxury.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uBldLuxury"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="uBldSpecial.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uBldSpecial"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="uGUIMainMenu.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uGUIMainMenu"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="kali\uSound.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="uSound"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="22"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="Camera.pas"/>
+        <UnitName Value="Camera"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="54" Y="11"/>
+        <UsageCount Value="20"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit18>
+      <Unit19>
+        <Filename Value="Geometry.pas"/>
+        <UnitName Value="Geometry"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="127"/>
+        <CursorPos X="34" Y="117"/>
+        <UsageCount Value="20"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit19>
+      <Unit20>
+        <Filename Value="TextSuite\TextSuite.pas"/>
+        <UnitName Value="TextSuite"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="652"/>
+        <CursorPos X="27" Y="669"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit20>
+      <Unit21>
+        <Filename Value="kali\openal.pas"/>
+        <UnitName Value="openal"/>
+        <EditorIndex Value="8"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="2096"/>
+        <CursorPos X="10" Y="2124"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit21>
+      <Unit22>
+        <Filename Value="kali\uSoundAL.pas"/>
+        <UnitName Value="uSoundAL"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="13"/>
+        <CursorPos X="38" Y="27"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit22>
+      <Unit23>
+        <Filename Value="C:\Zusatzprogramme\Lazarus\fpc\2.6.0\source\rtl\win\wininc\struct.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="70" Y="3"/>
+        <UsageCount Value="10"/>
+      </Unit23>
+      <Unit24>
+        <Filename Value="kali\uConfigFile.pas"/>
+        <UnitName Value="uConfigFile"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="15" Y="116"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit24>
+      <Unit25>
+        <Filename Value="..\kali\ogg.pas"/>
+        <UnitName Value="ogg"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="49"/>
+        <CursorPos X="5" Y="76"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="..\kali\openal.pas"/>
+        <UnitName Value="openal"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="24"/>
+        <CursorPos X="12" Y="52"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="..\kali\oval.pas"/>
+        <UnitName Value="oval"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="28" Y="5"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="..\kali\uConfigFile.pas"/>
+        <UnitName Value="uConfigFile"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="29" Y="2"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="..\kali\uSound.pas"/>
+        <UnitName Value="uSound"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="27" Y="5"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit29>
+      <Unit30>
+        <Filename Value="..\kali\uSoundAL.pas"/>
+        <UnitName Value="uSoundAL"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="28" Y="3"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="..\kali\vorbis.pas"/>
+        <UnitName Value="vorbis"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="26"/>
+        <CursorPos X="4" Y="56"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="kali\ogg.pas"/>
+        <UnitName Value="ogg"/>
+        <EditorIndex Value="7"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="218"/>
+        <CursorPos X="92" Y="173"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="kali\oval.pas"/>
+        <UnitName Value="oval"/>
+        <EditorIndex Value="9"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="12"/>
+        <CursorPos X="30" Y="40"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="kali\vorbis.pas"/>
+        <UnitName Value="vorbis"/>
+        <EditorIndex Value="11"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="434"/>
+        <CursorPos X="12" Y="452"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="TextSuite\TextSuiteOptions.inc"/>
+        <EditorIndex Value="10"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="50" Y="28"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit35>
+      <Unit36>
+        <Filename Value="uglShader.pas"/>
+        <UnitName Value="uglShader"/>
+        <EditorIndex Value="12"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="884"/>
+        <CursorPos X="33" Y="902"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit36>
+    </Units>
+    <General>
+      <ActiveWindowIndexAtStart Value="0"/>
+    </General>
+    <JumpHistory Count="29" HistoryIndex="28">
+      <Position1>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="47" Column="23" TopLine="19"/>
+      </Position1>
+      <Position2>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="52" Column="12" TopLine="24"/>
+      </Position2>
+      <Position3>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="53" Column="12" TopLine="25"/>
+      </Position3>
+      <Position4>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="54" Column="12" TopLine="26"/>
+      </Position4>
+      <Position5>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="180" Column="58" TopLine="152"/>
+      </Position5>
+      <Position6>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="188" Column="6" TopLine="160"/>
+      </Position6>
+      <Position7>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="202" Column="91" TopLine="174"/>
+      </Position7>
+      <Position8>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="203" Column="92" TopLine="175"/>
+      </Position8>
+      <Position9>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="247" Column="30" TopLine="236"/>
+      </Position9>
+      <Position10>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="390" Column="18" TopLine="369"/>
+      </Position10>
+      <Position11>
+        <Filename Value="kali\vorbis.pas"/>
+        <Caret Line="425" Column="167" TopLine="397"/>
+      </Position11>
+      <Position12>
+        <Filename Value="uglShader.pas"/>
+        <Caret Line="2" Column="32" TopLine="1"/>
+      </Position12>
+      <Position13>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="80" Column="31" TopLine="67"/>
+      </Position13>
+      <Position14>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="83" Column="31" TopLine="70"/>
+      </Position14>
+      <Position15>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="82" Column="31" TopLine="69"/>
+      </Position15>
+      <Position16>
+        <Filename Value="ld24.lpr"/>
+        <Caret Line="6" Column="18" TopLine="1"/>
+      </Position16>
+      <Position17>
+        <Filename Value="uGUIBlock.pas"/>
+        <Caret Line="531" Column="9" TopLine="514"/>
+      </Position17>
+      <Position18>
+        <Filename Value="uGUIBlock.pas"/>
+        <Caret Line="178" Column="7" TopLine="161"/>
+      </Position18>
+      <Position19>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="78" Column="105" TopLine="69"/>
+      </Position19>
+      <Position20>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="193" Column="3" TopLine="175"/>
+      </Position20>
+      <Position21>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="264" Column="4" TopLine="240"/>
+      </Position21>
+      <Position22>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="526" Column="3" TopLine="509"/>
+      </Position22>
+      <Position23>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="643" Column="3" TopLine="626"/>
+      </Position23>
+      <Position24>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="10" Column="31" TopLine="1"/>
+      </Position24>
+      <Position25>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="35" Column="3" TopLine="18"/>
+      </Position25>
+      <Position26>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="50" Column="3" TopLine="33"/>
+      </Position26>
+      <Position27>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="51" Column="3" TopLine="34"/>
+      </Position27>
+      <Position28>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="151" Column="2" TopLine="121"/>
+      </Position28>
+      <Position29>
+        <Filename Value="uViewFrame.pas"/>
+        <Caret Line="187" Column="4" TopLine="164"/>
+      </Position29>
+    </JumpHistory>
+  </ProjectSession>
+  <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="kali\openal.pas"/>
+        <Line Value="52"/>
+      </Item1>
+    </BreakPoints>
+  </Debugging>
+</CONFIG>
