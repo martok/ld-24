@@ -50,7 +50,7 @@ var
 begin
   inherited Create;
   FFrame:= aFrame;
-  c:= TGUIClickable.Create(Bounds(300, 20, 280, 35), HelpClick);
+  c:= TGUIClickable.Create(Bounds(350, 20, 280, 35), HelpClick);
   c.Text:= 'What''s this?';
   fClickables.Add(c);
 
@@ -63,7 +63,7 @@ begin
         try
           if map.SectionExists('Map') then begin
             s:= map.Section('Map').GetValue('Title',ChangeFileExt(sr.Name,''));
-            c:= TGUIClickable.Create(Bounds(300, 120+FFiles.Count*40, 280, 35), StartGameClick);
+            c:= TGUIClickable.Create(Bounds(350, 120+FFiles.Count*40, 280, 35), StartGameClick);
             c.Tag:= FFiles.Add(ChangeFileExt(sr.Name,''));
             c.Text:= s;
             fClickables.Add(c);
@@ -99,11 +99,11 @@ begin
 
   tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
-  Fonts.GUIText.BlockOut(RectOffset(Bounds(300, 90, 280, 35), ClientRect.TopLeft), 'Start playing map: ');
+  Fonts.GUIText.BlockOut(RectOffset(Bounds(350, 90, 280, 35), ClientRect.TopLeft), 'Start playing map: ');
 
   tsSetParameteri(TS_ALIGN, TS_ALIGN_CENTER);
   tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
-  Fonts.LargeText.BlockOut(RectOffset(Rect(0, 350, 600, 400), ClientRect.TopLeft),
+  Fonts.LargeText.BlockOut(RectOffset(Rect(0, 350, 700, 400), ClientRect.TopLeft),
     'Created for Ludum Dare #24'+sLineBreak+
     '  by BitSpace, 24-27 Aug 2012'
     );
@@ -131,7 +131,7 @@ end;
 
 procedure TGUIMainMenu.ViewportResize(const aWidth, aHeight: Integer);
 const
-  w = 600;
+  w = 700;
   h = 400;
 begin
   inherited;
@@ -159,7 +159,7 @@ var
   click: TGUIClickable;
 begin
   inherited;
-  click := TGUIClickable.Create(Rect(200,10,400,35), BackClick);
+  click := TGUIClickable.Create(Rect(250,10,450,35), BackClick);
   click.Text:= '<<< Back <<<';
   fClickables.Add(click);
 end;
@@ -176,25 +176,31 @@ var
 begin
   inherited;
   tsSetParameteri(TS_ALIGN, TS_ALIGN_LEFT);
-  tsSetParameteri(TS_VALIGN, TS_VALIGN_CENTER);
-  Fonts.GUIText.BlockOut(RectOffset(Bounds(20, 50, 580, 380), ClientRect.TopLeft),
+  tsSetParameteri(TS_VALIGN, TS_VALIGN_TOP);
+  Fonts.GUIText.BlockOut(RectOffset(Bounds(20, 50, 680, 380), ClientRect.TopLeft),
     'Game Of City Life is a variation on the classical Game of Life.'+sLineBreak+
     ''+sLineBreak+
     ''+sLineBreak+
     'Instead of a lifeform, you manage a city evolving from one tiny house up to a city of millions.'+sLineBreak+
     'Every city block affects those around it, by spreading it''s positive effects as well as it''s negative.'+sLineBreak+
     ''+sLineBreak+
+    'Select city blocks by clicking them, then choose one of the fields to build something or tear down exisiting buildings.'+sLineBreak+
+    'Every building costs money, destroying buildings returns 60% of the cost.'+sLineBreak+
+    'Most buildings also require a certain education level, which can be raised by building education facilities.'+sLineBreak+
     ''+sLineBreak+
     ''+sLineBreak+
+    'Special Buildings can only be built on certain blocks if there is nothing else on that block.'+sLineBreak+
+    'They also can''t be built everywhere, suitable locations are highlighted on the map:'+sLineBreak+
+    'Green: Research Center, Red: Waterfront, Blue: Business Apartments, Yellow: Wellness Center'+sLineBreak+
+    'These buildings cost a lot of money, but yield more of their specific resource then other buildings.'+sLineBreak+
     ''+sLineBreak+
-    ''+sLineBreak+
-    ''+sLineBreak+
-    ''+sLineBreak+
+    'The game is turnbased and open-ended. Use the buttons on the right menu to advance a turn or let the game run'+sLineBreak+
+    'for itself until paused again.'+sLineBreak+
     ''+sLineBreak+
     'Explanation of acronyms:'+sLineBreak+
     'PPL: Population, MON: Money, EDU: Education (required to build advanced buildings),'+sLineBreak+
     'IND: industry (generates money), SPA: Living Space (how many people fit in that area),'+sLineBreak+
-    'POL: Pollution (the side effect of industry), LUX: Luxury (keeps people happy),'+sLineBreak+
+    'POL: Pollution (the bad side effect of industry), LUX: Luxury (keeps people happy),'+sLineBreak+
     'RNG: Range (how many blocks affects this), LPB: how much effect is lost per distance'
   );
 
@@ -221,7 +227,7 @@ end;
 
 procedure TGUIMainHelp.ViewportResize(const aWidth, aHeight: Integer);
 const
-  w = 600;
+  w = 700;
   h = 400;
 begin
   inherited;

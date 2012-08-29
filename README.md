@@ -4,11 +4,11 @@ ld-24 @ BitSpace: Game Of Citylife
 How to Play
 -----------
 Your goal is to create a big city. In doing so, you plan how to spend the limited space you have by choosing buildings to create on the 9 building spots in every city block.
-See the ingame-info for details.
+See the ingame-info for details on how to play.
 
 Requirements
 ------------
-Graphics is OpenGL 2.0 (which any recent graphics hardware should have).
+Graphics is OpenGL 1.something (which any recent graphics hardware should have).
 
 Sound requires OpenAL, which you can get from [CreateiveLabs](http://connect.creativelabs.com/openal/Downloads/Forms/AllItems.aspx) or follow this direct [download link](http://connect.creativelabs.com/openal/Downloads/oalinst.zip).
 
@@ -21,7 +21,7 @@ Everything happens/happened on [GitHub](https://github.com/martok/ld-24).
 Used libraries
 --------------
 * Parts of [Kali](https://github.com/martok/kali), developed by Martok.
-* Shader support code by Bergmann
+* context support code by Bergmann
 * FastGL OpenGL basecode by Martok
 * [glBitmap](http://www.dev-center.de/header/glbitmap?cat=header&file=glbitmap) by Lossy eX
 * libOgg/libVorbis by Xiph.Org Foundation
@@ -43,4 +43,4 @@ Credits
 * [Teekeks](https://twitter.com/Teekeks)
 
 ### Shameless plug
-Also follow [MassiveUO](https://twitter.com/MassiveUO) for BitSpace stuff :-)
+Also follow [MassiveUO](https://twitter.com/MassiveUO) for our main (but slightly slower) project :-)

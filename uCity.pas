@@ -4,7 +4,7 @@ interface
 
 uses
   dglOpenGL, uCityBlock, Geometry, GLHelper, FastGL, contnrs, Windows,
-  uglShader, Forms, glBitmap, Types;
+  Forms, glBitmap, Types;
 
 type
   TCityBlocks = array of array of TCityBlock;
@@ -39,6 +39,7 @@ type
     FCityBlocks: TCityBlocks;
     FStreets: TStreets;
     FBlockDist: Single;
+    FDebugLevel: boolean;
     FCars: TObjectList;
     FTotalEducation: Single;
     FTotalMoney: Single;
@@ -105,9 +106,10 @@ begin
   end;
   FActiveBlock:=Point(-1,-1);
   FTotalPeople:= 0;
-  FTotalMoney:= 10000000;        //TODO
+  FTotalMoney:= 0;
   FTotalEducation:= 0;
   FRound := 0;
+  FDebugLevel:= false;
 
   FHeightMap := TglBitmap2D.Create;
   FHeightMap.SetWrap(GL_REPEAT, GL_REPEAT, GL_REPEAT);
@@ -448,7 +450,7 @@ begin
     if (Where.Building[4] is TBSpecial) then
       exit;
   end;
-  if Building.MinEducation > FTotalEducation then begin
+  if not FDebugLevel and (Building.MinEducation > FTotalEducation) then begin
     Result:= brErrorEdu;
     exit;
   end;
@@ -530,6 +532,7 @@ begin
     kcf := TkcfConfigFile.Create(stream);
     try
       with kcf.Section('Map') do begin
+        FDebugLevel:= GetValue('Debug', false);
         w := GetValue('Width', 10);
         h := GetValue('Height', 10);
         s := ExtractFilePath(Application.ExeName) + GetValue('Heightmap', '');
@@ -585,6 +588,10 @@ begin
   finally
     stream.Free;
   end;
+  if FDebugLevel then
+    FTotalMoney:= 10000000
+  else
+    FTotalMoney:= 1000;
   UpdateStats;
 end;
 
