@@ -166,8 +166,8 @@ begin
   TtsFont.InitTS;
   Sound:= TSoundSystem.Create;
   if not Sound.Available then begin
-    //TODO
-    raise Exception.Create('No OpenAL found. Pleas see included Readme to find out what to do about that.');
+    MessageDlg('No OpenAL found. Please see included Readme to find out what to do about that.',mtError,[mbOk],0);
+    halt;
   end;
 
   LoadFonts;
